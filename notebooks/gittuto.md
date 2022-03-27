@@ -12,6 +12,8 @@
 
 [github cli manual](https://cli.github.com/manual/)
 
+[git manual](https://git-scm.com/docs/user-manual)
+
 
 
 # Intro and Start
@@ -72,13 +74,28 @@
 
 
 
-### How to use git
+## How to use git
 
-0. 首先你需要把仓库克隆下来：
+理论上需要学一些git基础知识（至少得知道怎么在本地用git和git的一些基本概念）。。。推荐[learning git branching](https://learngitbranching.js.org/?locale=zh_CN)，做掉“主要”部分的内容就行。也可以去Youtube、BiliBili等视频网站学习一些。
 
-    `git clone `
+我们尽量不去涉及一些复杂的git操作，只做一些简单的merge、pull、push、rebase之类的。
+
+
+
+### Before we start
+
+0. 首先你需要把仓库克隆下来：在命令行输入`git clone https://github.com/ipChrisLee/MoeCompiler.git`后，`MoeCompiler`文件夹就会在当前工作文件夹下产生。之后`cd MoeCompiler`进入文件夹。
+
+1. `git branch`可以显示所有的本地的分支，现在应该会有一个`*main`分支（*表示这是你正在编辑的）
+
+    `git remote`可以显示`remote name`，理论上这应该是`origin`
+
+    `git log`可以显示所有的更改记录和branch，其中``
 
 
 
 如果你已经commit了一个文件，但是你实际上想忽略它，那就在`.gitignore`添加相关文件，然后参考[stackoverflow的提示](https://stackoverflow.com/questions/29276283/remove-files-from-remote-branch-in-git)清理下`git cache`。
 
+
+
+git自身的`git log`非常难看，你可以使用第三方`GUI`来看`git`的branch tree等内容，见[intro on git-scm](https://git-scm.com/download/gui/linux)。如果你是命令行党，也可以参考[stackoverflow的这个问题下的回答](https://stackoverflow.com/questions/1057564/pretty-git-branch-graphs)来设置一些命令。
