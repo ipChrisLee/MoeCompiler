@@ -94,10 +94,17 @@
 
     `git remote update`可以更新所有的remote信息
 
+2. 如果你已经commit了一个文件，但是你实际上想忽略它，那就在`.gitignore`添加相关文件，然后参考[stackoverflow的提示](https://stackoverflow.com/questions/29276283/remove-files-from-remote-branch-in-git)清理下`git cache`。
+
+3. git自身的`git log`非常难看，你可以使用第三方`GUI`来看`git`的branch tree等内容，见[intro on git-scm](https://git-scm.com/download/gui/linux)。如果你是命令行党，也可以参考[stackoverflow的这个问题下的回答](https://stackoverflow.com/questions/1057564/pretty-git-branch-graphs)来设置一些命令。
+
+Wait to be done.
+
+（连队友都没确定就写这种帮助文档属实有点奇怪）
 
 
-如果你已经commit了一个文件，但是你实际上想忽略它，那就在`.gitignore`添加相关文件，然后参考[stackoverflow的提示](https://stackoverflow.com/questions/29276283/remove-files-from-remote-branch-in-git)清理下`git cache`。
 
 
 
-git自身的`git log`非常难看，你可以使用第三方`GUI`来看`git`的branch tree等内容，见[intro on git-scm](https://git-scm.com/download/gui/linux)。如果你是命令行党，也可以参考[stackoverflow的这个问题下的回答](https://stackoverflow.com/questions/1057564/pretty-git-branch-graphs)来设置一些命令。
+
+
