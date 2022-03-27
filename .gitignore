@@ -1,3 +1,6 @@
-local/*
-build/*
-testDir/*
+local/
+build/
+testDir/
+!referenceImplementation/README
+!referenceImplementation/load.sh
+referenceImplementation/
