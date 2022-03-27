@@ -92,6 +92,8 @@
 
     `git log`可以显示所有的更改记录和branch
 
+    `git remote update`可以更新所有的remote信息
+
 
 
 如果你已经commit了一个文件，但是你实际上想忽略它，那就在`.gitignore`添加相关文件，然后参考[stackoverflow的提示](https://stackoverflow.com/questions/29276283/remove-files-from-remote-branch-in-git)清理下`git cache`。
