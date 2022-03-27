@@ -86,7 +86,7 @@
 
 0. 首先你需要把仓库克隆下来：在命令行输入`git clone https://github.com/ipChrisLee/MoeCompiler.git`后，`MoeCompiler`文件夹就会在当前工作文件夹下产生。之后`cd MoeCompiler`进入文件夹。
 
-1. `git branch`可以显示所有的本地的分支，现在应该会有一个`*main`分支（*表示这是你正在编辑的）
+1. `git branch -a`可以显示所有的分支，现在应该会有一个`*main`分支（*表示这是你正在编辑的）
 
     `git remote`可以显示`remote name`，理论上这应该是`origin`
 
