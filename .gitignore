@@ -1,6 +1,7 @@
-local/
-build/
+# directory for test
 testDir/
+
+# ignore reference projects
 referenceImplementation/*
 !referenceImplementation/README
 !referenceImplementation/load.sh
