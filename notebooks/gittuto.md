@@ -1,6 +1,6 @@
 # Info
 
-[repo link]()
+[repo link](https://github.com/ipChrisLee/MoeCompiler)
 
 
 
@@ -14,17 +14,15 @@
 
 
 
-
-
 # Intro and Start
 
 ## Starter
 
 ### md reader
 
-强烈推荐使用markdown格式的文件作为说明文档、笔记文档的载体。
+强烈推荐使用markdown格式的文件作为说明文档、笔记文档的载体。（除非需要记录的东西很短，此时可以用纯文本文件）个人不建议使用word作为笔记的载体，因为用git会将word直接当作一个二进制文件处理，这会导致诸如diff-test、merge等操作难以进行（虽然可能已经有一些插件可以做到这两个操作了。。。所以实际上主要原因是word和markdown实在是太“重”且不优雅了）。
 
-我个人使用的是[typora](https://typora.io)作为markdown阅读器和写作器，但是typora的最新版本是要付费使用的，你可以自己选择markdown阅读器（据说vs code是一个不错的选择）。
+我个人使用的是[typora](https://typora.io)作为markdown编辑器，但是typora的最新版本是要付费使用的，你可以自己选择markdown编辑器（据说vs code是一个不错的选择）。
 
 这里提供一个“协议”：所有markdown的图片全部放在和`.md`文件同文件夹下的图片文件夹中，并且在`.md`文件内使用相对路径引用图片。
 
@@ -72,5 +70,11 @@
 
     在执行完后，进入[github-settings-keys](https://github.com/settings/keys)查看刚加入的key。
 
-6. 
+
+
+### How to use git
+
+0. 首先你需要把仓库克隆下来：
+
+    `git clone `
 
