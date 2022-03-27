@@ -1,6 +1,6 @@
 local/
 build/
 testDir/
+referenceImplementation/
 !referenceImplementation/README
 !referenceImplementation/load.sh
-referenceImplementation/
