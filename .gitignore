@@ -5,3 +5,6 @@ testDir/
 referenceImplementation/*
 !referenceImplementation/README
 !referenceImplementation/load.sh
+
+# directory of download files
+notebooks/docsFromCSC/
