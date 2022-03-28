@@ -8,3 +8,9 @@ referenceImplementation/*
 
 # directory of download files
 notebooks/docsFromCSC/
+
+# build files
+moe/build/
+
+# binary file
+moe/moecompiler/
