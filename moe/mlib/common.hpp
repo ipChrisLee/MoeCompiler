@@ -298,6 +298,27 @@ public:
         }
     }
 
+    /*  Take place in `assert`. This version use a bool value as assert condition.
+     * */
+    void Assert(bool b,const std::string & msg="",const std::string & codepos=""){
+        if(!b) {
+            std::string buf;
+            if(codepos.length()) buf+="Error in "+codepos+".";
+            buf+=" Message : ["+msg+"]";
+            throw std::runtime_error(buf);
+        }
+    }
+
+    /*  Take place in `assert`. This version use a bool value as assert condition.
+     * */
+    void Assert(std::function<bool(void)>fun,const std::string & msg="",const std::string & codepos=""){
+        if(!fun()) {
+            std::string buf;
+            if(codepos.length()) buf+="Error in "+codepos+".";
+            buf+=" Message : ["+msg+"]";
+            throw std::runtime_error(buf);
+        }
+    }
 };
 
 namespace exitcode{
@@ -315,6 +336,8 @@ namespace exitcode{
 namespace com{
     void TODO(const std::string_view s=std::string_view());
 
+    /*  Struct for regex switch.
+     * */
     struct RegexSwitchCase{
         const char * const regex;
         std::function<void(void)>fun;
@@ -326,6 +349,7 @@ namespace com{
      *  codes come first in source codes.
      * */
     void bmeBrace(std::function<void(void)>begin,std::function<void(void)>end,std::function<void(void)>middle);
+
 }
 
 namespace unitest{

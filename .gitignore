@@ -13,4 +13,4 @@ notebooks/docsFromCSC/
 moe/build/
 
 # binary file
-moe/moecompiler/
+moe/compiler

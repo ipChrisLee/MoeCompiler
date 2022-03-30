@@ -29,7 +29,7 @@ namespace unitest{
     }
 
    std::string TestMain::getAll(const std::string & sep) const {
-       std::string re=0;
+       std::string re;
         auto it=testCases.begin();
         if(it!=testCases.end()) {
             re+=it->first;++it;
