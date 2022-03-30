@@ -1,17 +1,21 @@
-files := $(patsubst .%,%,$(patsubst %.cpp,%,$(shell find . -name '*.cpp')))
 objDir := build
-objs := $(addprefix $(objDir),$(addsuffix .o, $(files)))
-objsDir := $(dir $(objs))
-allGenFiles := $(objDir) compiler 
-
 cflags := -x c++ -std=c++17 -Wall -Werror -Wextra -g
 CC := clang++-9
-incs := -I./mlib/
+incsLibs := ./tlib/ ./mlib/
+exename := compiler
+# opti := -O2
 
-compiler : $(objs)
-	$(CC) $(objs) -o compiler
+files := $(patsubst .%,%,$(patsubst %.cpp,%,$(shell find . -name '*.cpp')))
+headerfiles := $(shell find . -name '*.hpp')
+objs := $(addprefix $(objDir),$(addsuffix .o, $(files)))
+objsDir := $(dir $(objs))
+allGenFiles := $(objDir) $(exename) 
+incs := $(addprefix -I,$(incsLibs))
+
+$(exename) : $(objs)
+	$(CC) $(objs) -o $(exename) 
 	
-$(objDir)/%.o : %.cpp  
+$(objDir)/%.o : %.cpp $(headerfiles)
 	$(CC) -c $(incs) $(cflags) $(opti) $< -o $@
 
 $(objs): | $(objsDir)
@@ -21,11 +25,12 @@ $(objs): | $(objsDir)
 
 .PHONY : clean gdb run
 clean :
+	find . -name '*.log' | xargs rm -rf
 	rm -rf $(allGenFiles) $(objsDir)
 
-run : compiler 
-	./compiler $(args)
+run : $(exename) 
+	./$(exename) $(args)
 
-gdb : compiler
-	gdb ./compiler
+gdb : $(exename) 
+	gdb -ex="catch throw" --args ./$(exename) $(args)
 

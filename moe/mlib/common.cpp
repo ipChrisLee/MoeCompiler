@@ -4,11 +4,16 @@
 #include <stdexcept>
 #include <iostream>
 
+bool mdb::sysEnable=false;
+cprt::TOS cprt::tos=cprt::TOS();
 
 namespace com{
     void TODO(const std::string_view msg){
-        std::cerr<<"Not Implemented!"<<std::endl;
-        throw std::logic_error("Not implemeted error by \'TODO()\'"+std::string(msg)+"");
+        cprt::cprintLn("Not Implemented!",std::cerr,cprt::err);
+        throw std::logic_error("Not implemeted error by \'TODO()\', msg["+std::string(msg)+"].");
+    }
+    void bmeBrace(std::function<void(void)>begin,std::function<void(void)>end,std::function<void(void)>middle){
+        begin();middle();end();
     }
 }
 

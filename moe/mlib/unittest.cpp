@@ -19,7 +19,7 @@ namespace unitest{
         }
     }
 
-    int TestMain::test(const std::string & name){
+   int TestMain::test(const std::string & name){
         if(!testCases.count(name)){
             std::cout<<"Test ["<<name<<"] doesn't exist!"<<std::endl;
             return exitcode::INVALID_ARGUMENT;
@@ -28,13 +28,15 @@ namespace unitest{
         }
     }
 
-    void TestMain::printAll(std::ostream & os, const std::string & sep) const {
+   std::string TestMain::getAll(const std::string & sep) const {
+       std::string re=0;
         auto it=testCases.begin();
         if(it!=testCases.end()) {
-            os<<it->first;++it;
+            re+=it->first;++it;
             while(it!=testCases.end()){
-                os<<sep<<it->first;++it;
+                re+=sep+it->first;++it;
             }
         }
+        return re;
     }
 }

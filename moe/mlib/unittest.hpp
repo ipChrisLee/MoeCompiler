@@ -43,9 +43,8 @@ namespace unitest{
             const std::string & /* test name */ \
         );
 
-        /* Print all unit test names. */
-        void printAll(
-            std::ostream & os, /* output stream, std::cout and std::cerr for example. */
+        /* Get all unit test names, seperated by sep. */
+        std::string getAll(
             const std::string & sep=", " /* sep string */
         ) const ;
     };

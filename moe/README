@@ -1,0 +1,34 @@
+delete files except source files : make clean
+    NOTE: all files whose name matches '*.log' will be deleted!
+
+compile moecompiler : make -j4 opti="-O2" compiler
+compile moecompiler and run : make -j4 opti="-O2" run args="testcase.sysy -S -o testcase.s"
+run directly : ./compiler testcase.sysy -S -o testcase.s
+
+command line options :
+    By default, all argument neither without prefix of '-' or '--' nor followed by option
+    will be interpreted as files to compile.
+    (For now, compiler is designed to compile one file for once)
+    
+    [-d] : debug option
+        /*  This option will enable debug information to be created.
+         *  This will also enable default mdb which prints information to stdou. 
+         */
+    [-S] : assemble option
+        /* if and only if command line has this option, compiler will compile files provided.
+         * */
+        [-o <ofiledir> ] (needed) : specify output file directory. 
+
+    [-t] : unit test option
+        /*  Let compiler do unit test. 
+         *  All arguments after it will be considered as the settings of unit test. 
+         *  So if you want to print debug info, let '-d' come before '-t'
+         *  All test names should be placed in the end.
+         *  e.g : ./compiler -d -t -p exprTest regexSwitchTest 
+         * */
+        [-p] : This option let compiler print all availible unit tests to stdout before testing.
+
+
+        
+    
+
