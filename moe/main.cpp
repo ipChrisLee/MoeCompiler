@@ -4,82 +4,65 @@
 #include <vector>
 #include <string>
 #include <tuple>
+#include <fstream>
+
 #include <unittest.hpp>
 #include <common.hpp>
+#include <sysy.hpp>
 
-namespace unitest{
-    /* main function of unitest. */
-    int main(int argc,char ** argv){
-        std::vector<std::string> toTest;/* names of test case */
-        bool toPrintAll=false;/* whether to print all the name of test cases */
-        int opt;
-        while( (opt=getopt(argc,argv,":p")) != -1 ){
-            switch(opt){
-                case 'p':
-                    {
-                        toPrintAll=true;break;
-                    }
-                default:
-                    cprt::cprintLn("Error when parsing command line arguments in unittest::main" ,std::cerr,cprt::err);
-                    exit(exitcode::FAULT_USAGE);
-            }
-        }
-        mdb::getStatic().infoPrint(std::tuple(
-            std::pair("optind",optind),
-            std::pair("optopt",optopt),
-            std::pair("opterr",opterr),
-            std::pair("argc",argc)
-        ),CODEPOS);
-        for(;optind<argc;++optind) toTest.push_back(argv[optind]);
-        if(toPrintAll) {
-            cprt::cprint("All test units : ");
-            cprt::cprintLn(unitest::TestMain::get().getAll());
-        }
-
-        cprt::cprint("To test : ");
-        for(auto s : toTest) cprt::cprint(s+" ; ");
-        cprt::cprintLn("");
-        for(auto name : toTest){
-            int ret=TestMain::get().test(name);
-            if(ret!=exitcode::NORMAL){
-                cprt::cprintLn("Test ["+name+"] failed!");
-                return exitcode::TEST_FAILED;
-            }
-        }
-        cprt::cprintLn("All test passed!");
-        return 0;
-    }
-}
 
 int Main(int argc,char ** argv){
     /* Inkove different functions by command line.
      * */
     int opt;
-    while( (opt=getopt(argc,argv,":tdS")) != -1 ){
-        mdb::getStatic().msgPrint("???");
+    std::string inFilePath=argv[1],outFilePath,subFunName;
+    optind=2;
+    char cmd='\0';
+    while( (opt=getopt(argc,argv,":dlpsiSf:o:")) != -1 ){
         switch (opt){
-            case 't': 
-            {
-                return unitest::main(argc,argv);
-            }
             case 'd':
-            {
                 mdb::setSysEnable()=true;
                 mdb::getStatic().setEnable()=true;
                 break;
-            }
+            case 'l':
+                cmd='l';break;
+            case 'f': 
+                subFunName=optarg;cmd='f';
+                break;
             case 'S':
-            {
+                cmd='S';
                 com::TODO("Compiler not implemented.");
-            }
+            case 'o':
+                outFilePath=optarg;
+                break;
             default:
-                std::cerr<<"Error when parsing command line arguments"<<std::endl;
-                exit(exitcode::FAULT_USAGE);
+                com::Throw("Error when parsing command line arguments");
         }
     }
-    if(optind>=argc){
-        std::cerr<<"Expected argument after options"<<std::endl;
-        exit(exitcode::FAULT_USAGE);
+    if(optind>argc){
+        com::Throw("Expected argument after options");
+    }
+    sysy::init(inFilePath,outFilePath);
+    switch(cmd){
+        case 'f':
+            return unitest::main(subFunName);
+        case 'l':
+            com::TODO("Not support -l for now.");
+            break;
+        case 'p':
+            com::TODO("Not support -p for now.");
+            break;
+        case 's':
+            com::TODO("Not support -s for now.");
+            break;
+        case 'i':
+            com::TODO("Not support -i for now.");
+            break;
+        case 'S':
+            com::TODO("Not support -S for now.");
+            break;
+        default:
+            com::Throw("No command is specified.");
     }
     return 0;
 }
@@ -95,6 +78,7 @@ int main(int argc,char ** argv){
     try{
         return Main(argc,argv);
     }catch(const std::exception & e){
-        std::cerr<<e.what()<<std::endl;
+        cprt::cprintLn(e.what(),std::cerr,cprt::err);
+        return -1;
     }
 }

@@ -8,10 +8,30 @@ bool mdb::sysEnable=false;
 cprt::TOS cprt::tos=cprt::TOS();
 
 namespace com{
-    void TODO(const std::string_view msg){
-        cprt::cprintLn("Not Implemented!",std::cerr,cprt::err);
-        throw std::logic_error("Not implemeted error by \'TODO()\', msg["+std::string(msg)+"].");
+    [[noreturn]] void Throw(const std::string_view msg){
+        throw MException("Moe Exception! {"+std::string(msg)+"}");
     }
+    [[noreturn]] void TODO(const std::string_view msg){
+        Throw("Not implemeted error by \'TODO()\'["+std::string(msg)+"].");
+    }
+    void Assert(bool b,const std::string & msg,const std::string & codepos){
+        if(!b) {
+            std::string buf;
+            if(codepos.length()) buf+="Error in "+codepos+".";
+            buf+=" Message : ["+msg+"]";
+            com::Throw(buf);
+        }
+    }
+
+    void Assert(std::function<bool(void)>fun,const std::string & msg,const std::string & codepos){
+        if(!fun()) {
+            std::string buf;
+            if(codepos.length()) buf+="Error in "+codepos+".";
+            buf+=" Message : ["+msg+"]";
+            Throw(buf);
+        }
+    }
+
     void bmeBrace(std::function<void(void)>begin,std::function<void(void)>end,std::function<void(void)>middle){
         begin();middle();end();
     }
@@ -35,6 +55,11 @@ namespace unitest{
             { "*", [&](){ std::cout<<"match failed"<<std::endl; } }
         }); 
         return 0;
+    }
+    bool comTestAdded(){
+        static bool added=
+            unitest::TestMain::get().addTestCase("regexSwitchTest",regexSwitchTest);
+        return added;
     }
 }
 

@@ -34,10 +34,6 @@ public:
             return std::string(s);
         }
 
-        std::string operator () (char * s){
-            return std::string(s);
-        }
-
         template<typename T> std::string operator () (T * p){
             return std::to_string((unsigned long long)p);
         }
@@ -67,7 +63,7 @@ public:
      *  You can decide WHERE to print by changing `std::ostream` and decide
      *  text decoration by `col`;
      *  Usage:
-     *      cprt::cPrint(tuple(1,2,'a',"S",0.5,S()),std::cout,cprt::red);
+     *      cprt::cprint(tuple(1,2,'a',"S",0.5,S()),std::cout,cprt::red);
      *  Ref:
      *      https://stackoverflow.com/questions/1198260/how-can-you-iterate-over-the-elements-of-an-stdtuple
      * */
@@ -98,7 +94,6 @@ public:
         os<<col;
         apply([&](auto && ... args){ ((os<<tos(args)),...); },t);
         os<<noc<<std::endl;
-        return os;
     }
 
     /*  Colored output method for one argument printting. 
@@ -230,24 +225,24 @@ public:
         static mdb single(std::cout);return single;
     }
     
-    /*  method to enable mdb or disable it. */
+    /*  Method to enable mdb or disable it. */
     bool & setEnable(){
         return enable;
     }
 
-    /*  method to enable all mdb or disable them. */
+    /*  Method to enable all mdb or disable them. */
     static bool & setSysEnable(){
         return sysEnable;
     }
 
-    /*  method to print messages to outs stream. It will detect '\n' and print 
+    /*  Method to print messages to outs stream. It will detect '\n' and print 
      *  newline (and flush stream) and head string (e.g. '[mdb] ') for every '\n'
      *  and at the end of printing.
-     *  if you don't want text to be decorated, set decorated=false;
-     *  detect enable flag automaticlly.
-     *  to print the location of message, let printLoc=CODEPOS. (see defination of CODELOC)
+     *  If you don't want text to be decorated, set decorated=false;
+     *  Detect enable flag automaticlly.
+     *  To print the location of message, let printLoc=CODEPOS. (see defination of CODELOC)
      * */
-    void msgprint(\
+    void msgPrint(\
         const std::string & msg, /* Message to print. */\
         const std::string & printLoc="", /* If not empty, print location at beginning */ \
         bool decorated=true\
@@ -273,40 +268,15 @@ public:
 
     }
 
-    /*  method to print 'list' of 'pair' of string and object. One line one object.
-     *  it will print head string (e.g. '[mdb] ') for every line.
-     *  it will noT print newline after the end of string.
-     *  you should limit the count of the lines of S.to_string() to one.
-     *  if you don't want text to be decorated, set decorated=false;
-     *  detect enable flag automaticlly.
-     *  to print the location of message, let printLoc=CODEPOS. (see defination of CODELOC)
-     *  usage : 
-     *      mdb::getStatic()
-     *          .infoPrint(std::tuple( std::pair("n",n),(std::pair("t",t)) ),CODEPOS);
-     * */
-    template<typename Type>
-    void infoPrint(\
-        std::pair<const char *,Type>t, /* Message to print. */\
-        const std::string & printLoc="", /* If not empty, print location at beginning */ \
-        bool decorated=true\
-    ) {
-        if(decorated){
-            if(printLoc.length()) cprt::cprintLn(headstr+printLoc,outs,col);
-            cprt::cprintLn(headstr+std::string(t.first)+" : "+cprt::tos(t.second),outs,col);
-        }else{
-            if(printLoc.length()) cprt::printLn(headstr+printLoc,outs);
-            cprt::printLn(headstr+std::string(t.first)+" : "+cprt::tos(t.second),outs);
-        }
-    }
 
-    /*  method to print 'list' of 'pair' of string and object. One line one object.
-     *  it will print head string (e.g. '[mdb] ') for every line.
-     *  it will noT print newline after the end of string.
-     *  you should limit the count of the lines of S.to_string() to one.
-     *  if you don't want text to be decorated, set decorated=false;
-     *  detect enable flag automaticlly.
-     *  to print the location of message, let printLoc=CODEPOS. (see defination of CODELOC)
-     *  usage : 
+    /*  Method to print 'list' of 'pair' of string and object. One line one object.
+     *  It will print head string (e.g. '[mdb] ') for every line.
+     *  It will NOT print newline after the end of string.
+     *  You should limit the count of the lines of S.to_string() to one.
+     *  If you don't want text to be decorated, set decorated=false;
+     *  Detect enable flag automaticlly.
+     *  To print the location of message, let printLoc=CODEPOS. (see defination of CODELOC)
+     *  Usage : 
      *      mdb::getStatic()
      *          .infoPrint(std::tuple( std::pair("n",n),(std::pair("t",t)) ),CODEPOS);
      * */
@@ -321,17 +291,19 @@ public:
             apply([&](auto && ... args){ 
                 ((cprt::cprintLn(headstr+std::string(args.first)+" : "+cprt::tos(args.second),outs,col)),...);
             },t);
+            outs<<std::endl;
         }else{
             if(printLoc.length()) cprt::printLn(headstr+printLoc,outs);
             apply([&](auto && ... args){ 
                 ((cprt::printLn(headstr+std::string(args.first)+" : "+cprt::tos(args.second),outs)),...);
             },t);
+            outs<<std::endl;
         }
     }
 
 };
 
-namespace returncode{
+namespace exitcode{
     enum{
         NORMAL, /* all right */
         FAULT_USAGE, /* use code in wrong way */
@@ -386,7 +358,7 @@ namespace unitest{
     /*  Test of regexSwitch. */
     /*  Need to be edit.*/
     int regexSwitchTest(std::vector<std::string>);
-    /*  Issue : constructor attribute function can NOT use cprt.
+    /*  Issue : This will be invoked for every include<common.hpp> !
      *  */
     __attribute__((constructor)) bool comTestAdded();
 }

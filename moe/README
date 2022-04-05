@@ -5,30 +5,33 @@ compile moecompiler : make -j4 opti="-O2" compiler
 compile moecompiler and run : make -j4 opti="-O2" run args="testcase.sysy -S -o testcase.s"
 run directly : ./compiler testcase.sysy -S -o testcase.s
 
+usage ./compiler input.sysy [-d] -l/-p/-s/-i/-S/-s<subfun> -o output.s [-O1]
+
 command line options :
-    By default, all argument neither without prefix of '-' or '--' nor followed by option
-    will be interpreted as files to compile.
+    The second argument (i.e. argv[1]) will be interpreted as input file path.
     (For now, compiler is designed to compile one file for once)
     
     [-d] : debug option
         /*  This option will enable debug information to be created.
-         *  This will also enable default mdb which prints information to stdou. 
+         *  This will also enable default mdb which prints information to stdout. 
          */
-    [-S] : assemble option
-        /* if and only if command line has this option, compiler will compile files provided.
-         * */
-        [-o <ofiledir> ] (needed) : specify output file directory. 
+    -l/-p/-s/-i/-S/-f<subfun> : compiler option
+        [-l] : lexer option
+            /*  Process input file until lexical analyze finished.
+             *  Token streams will be output to output file.
+             */
+        [-S] : assemble option
+            /*  Assemble file.
+             * */
+        [-s] : sub funtion
+            /*  Invoke sub function provided.
+             *  */
+        [-f] : unittest function invoke
+            /*  
+             *  */
+    -o<out file path> : specify output file path
 
-    [-t] : unit test option
-        /*  Let compiler do unit test. 
-         *  All arguments after it will be considered as the settings of unit test. 
-         *  So if you want to print debug info, let '-d' come before '-t'
-         *  All test names should be placed in the end.
-         *  e.g : ./compiler -d -t -p exprTest regexSwitchTest 
-         * */
-        [-p] : This option let compiler print all availible unit tests to stdout before testing.
+    -O1 : opitmization
 
-
-        
     
 

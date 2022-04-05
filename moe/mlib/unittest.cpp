@@ -5,11 +5,17 @@
 #include <string>
 #include <functional>
 #include <map>
+#include <iostream>
 
 #include <common.hpp>
 #include <unittest.hpp>
 
 namespace unitest{
+    int main(const std::string & toInvoke){
+        int ec=TestMain::get().test(toInvoke);
+        cprt::cprintLn("unittest::main finished. Exit code of function: "+std::to_string(ec));
+        return 0;
+    }
     bool TestMain::addTestCase(const std::string & name,testFun_t fun){
         if(testCases.count(name)){
             return false;
@@ -21,8 +27,8 @@ namespace unitest{
 
    int TestMain::test(const std::string & name){
         if(!testCases.count(name)){
-            std::cout<<"Test ["<<name<<"] doesn't exist!"<<std::endl;
-            return exitcode::INVALID_ARGUMENT;
+            cprt::cprintLn(std::tuple{"Test [",name,"] doesn't exist"},std::cerr,cprt::err);
+            return returncode::INVALID_ARGUMENT;
         }else{
             return testCases[name]({});
         }

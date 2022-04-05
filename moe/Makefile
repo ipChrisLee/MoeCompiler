@@ -20,7 +20,7 @@ $(objDir)/%.o : %.cpp $(headerfiles)
 
 $(objs): | $(objsDir)
 
--$(objsDir) : 
+$(objsDir) : 
 	mkdir -p $(objsDir)
 
 .PHONY : clean gdb run

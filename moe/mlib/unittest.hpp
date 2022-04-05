@@ -48,4 +48,7 @@ namespace unitest{
             const std::string & sep=", " /* sep string */
         ) const ;
     };
+    int main(const std::string & toInvoke=std::string());
 }
+
+
