@@ -7,7 +7,13 @@
 #include <iostream>
 
 namespace unitest{
-    /* testFun_t is a function type for test function. */
+    /*  testFun_t is a function type for test function. 
+     *  To add uniitest:
+     *  namespace unitest{
+     *      int regexSwitchTest(std::vector<std::string>); // test function
+     *      __attribute__((constructor)) bool comTestAdded(); // unitest::TestMain::get().add
+     *  }
+     * */
     using testFun_t=std::function<int(std::vector<std::string>)>;
 
     /* Main function for unit testing. This struct is not constructable. (i.e. Singleton)

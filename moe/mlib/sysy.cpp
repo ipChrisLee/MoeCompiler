@@ -8,4 +8,15 @@ const std::set<std::string>sysy::reservedWords={
     "const",
 };
 
+const std::set<std::string>sysy::operators={
+    "+","-","*","/","%",
+    ">","<","=","!",
+    "<=",">=","!=","==",
+    "&&","||",
+};
+
+const std::set<std::string>sysy::delimiter={
+    "{","}","(",")",
+};
+
 std::unique_ptr<sysy> sysy::single=nullptr;

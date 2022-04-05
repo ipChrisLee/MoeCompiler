@@ -1,7 +1,7 @@
 objDir := build
 cflags := -x c++ -std=c++17 -Wall -Werror -Wextra -g
 CC := clang++-9
-incsLibs := ./tlib/ ./mlib/
+incsLibs := ./clib/ ./mlib/
 exename := compiler
 # opti := -O2
 

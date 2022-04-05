@@ -32,5 +32,7 @@ public:
         return *single;
     }
     static const std::set<std::string>reservedWords;
+    static const std::set<std::string>operators;
+    static const std::set<std::string>delimiter;
 };
 

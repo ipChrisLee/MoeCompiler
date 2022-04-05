@@ -2,7 +2,7 @@ from os import path
 import sys
 
 
-myLibs = ['mlib/']
+myLibs = ['mlib/','clib/']
 
 
 def findProjRoot(filename):

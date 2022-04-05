@@ -14,6 +14,9 @@
 int Main(int argc,char ** argv){
     /* Inkove different functions by command line.
      * */
+    if(argc<2){
+        com::Throw("You should specify input file path.");
+    }
     int opt;
     std::string inFilePath=argv[1],outFilePath,subFunName;
     optind=2;
