@@ -12,5 +12,8 @@ notebooks/docsFromCSC/
 # build files
 moe/build/
 
+# test files
+moe/testDir/
+
 # binary file
 moe/compiler
