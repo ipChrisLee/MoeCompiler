@@ -21,6 +21,40 @@
 //  https://stackoverflow.com/questions/733056/is-there-a-way-to-get-function-name-inside-a-c-function
 #define FUNINFO __PRETTY_FUNCTION__
 
+namespace moeconcept{
+    struct Stringable{
+        virtual std::string toString() const = 0;
+    };
+}
+
+using std::to_string;
+
+inline std::string to_string(char ch){
+    return std::string(1,ch);
+}
+
+inline std::string to_string(std::string_view sv){
+    return std::string(sv);
+}
+
+inline std::string to_string(const char * str){
+    return std::string(str);
+}
+
+template<typename T>
+std::string to_string (const T * p){
+    return std::to_string((unsigned long long)p);
+}
+
+template<typename T>
+std::string to_string (T * p){
+    return std::to_string((unsigned long long)p);
+}
+
+inline std::string to_string(const moeconcept::Stringable & o){
+    return o.toString();
+}
+
 class cprt{  
     /*  We will use cprt to avoid using ostream explicitly.
      *  Methods defined here mimics java io unit design.
@@ -32,36 +66,14 @@ class cprt{
 
 public:
     struct TOS{
-        std::string operator () (const char * s){
-            return std::string(s);
-        }
-
-        std::string operator () (char * s){
-            return std::string(s);
-        }
-
-        template<typename T> std::string operator () (T * p){
-            return std::to_string((unsigned long long)p);
-        }
-
-        std::string operator () (std::string s){ return s; }
-
-        std::string operator () (std::string_view s){ return std::string(s); }
-
-        std::string operator () (int32_t i){ return std::to_string(i); }
-
-        std::string operator () (char c){ return std::to_string(c); }
-
-        std::string operator () (double d){ return std::to_string(d); }
-        
-        std::string operator () (int64_t i){ return std::to_string(i); }
-
-        std::string operator () (uint32_t u){ return std::to_string(u); }
-
-        std::string operator () (uint64_t u){ return std::to_string(u); }
-
-        template<typename T>std::string operator () (T & t){
-            return t.to_string();
+        //  Thank zx who teaches me about this method.
+        template<typename T>
+        auto operator () (T && t){
+            if constexpr (std::is_convertible_v<T,std::string>){
+                return std::string(t);
+            }else{
+                return to_string(t);
+            }
         }
     };
     static TOS tos;
@@ -217,8 +229,8 @@ public:
     mdb(\
         std::ostream & outs,/* out stream, can be ofstream (can be closed automatically) */\
         bool enable=false,/* default enable status */\
-        const std::string_view & headstr="[mdb] ",/* headstr of every line */\
-        const std::string_view & col=cprt::warning/* color of text */\
+        std::string_view headstr="[mdb] ",/* headstr of every line */\
+        std::string_view col=cprt::warning/* color of text */\
        ):enable(enable),outs(outs),headstr(headstr),col(col){
     }
     ~mdb(){
@@ -335,16 +347,14 @@ public:
 
 };
 
-namespace returncode{
-    enum{
-        NORMAL, /* all right */
-        FAULT_USAGE, /* use code in wrong way */
-        NOT_IMPLEMETED, /* have not been implemented */
-        INVALID_ARGUMENT, /* function get invalid arguments */
-        TEST_FAILED, /* failed to pass some test, since fault complement */
-        TESTING /* just testing */
-    };
-}
+//enum class returncode{
+    //NORMAL, /* all right */
+    //FAULT_USAGE, /* use code in wrong way */
+    //NOT_IMPLEMETED, /* have not been implemented */
+    //INVALID_ARGUMENT, /* function get invalid arguments */
+    //TEST_FAILED, /* failed to pass some test, since fault complement */
+    //TESTING /* just testing */
+//};
 
 
 namespace com{
@@ -358,16 +368,16 @@ namespace com{
         }
     };
 
-    [[noreturn]] void TODO(const std::string_view msg=std::string_view());
+    [[noreturn]] void TODO(std::string_view msg=std::string_view());
 
     /*  To handle code that hasn't been finished. This may avoid some bugs
      *  caused by coders forgetting to implement.
      *  Usually usage:
      *      com::notFinished(FUNINFO,CODEPOS);
      * */
-    void notFinished(const std::string_view msg=std::string_view(),const std::string_view codepos=std::string_view());
-    [[noreturn]] void Throw(const std::string_view s=std::string_view());
-    [[noreturn]] void ThrowSingletonNotInited(const std::string_view className=std::string_view());
+    void notFinished(std::string_view msg=std::string_view(),std::string_view codepos=std::string_view());
+    [[noreturn]] void Throw(std::string_view s=std::string_view());
+    [[noreturn]] void ThrowSingletonNotInited(std::string_view className=std::string_view());
 
     /*  Take place in `assert`. This version use a bool value as assert condition.
      * */

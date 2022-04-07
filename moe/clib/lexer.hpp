@@ -15,10 +15,10 @@
 #include <common.hpp>
 #include <sysy.hpp>
 
-class Token{
+class Token : public moeconcept::Stringable{
 public: 
     enum Type{ OP,INUM,FNUM,DELIM,ID,KEY,STR,CHAR,COMMENT,BLANK };
-    std::string tokenName(){
+    virtual std::string tokenName() const final {
         switch(type){
             case OP: return "OP";
             case INUM: return "INUM";
@@ -36,17 +36,19 @@ public:
     std::string lexeme;
     Token(Type type,const std::string & lexeme):type(type),lexeme(lexeme){
     }
+    virtual ~Token()=default;
     static bool is(Token * t,Type type){
         return t->type==type;
-    }
-    std::string toString(){
-        return tokenName()+"["+lexeme+"]";
     }
     static std::shared_ptr<Token> getTokenNULL([[maybe_unused]] const std::string & lexeme){
         com::notFinished(FUNINFO,CODEPOS);
         return nullptr;
     }
+    std::string toString() const {
+        return tokenName()+"["+lexeme+"]";;
+    }
 };
+
 
 class Token_OP : public Token{
 public:
@@ -187,13 +189,14 @@ public:
 #define ff first
 #define ss second
 #define mp std::make_pair
-    struct Node{
+    struct Node : public moeconcept::Stringable{
         static int cnt;
         int id;
         std::map<std::pair<char,char>,Node *>oute;
         std::function<std::shared_ptr<Token>(const std::string &)>doWhenFail;
         Node():id(++cnt),doWhenFail(nullptr){
         }
+        virtual ~Node()=default;
         std::string toString() const {
             std::stringstream sstream;
             sstream<<"Node id=["<<id<<"], hasFun=["<<bool(doWhenFail)<<"], oute={ ";
@@ -283,7 +286,7 @@ private:
                 if(!fnd){
                     pnode v=new Node();
                     u->oute.insert(std::make_pair(std::make_pair(ch,ch),v));
-                    dfa.nodes.push_back(std::shared_ptr<Node>(v));
+                    dfa.nodes.emplace_back((v));
                     u=v;
                 }
             }
@@ -293,10 +296,10 @@ private:
         {   // For comments
             pnode Sls=dfa.start->oute[mp('/','/')];
             pnode Smcs=new Node(),Sstar=new Node(),Sscs=new Node(),Sced=new Node();
-            dfa.nodes.push_back(std::shared_ptr<Node>(Smcs));
-            dfa.nodes.push_back(std::shared_ptr<Node>(Sstar));
-            dfa.nodes.push_back(std::shared_ptr<Node>(Sscs));
-            dfa.nodes.push_back(std::shared_ptr<Node>(Sced));
+            dfa.nodes.emplace_back((Smcs));
+            dfa.nodes.emplace_back((Sstar));
+            dfa.nodes.emplace_back((Sscs));
+            dfa.nodes.emplace_back((Sced));
             
             Sls->oute.insert({
                 mp(mp('*','*'),Smcs),
@@ -326,9 +329,9 @@ private:
 
         {   // For string
             pnode Sdq=new Node(),Stran=new Node(),Ssed=new Node();
-            dfa.nodes.push_back(std::shared_ptr<Node>(Sdq));
-            dfa.nodes.push_back(std::shared_ptr<Node>(Stran));
-            dfa.nodes.push_back(std::shared_ptr<Node>(Ssed));
+            dfa.nodes.emplace_back((Sdq));
+            dfa.nodes.emplace_back((Stran));
+            dfa.nodes.emplace_back((Ssed));
             
             dfa.start->oute.insert({
                 mp(mp('\"','\"'),Sdq)
@@ -355,10 +358,10 @@ private:
         {   // For char
             pnode Ssq=new Node(),Stranc=new Node(),Sced=new Node(),Stced=new Node();
             
-            dfa.nodes.push_back(std::shared_ptr<Node>(Ssq));
-            dfa.nodes.push_back(std::shared_ptr<Node>(Stranc));
-            dfa.nodes.push_back(std::shared_ptr<Node>(Sced));
-            dfa.nodes.push_back(std::shared_ptr<Node>(Stced));
+            dfa.nodes.emplace_back((Ssq));
+            dfa.nodes.emplace_back((Stranc));
+            dfa.nodes.emplace_back((Sced));
+            dfa.nodes.emplace_back((Stced));
             
             dfa.start->oute.insert({
                 mp(mp('\'','\''),Ssq)
@@ -405,7 +408,7 @@ private:
                 if(!fnd){
                     pnode v=new Node();
                     u->oute.insert(mp(mp(ch,ch),v));
-                    dfa.nodes.push_back(std::shared_ptr<Node>(v));
+                    dfa.nodes.emplace_back((v));
                     u=v;
                 }
             }
@@ -422,19 +425,19 @@ private:
         dfa.now=dfa.nodes[0].get();
         
         pnode St=dfa.start;
-        pnode Sz=new Node();dfa.nodes.push_back(std::shared_ptr<Node>(Sz));
+        pnode Sz=new Node();dfa.nodes.emplace_back((Sz));
         St->oute.insert({mp(mp('0','0'),Sz)});
         Sz->doWhenFail=Token_INUM::getTokenOctINUM;
         {   // For hex value.
             pnode S0=new Node(),S1=new Node(),S2=new Node(),Se=new Node();
             pnode Sp=new Node(),Sm=new Node(),Sf=new Node();
-            dfa.nodes.push_back(std::shared_ptr<Node>(S0));
-            dfa.nodes.push_back(std::shared_ptr<Node>(S1));
-            dfa.nodes.push_back(std::shared_ptr<Node>(S2));
-            dfa.nodes.push_back(std::shared_ptr<Node>(Se));
-            dfa.nodes.push_back(std::shared_ptr<Node>(Sp));
-            dfa.nodes.push_back(std::shared_ptr<Node>(Sm));
-            dfa.nodes.push_back(std::shared_ptr<Node>(Sf));
+            dfa.nodes.emplace_back((S0));
+            dfa.nodes.emplace_back((S1));
+            dfa.nodes.emplace_back((S2));
+            dfa.nodes.emplace_back((Se));
+            dfa.nodes.emplace_back((Sp));
+            dfa.nodes.emplace_back((Sm));
+            dfa.nodes.emplace_back((Sf));
 
             Sz->oute.insert({
                 mp(mp('x','x'),S0),mp(mp('X','X'),S0),
@@ -479,14 +482,14 @@ private:
             pnode Snx=new Node(),Smd=new Node(),Sno=new Node(),Sad=new Node(),Sd=new Node();
             pnode Sep=new Node(),Ssep=new Node(),Sef=new Node();
             
-            dfa.nodes.push_back(std::shared_ptr<Node>(Snx));
-            dfa.nodes.push_back(std::shared_ptr<Node>(Smd));
-            dfa.nodes.push_back(std::shared_ptr<Node>(Sno));
-            dfa.nodes.push_back(std::shared_ptr<Node>(Sad));
-            dfa.nodes.push_back(std::shared_ptr<Node>(Sd));
-            dfa.nodes.push_back(std::shared_ptr<Node>(Sep));
-            dfa.nodes.push_back(std::shared_ptr<Node>(Ssep));
-            dfa.nodes.push_back(std::shared_ptr<Node>(Sef));
+            dfa.nodes.emplace_back((Snx));
+            dfa.nodes.emplace_back((Smd));
+            dfa.nodes.emplace_back((Sno));
+            dfa.nodes.emplace_back((Sad));
+            dfa.nodes.emplace_back((Sd));
+            dfa.nodes.emplace_back((Sep));
+            dfa.nodes.emplace_back((Ssep));
+            dfa.nodes.emplace_back((Sef));
 
             St->oute.insert({
                 mp(mp('1','9'),Sno),mp(mp('0','0'),Sz),mp(mp('.','.'),Smd)
@@ -552,7 +555,7 @@ private:
         dfa.start=dfa.nodes[0].get();
         dfa.now=dfa.nodes[0].get();
         pnode St=dfa.start;
-        pnode Sa=new Node();dfa.nodes.push_back(std::shared_ptr<Node>(Sa));
+        pnode Sa=new Node();dfa.nodes.emplace_back((Sa));
         St->oute.insert({
             mp(mp('a','z'),Sa),mp(mp('A','Z'),Sa),mp(mp('_','_'),Sa)
         });
@@ -570,7 +573,7 @@ private:
         dfa.now=dfa.nodes[0].get();
         pnode St=dfa.start;
         pnode Sbl=new Node();
-        dfa.nodes.push_back(std::shared_ptr<Node>(Sbl));
+        dfa.nodes.emplace_back((Sbl));
 
         St->oute.insert({
             mp(mp('\n','\n'),Sbl),
@@ -625,9 +628,9 @@ private:
         std::string s;
         sysy::get().resetIn();
         while(std::getline(sysy::get().getInStream(),s)){
+            s.push_back('\n');
             buf+=s;
         }
-        buf.push_back('\n');
         pl=buf.begin();pr=buf.begin();
         rownum=1;
     }
@@ -646,6 +649,7 @@ public:
         single=nullptr;
     }
     char read(){
+        mdb::getStatic().msgPrint(to_string(*pr));
         if(pr!=buf.end() && pr+1!=buf.end() && *pr=='\\' && *(pr+1)=='\n') {
             ++rownum;pr=pr+2;
         }
@@ -660,6 +664,9 @@ public:
     std::string dump(){
         std::string res;
         for(auto it=pl;it!=pr;++it){
+            if(it+1!=buf.end() && *it=='\\' &&*(it+1)=='\n'){
+                ++it;continue;
+            } 
             res.push_back(*it);
         }
         pl=pr;
@@ -668,6 +675,6 @@ public:
 };
 
 namespace unitest{
-    int dfaTest(std::vector<std::string>);
-    __attribute__((constructor)) bool dfaTestAdded();
+    int lexerTest(std::vector<std::string>);
+    __attribute__((constructor)) bool lexerTestAdded();
 }

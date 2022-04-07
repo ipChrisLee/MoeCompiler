@@ -33,11 +33,11 @@ int TokenDFA::main(){
 }
 
 namespace unitest{
-    int dfaTest(std::vector<std::string>){
+    int lexerTest(std::vector<std::string>){
         return TokenDFA::main();
     }
-    bool dfaTestAdded(){
-        static bool added=unitest::TestMain::get().addTestCase("dfaTest",dfaTest);
+    bool lexerTestAdded(){
+        static bool added=unitest::TestMain::get().addTestCase("lexerTest",lexerTest);
         return added;
     }
 }

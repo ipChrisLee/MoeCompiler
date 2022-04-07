@@ -30,10 +30,11 @@ command line options :
             /*  
              *  */
             suported:
-                dfaTest: test token dfa.
+                lexerTest: test token dfa.
     -o<out file path> : specify output file path
 
     -O1 : opitmization
 
-    
+example :
+    test lexer : make -j4 opti="-O2" args="testDir/test.sysy -d -f lexerTest -o "testDir/test.tokens"
 

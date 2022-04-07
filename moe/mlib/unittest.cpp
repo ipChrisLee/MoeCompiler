@@ -28,7 +28,7 @@ namespace unitest{
    int TestMain::test(const std::string & name){
         if(!testCases.count(name)){
             cprt::cprintLn(std::tuple{"Test [",name,"] doesn't exist"},std::cerr,cprt::err);
-            return returncode::INVALID_ARGUMENT;
+            return 1;
         }else{
             return testCases[name]({});
         }
