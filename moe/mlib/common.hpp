@@ -17,7 +17,9 @@
 // https://zhuanlan.zhihu.com/p/141690132
 #define STR(t) #t 
 #define LINE_STR(v) STR(v)
-#define CODEPOS ("File : " + std::string(__FILE__) + ", Line : " + LINE_STR(__LINE__))
+#define CODEPOS "File : "  __FILE__  ", Line : "  LINE_STR(__LINE__)
+//  https://stackoverflow.com/questions/733056/is-there-a-way-to-get-function-name-inside-a-c-function
+#define FUNINFO __PRETTY_FUNCTION__
 
 class cprt{  
     /*  We will use cprt to avoid using ostream explicitly.
@@ -43,6 +45,8 @@ public:
         }
 
         std::string operator () (std::string s){ return s; }
+
+        std::string operator () (std::string_view s){ return std::string(s); }
 
         std::string operator () (int32_t i){ return std::to_string(i); }
 
@@ -169,7 +173,7 @@ public:
         T v, /* Text to print. */\
         std::ostream & os=std::cout /* Ostream. */\
     ){
-        os<<tos(v)<<noc<<std::endl;
+        os<<tos(v)<<std::endl;
     }
     static constexpr std::string_view black=   "\033[0;30m";
     static constexpr std::string_view red=     "\033[0;31m";
@@ -247,7 +251,7 @@ public:
      *  detect enable flag automaticlly.
      *  to print the location of message, let printLoc=CODEPOS. (see defination of CODELOC)
      * */
-    void msgprint(\
+    void msgPrint(\
         const std::string & msg, /* Message to print. */\
         const std::string & printLoc="", /* If not empty, print location at beginning */ \
         bool decorated=true\
@@ -355,7 +359,15 @@ namespace com{
     };
 
     [[noreturn]] void TODO(const std::string_view msg=std::string_view());
+
+    /*  To handle code that hasn't been finished. This may avoid some bugs
+     *  caused by coders forgetting to implement.
+     *  Usually usage:
+     *      com::notFinished(FUNINFO,CODEPOS);
+     * */
+    void notFinished(const std::string_view msg=std::string_view(),const std::string_view codepos=std::string_view());
     [[noreturn]] void Throw(const std::string_view s=std::string_view());
+    [[noreturn]] void ThrowSingletonNotInited(const std::string_view className=std::string_view());
 
     /*  Take place in `assert`. This version use a bool value as assert condition.
      * */

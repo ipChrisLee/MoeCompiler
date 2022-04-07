@@ -11,8 +11,14 @@ namespace com{
     [[noreturn]] void Throw(const std::string_view msg){
         throw MException("Moe Exception! {"+std::string(msg)+"}");
     }
+    [[noreturn]] void ThrowSingletonNotInited(const std::string_view className){
+        com::Throw("Using uninited singleton ["+std::string(className)+"]"); 
+    }
     [[noreturn]] void TODO(const std::string_view msg){
         Throw("Not implemeted error by \'TODO()\'["+std::string(msg)+"].");
+    }
+    void notFinished(const std::string_view msg,const std::string_view codepos){
+        cprt::cprintLn(std::tuple("Not finished code [",msg,"] in ",codepos),std::cerr,cprt::warning);
     }
     void Assert(bool b,const std::string & msg,const std::string & codepos){
         if(!b) {
