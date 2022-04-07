@@ -26,9 +26,11 @@ command line options :
         [-s] : sub funtion
             /*  Invoke sub function provided.
              *  */
-        [-f] : unittest function invoke
+        [-f<subfun>] : unittest function invoke
             /*  
              *  */
+            suported:
+                dfaTest: test token dfa.
     -o<out file path> : specify output file path
 
     -O1 : opitmization

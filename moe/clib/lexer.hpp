@@ -611,6 +611,7 @@ public:
     static int main(); 
 #undef ff
 #undef ss
+#undef mp
 };
 
 class TwoPointerScanner{
