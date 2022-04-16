@@ -8,4 +8,11 @@ if ! [ -d $projDirSpinCat ];then
     echo -e "$__CYAN"Loading \"SpinCat\" by BJTU in CSC2020"$__NOC"
     git clone https://gitlab.eduxiji.net/CSC2020-BJTU-SpinCat/compiler.git $projDirSpinCat
 fi
+
+projDirKobayashi=./Kobayashi-THU-CSC2021
+if ! [ -d $projDirKobayashi ];then
+    echo -e "$__CYAN"Loading \"Kobayashi-Compiler\" by THU \(rk1\) in CSC2021"$__NOC"
+    git clone https://github.com/kobayashi-compiler/kobayashi-compiler.git $projDirKobayashi
+fi
+
 echo -e "$__GREEN"Finished."$__NOC"

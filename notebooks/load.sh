@@ -16,7 +16,7 @@ if ! [ -f $tmp ];then
     curl "https://mp.weixin.qq.com/s/fhU_4HbHaUk8iuWkHpimFw" --output $tmp
 fi
 
-tmp="ISO-C99.pdf"
+tmp="docsFromCSC/ISO-C99.pdf"
 if ! [ -f $tmp ];then
     curl "http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1124.pdf" --output $tmp
 fi

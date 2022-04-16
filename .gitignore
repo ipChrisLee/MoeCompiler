@@ -6,8 +6,11 @@ referenceImplementation/*
 !referenceImplementation/README
 !referenceImplementation/load.sh
 
-# directory of download files
-notebooks/docsFromCSC/
+# ignore directory of download files
+notebooks/*
+!notebooks/README
+!notebooks/load.sh
+!notebooks/projNotebooks/
 
 # build files
 moe/build/

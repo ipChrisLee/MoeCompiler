@@ -1,0 +1,5 @@
+Makefile:23: target 'build/mlib/' given more than once in the same rule
+Makefile:23: target 'build/mlib/' given more than once in the same rule
+clang++ -c -I./clib/ -I./mlib/ -x c++ -std=c++17 -Wall -Werror -Wextra -g -O2 mlib/common.cpp -o build/mlib/common.o
+make: clang++: No such file or directory
+make: *** [Makefile:19: build/mlib/common.o] Error 127
