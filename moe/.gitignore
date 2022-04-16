@@ -1,1 +1,11 @@
-./testDir
+# build files
+build/
+
+# test files
+testDir/
+
+# binary file
+compiler
+
+# log files
+*.log

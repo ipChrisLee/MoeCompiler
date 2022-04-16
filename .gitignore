@@ -1,22 +1,2 @@
 # directory for test
 testDir/
-
-# ignore reference projects
-referenceImplementation/*
-!referenceImplementation/README
-!referenceImplementation/load.sh
-
-# ignore directory of download files
-notebooks/*
-!notebooks/README
-!notebooks/load.sh
-!notebooks/projNotebooks/
-
-# build files
-moe/build/
-
-# test files
-moe/testDir/
-
-# binary file
-moe/compiler
