@@ -2,7 +2,7 @@ from os import path
 import sys
 
 
-myLibs = ['mlib/','clib/']
+myLibs = ['mlib/', 'clib/', '/', 'third_party/antlr4/']
 
 
 def findProjRoot(filename):
@@ -21,7 +21,7 @@ def Settings(**kwargs):
             'flags': [
                 'x', 'c++',
                 '-Wall', '-Wextra', '-Werror',
-                '-std=c++17'
+                '-std=c++17', '-D CODING'
             ]
         }
 
@@ -30,6 +30,6 @@ def Settings(**kwargs):
     ilibs = ['-I'+str(projRootDir)+'/'+_ for _ in myLibs]
     flags = ['x', 'c++',
              '-Wall', '-Wextra', '-Werror',
-             '-std=c++17']+ilibs
+             '-std=c++17', '-DCODING']+ilibs
     print(str(flags))
     return {'flags': flags}

@@ -5,7 +5,7 @@ compile moecompiler : make -j4 opti="-O2" compiler
 compile moecompiler and run : make -j4 opti="-O2" run args="testcase.sysy -S -o testcase.s"
 run directly : ./compiler testcase.sysy -S -o testcase.s
 
-usage ./compiler input.sysy [-d] -l/-p/-s/-i/-S/-s<subfun> -o output.s [-O1]
+usage ./compiler input.sysy [-d] -l/-p/-s/-i/-S/-s<submain> -o output.s [-O1]
 
 command line options :
     The second argument (i.e. argv[1]) will be interpreted as input file path.
@@ -15,7 +15,7 @@ command line options :
         /*  This option will enable debug information to be created.
          *  This will also enable default mdb which prints information to stdout. 
          */
-    -l/-p/-s/-i/-S/-f<subfun> : compiler option
+    -l/-p/-s/-i/-S/-f<submain> : compiler option
         [-l] : lexer option
             /*  Process input file until lexical analyze finished.
              *  Token streams will be output to output file.
@@ -26,12 +26,12 @@ command line options :
         [-s] : sub funtion
             /*  Invoke sub function provided.
              *  */
-        [-f<subfun>] : unittest function invoke
-            /*  
+        [-f<submain>] : unittest function invoke
+            /*  use 
              *  */
             suported:
-                lexerTest: test token dfa.
-    -o<out file path> : specify output file path
+                listall : see all sub mains.
+    -o<out file path> : specify output file path.
 
     -O1 : opitmization
 

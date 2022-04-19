@@ -5,15 +5,21 @@
 #include <string>
 #include <tuple>
 #include <fstream>
+#include <memory>
 
-#include <unittest.hpp>
+#include <cprt.hpp>
 #include <common.hpp>
-#include <sysy.hpp>
+#include <mdb.hpp>
+#include <submain.hpp>
 
 
+#ifndef TESTING
+/*  When `make run`, TESTING is not defined.
+ * */
 int Main(int argc,char ** argv){
     /* Inkove different functions by command line.
      * */
+    
     if(argc<2){
         com::Throw("You should specify input file path.");
     }
@@ -24,8 +30,8 @@ int Main(int argc,char ** argv){
     while( (opt=getopt(argc,argv,":dlpsiSf:o:")) != -1 ){
         switch (opt){
             case 'd':
-                mdb::setSysEnable()=true;
-                mdb::getStatic().setEnable()=true;
+                com::mdb::setSysEnable()=true;
+                com::ccdbg.setEnable()=true;
                 break;
             case 'l':
                 cmd='l';break;
@@ -42,28 +48,32 @@ int Main(int argc,char ** argv){
                 com::Throw("Error when parsing command line arguments");
         }
     }
-    if(optind>argc){
-        com::Throw("Expected argument after options");
-    }
-    sysy::init(inFilePath,outFilePath);
+    if(optind>argc){ com::Throw("Expected argument after options"); }
+    com::Assert(!outFilePath.empty(),"-o should have argument.",CODEPOS);
+
     switch(cmd){
-        case 'f':
-            return unitest::main(subFunName);
-        case 'l':
-            com::TODO("Not support -l for now.");
+        case 'f':   {
+            std::vector<std::string>subMainArgs;
+            subMainArgs.push_back(inFilePath);
+            subMainArgs.push_back(outFilePath);
+            com::submain::getSingle().runMain(subFunName,subMainArgs);
             break;
-        case 'p':
-            com::TODO("Not support -p for now.");
-            break;
-        case 's':
-            com::TODO("Not support -s for now.");
-            break;
-        case 'i':
-            com::TODO("Not support -i for now.");
-            break;
-        case 'S':
-            com::TODO("Not support -S for now.");
-            break;
+        }
+        //case 'l':
+            //com::TODO("Not support -l for now.");
+            //break;
+        //case 'p':
+            //com::TODO("Not support -p for now.");
+            //break;
+        //case 's':
+            //com::TODO("Not support -s for now.");
+            //break;
+        //case 'i':
+            //com::TODO("Not support -i for now.");
+            //break;
+        //case 'S':
+            //com::TODO("Not support -S for now.");
+            //break;
         default:
             com::Throw("No command is specified.");
     }
@@ -71,8 +81,8 @@ int Main(int argc,char ** argv){
 }
 
 int main(int argc,char ** argv){
-    // For better exception handle.
-    // https://www.digitalpeer.com/blog/find-where-a-cpp-exception-is-thrown
+    //  For better exception handle.
+    //  https://www.digitalpeer.com/blog/find-where-a-cpp-exception-is-thrown
     /*  To get where an exception is thorwn, make the files, and gdb it.
      *  Then type `catch throw` and `run` and `where`.
      *  For this project, gdb is called with '-ex="catch throw"' for the target `gdb`.
@@ -81,7 +91,21 @@ int main(int argc,char ** argv){
     try{
         return Main(argc,argv);
     }catch(const std::exception & e){
-        cprt::cprintLn(e.what(),std::cerr,cprt::err);
+        com::ccerr.cprintLn(e.what());
         return -1;
     }
 }
+
+#else
+/*  This is just for temp test.
+ *  Use submain to do unit test, not this part of code.
+ * */
+int main(int ,char ** ){
+    com::mdb::setSysEnable()=true;
+    for(auto it:com::submain::getSingle().getCases()){
+        std::cout<<it.first<<std::endl;
+    }
+    com::submain::getSingle().runMain("listallWithPositions");
+    return 0;
+}
+#endif
