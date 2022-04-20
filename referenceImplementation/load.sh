@@ -15,4 +15,11 @@ if ! [ -d $projDirKobayashi ];then
     git clone https://github.com/kobayashi-compiler/kobayashi-compiler.git $projDirKobayashi
 fi
 
+projDirMahoShojo=./MahoShojo-USTC-CSC2021
+if ! [ -d $projDirMahoShojo ];then
+    echo -e "$__CYAN"Loading \"MahoShojo\" by USTC \(rk8\) in CSC2021"$__NOC"
+    git clone https://github.com/wildoranges/MahoShojo.git $projDirMahoShojo
+fi
+
 echo -e "$__GREEN"Finished."$__NOC"
+
