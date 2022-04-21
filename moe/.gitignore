@@ -12,3 +12,9 @@ compiler
 
 # local back up directory
 .local_back_up/
+
+# ignore third_party/JavaGrunSupport except g4 and README.
+third_party/JavaGrunSupport/
+!third_party/JavaGrunSupport/README
+!third_party/JavaGrunSupport/CommonLex.g4
+!third_party/JavaGrunSupport/SysY.g4

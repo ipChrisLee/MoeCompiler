@@ -1,3 +1,5 @@
+SHELL  := /bin/zsh
+grun   := java org.antlr.v4.gui.TestRig
 objDir := build
 cflags := -x c++ -std=c++17 -Wall -Werror -Wextra -Wno-error=unused-parameter -g
 lflags := -lpthread
@@ -29,7 +31,7 @@ $(objs): | $(objsDir)
 $(objsDir) : 
 	mkdir -p $(objsDir)
 
-.PHONY : clean gdb run see test
+.PHONY : clean gdb run see test grun
 clean :
 	find . -name '*.log' | xargs rm -rf
 	rm -rf $(allGenFiles) $(objsDir)
@@ -50,3 +52,8 @@ see :
 	$(info $(files))
 	$(info $(objs))
 	$(info $(objsDir))
+
+grun : 
+	# make grun sysy="testDir/test.sysy"
+	export CLASSPATH=".:/usr/local/lib/antlr-4.10.1-complete.jar:$CLASSPATH"xport PATH=$PATH:/opt/riscv/bin
+	cd third_party/JavaGrunSupport;$(grun) SysY compUnit -gui < ../../$(sysy)

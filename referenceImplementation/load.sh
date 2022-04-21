@@ -21,5 +21,11 @@ if ! [ -d $projDirMahoShojo ];then
     git clone https://github.com/wildoranges/MahoShojo.git $projDirMahoShojo
 fi
 
+projDirFlamming=./Flamming-USTC-CSC2020
+if ! [ -d $projDirFlamming ];then
+    echo -e "$__CYAN"Loading \"FlammingMyCompiler\" by USTC \(rk1\) in CSC2020"$__NOC"
+    git clone https://github.com/mlzeng/CSC2020-USTC-FlammingMyCompiler.git $projDirFlamming
+fi
+
 echo -e "$__GREEN"Finished."$__NOC"
 

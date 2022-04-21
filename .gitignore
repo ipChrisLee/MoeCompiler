@@ -3,3 +3,6 @@ testDir/
 
 # backup folder
 .bku/
+
+# ignore java files
+*.java
