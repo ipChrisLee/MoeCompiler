@@ -9,3 +9,6 @@ compiler
 
 # log files
 *.log
+
+# local back up directory
+.local_back_up/
