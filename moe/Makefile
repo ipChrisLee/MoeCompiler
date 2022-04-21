@@ -1,4 +1,3 @@
-SHELL  := /bin/zsh
 grun   := java org.antlr.v4.gui.TestRig
 objDir := build
 cflags := -x c++ -std=c++17 -Wall -Werror -Wextra -Wno-error=unused-parameter -g
