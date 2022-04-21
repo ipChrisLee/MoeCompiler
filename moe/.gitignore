@@ -2,7 +2,7 @@
 build/
 
 # test files
-testDir/
+testDir/*
 
 # binary file
 compiler
