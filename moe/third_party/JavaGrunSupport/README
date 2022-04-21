@@ -1,0 +1,6 @@
+This is for grun of antlr4.
+OJ may consider our project written in java if OJ found `.java` file or `'.java'` file.
+To avoid this, this folder is almost add into `.gitignore`, and run command below to run `make grun` correctly.
+1.  First you should install antlr4. Read https://www.antlr.org for details.
+2.  Second, run `antlr4 SysY.g4` and `javac antlr4*.java` in this directory.
+3.  At last, run `make grun sysy="testDir/test.sysy"`.
