@@ -4,6 +4,7 @@
 #include <submain.hpp>
 #include <cprt.hpp>
 
+#include "atn/ParserATNSimulator.h"
 #include "frontend/frontend.hpp"
 #include "frontend/ASTVisitor.hpp"
 #include "frontend/SysAntlr/SysYBaseVisitor.h"
