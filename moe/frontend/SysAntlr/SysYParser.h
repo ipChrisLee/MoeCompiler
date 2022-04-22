@@ -12,16 +12,14 @@
 class  SysYParser : public antlr4::Parser {
 public:
   enum {
-    T__0 = 1, T__1 = 2, Int = 3, Void = 4, Const = 5, Return = 6, If = 7, 
+    T__0 = 1, Int = 2, Float = 3, Void = 4, Const = 5, Return = 6, If = 7, 
     Else = 8, For = 9, While = 10, Do = 11, Break = 12, Continue = 13, Lparen = 14, 
     Rparen = 15, Lbrkt = 16, Rbrkt = 17, Lbrace = 18, Rbrace = 19, Comma = 20, 
     Semicolon = 21, Question = 22, Colon = 23, Minus = 24, Exclamation = 25, 
     Tilde = 26, Addition = 27, Multiplication = 28, Division = 29, Modulo = 30, 
     LAND = 31, LOR = 32, EQ = 33, NEQ = 34, LT = 35, LE = 36, GT = 37, GE = 38, 
-    IntLiteral = 39, Hexadecimal_Fractional_Constant = 40, Hexadecimal_Digit_Sequence = 41, 
-    Binary_Exponent_Part = 42, Hexadecimal_Floating_Constant = 43, Exponent_Part = 44, 
-    Fractional_Constant = 45, Decinal_Floating_Constant = 46, FloatLiteral = 47, 
-    Identifier = 48, STRING = 49, WS = 50, LINE_COMMENT = 51, COMMENT = 52
+    IntLiteral = 39, FloatLiteral = 40, Identifier = 41, STRING = 42, WS = 43, 
+    LINE_COMMENT = 44, COMMENT = 45
   };
 
   enum {
@@ -140,6 +138,7 @@ public:
     BTypeContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
     antlr4::tree::TerminalNode *Int();
+    antlr4::tree::TerminalNode *Float();
 
 
     virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;
@@ -332,6 +331,7 @@ public:
     virtual size_t getRuleIndex() const override;
     antlr4::tree::TerminalNode *Void();
     antlr4::tree::TerminalNode *Int();
+    antlr4::tree::TerminalNode *Float();
 
 
     virtual std::any accept(antlr4::tree::ParseTreeVisitor *visitor) override;

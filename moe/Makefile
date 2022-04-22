@@ -1,8 +1,9 @@
-grun   := java org.antlr.v4.gui.TestRig
-objDir := build
-cflags := -x c++ -std=c++17 -Wall -Werror -Wextra -Wno-error=unused-parameter -g
-lflags := -lpthread
-CC := clang++
+grun  	:= java org.antlr.v4.gui.TestRig
+pysName := listall
+objDir	:= build
+cflags	:= -x c++ -std=c++17 -Wall -Werror -Wextra -Wno-error=unused-parameter -g
+lflags	:= -lpthread
+CC		:= clang++
 incsLibs := clib/ mlib/ third_party/antlr4/ ./ 
 exename := compiler 
 testPrerequisiteTablePath := testFileTable.txt 
@@ -30,7 +31,7 @@ $(objs): | $(objsDir)
 $(objsDir) : 
 	mkdir -p $(objsDir)
 
-.PHONY : clean gdb run see test grun
+.PHONY : clean gdb run see test grun pys
 clean :
 	find . -name '*.log' | xargs rm -rf
 	rm -rf $(allGenFiles) $(objsDir)
@@ -56,3 +57,7 @@ grun :
 	# make grun sysy="testDir/test.sysy"
 	export CLASSPATH=".:/usr/local/lib/antlr-4.10.1-complete.jar:$CLASSPATH"xport PATH=$PATH:/opt/riscv/bin
 	cd third_party/JavaGrunSupport;$(grun) SysY compUnit -gui < ../../$(sysy)
+
+pys :
+	conda run -n MoePy python pyScript/$(pysName).py $(args)
+

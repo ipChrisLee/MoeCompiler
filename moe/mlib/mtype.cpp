@@ -18,7 +18,7 @@ AddSubMain(testquat_t,
         quat_t qU=qUndefined;
         quat_t qC=qChaos;
         com::ccout.cprintLn(std::tuple(qF," ",qT," ",qU," ",qC));
-        com::ccout.cprintLn(std::tuple(qF&qT," ",qF&qF," ",qT&qT," ",qU&qT," ",qC&qT));
+        com::ccout.cprintLn(std::tuple(qF&&qT," ",qF&&qF," ",qT&&qT," ",qU&&qT," ",qC&&qT));
         return 0;
     }
 );

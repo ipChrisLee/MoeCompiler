@@ -20,11 +20,16 @@ class quat_t : public moeconcept::Stringable {
     quat_t(const quat_t &) = default;
     quat_t & operator = (const quat_t &) = default;
     bool operator == (const quat_t & q){ return qvalue==q.qvalue; }
-    quat_t operator & (const quat_t & q) { 
+    quat_t operator && (const quat_t & q) { 
         if(isChaos() || q.isChaos()) return QValue::Chaos;
         if(isUndefined() || q.isUndefined()) return QValue::Undefined;
         if(isTrue() && q.isTrue()) return QValue::True;
         return QValue::False;
+    }
+    quat_t operator ! () {
+        if(isTrue()) return QValue::False;
+        if(isFalse()) return QValue::True;
+        return *this;
     }
     bool isUndefined() const { return qvalue==QValue::Undefined; }
     bool isTrue() const { return qvalue==QValue::True; }
