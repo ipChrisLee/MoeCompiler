@@ -1,0 +1,8 @@
+# directory for test
+testDir/
+
+# backup folder
+.bku/
+
+# ignore java files
+*.java
