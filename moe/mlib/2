@@ -1,0 +1,12 @@
+#pragma once
+
+#include <vector>
+
+namespace stdextension{
+    namespace vector{
+        template<typename T>
+        typename std::vector<T>::iterator InsertByIterator(){
+
+        }
+    }
+}

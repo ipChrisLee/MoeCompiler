@@ -2,7 +2,7 @@ grun  	:= java org.antlr.v4.gui.TestRig
 pysName := listall
 objDir	:= build
 cflags	:= -x c++ -std=c++17 -Wall -Werror -Wextra -Wno-error=unused-parameter -g
-lflags	:= -lpthread
+lflags	:= -lpthread -v
 CC		:= clang++
 incsLibs := clib/ mlib/ third_party/antlr4/ ./ 
 exename := compiler 

@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <string>
+#include <cstdint>
 
 #include "moeconcept.hpp"
 
@@ -54,3 +55,7 @@ extern quat_t qUndefined;
 extern quat_t qChaos;
 
 }
+
+typedef int64_t i64;
+typedef int32_t i32;
+typedef bool i1;
