@@ -2,6 +2,8 @@
 
 #include <submain.hpp>
 
+#ifdef CODEING
+
 namespace ircode{
     int IRInstr::cnt=0;
 
@@ -32,3 +34,4 @@ namespace ircode{
         return 0;
     }
 }
+#endif

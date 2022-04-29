@@ -9,34 +9,34 @@
 //bool mdb::sysEnable=false;
 
 namespace com{
-    [[noreturn]] void Throw(const std::string_view msg){
-        throw MException("Moe Exception! {"+std::string(msg)+"}");
+    std::string concatToString(std::initializer_list<std::string>listOfStr){
+        std::string buffer;
+        for(auto s:listOfStr){
+            buffer+=s;
+        }
+        return buffer;
     }
-    [[noreturn]] void ThrowSingletonNotInited(const std::string_view className){
-        com::Throw("Using uninited singleton ["+std::string(className)+"]"); 
+    [[noreturn]] void Throw(const std::string_view msg,std::string_view codepos){
+        std::string buf;
+        if(codepos.length()) buf="Code Position [" + std::string(codepos) +"] | ";
+        buf+="Moe Exception! {"+std::string(msg)+"}";
+        throw MException(buf);
     }
-    [[noreturn]] void TODO(const std::string_view msg){
-        Throw("Not implemeted error by \'TODO()\'["+std::string(msg)+"].");
+    [[noreturn]] void ThrowSingletonNotInited(const std::string_view className,std::string_view  codepos){
+        com::Throw("Using uninited singleton ["+std::string(className)+"]",codepos); 
+    }
+    [[noreturn]] void TODO(const std::string_view msg,std::string_view codepos){
+        Throw("Not implemeted error by \'TODO()\'["+std::string(msg)+"].",codepos);
     }
     void notFinished(const std::string_view msg,const std::string_view codepos){
         com::ccerr.cprintLn(std::tuple("Not finished code [",msg,"] in ",codepos));
     }
     void Assert(bool b,const std::string & msg,const std::string & codepos){
-        if(!b) {
-            std::string buf;
-            if(codepos.length()) buf+="Error in "+codepos+".";
-            buf+=" Message : ["+msg+"]";
-            com::Throw(buf);
-        }
+        if(!b) { com::Throw(" Assertion failed : ["+msg+"]",codepos); }
     }
 
     void Assert(std::function<bool(void)>fun,const std::string & msg,const std::string & codepos){
-        if(!fun()) {
-            std::string buf;
-            if(codepos.length()) buf+="Error in "+codepos+".";
-            buf+=" Message : ["+msg+"]";
-            Throw(buf);
-        }
+        if(!fun()) { com::Throw(" Assertion failed : ["+msg+"]",codepos); }
     }
 
     void bmeBrace(std::function<void(void)>begin,std::function<void(void)>end,std::function<void(void)>middle){

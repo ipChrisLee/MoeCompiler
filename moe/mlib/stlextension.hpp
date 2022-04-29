@@ -5,7 +5,7 @@
 namespace stlextension{
     namespace vector{
         template<typename T>
-        void InsertByIterator(
+        void PushBackByIterators(
             std::vector<T> & vec,
             typename std::vector<T>::const_iterator beginIt,
             typename std::vector<T>::const_iterator endIt
@@ -15,7 +15,7 @@ namespace stlextension{
             }
         }
         template<typename T>
-        void InsertByNumberAndInstance(
+        void PushBackByNumberAndInstance(
             std::vector<T> & vec,
             const int number,
             const T & instance

@@ -9,6 +9,7 @@
 #include "frontend/frontendHeader.hpp"
 
 
+#ifdef CODEING
 namespace ircode{
     /*  class for IR instruction.
      *  Notice that, `IRInstr` has no control of pointers it saves, which means you should
@@ -28,10 +29,10 @@ namespace ircode{
     class IRInstr_staticdef : public IRInstr{
     private:
         AddrStaticVar * pStaticVar; //  It contains pStaticVar->Add, but just add another pointer.
-        AddrCompileConst * pInitValue;
     public:
         IRInstr_staticdef(AddrStaticVar* pStaticVar,AddrCompileConst*pInitValue);
         std::string toLLVMIR() const override;
         static int testStaticDefSubMain(const std::vector<std::string>&);
     };
 }
+#endif
