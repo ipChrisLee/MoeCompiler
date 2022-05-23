@@ -1,4 +1,0 @@
-build/mlib/cprt.o
-build/mlib/common.o
-build/mlib/mdb.o
-build/mlib/submain.o

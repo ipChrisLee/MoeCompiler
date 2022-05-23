@@ -11,6 +11,7 @@
 #include "stlextension.hpp"
 
 
+/*
 
 //  Implementation of `AddrPool` and `AddrPool::Scope` 
 namespace ircode{
@@ -33,7 +34,7 @@ namespace ircode{
         return this;
     }
 
-    void AddrPool::Scope::bindDominateVar(AddrVar * addrvar){
+    void AddrPool::Scope::bindDominateVar(AddrOperand * addrvar){
         if(addrvar->getDominator() && addrvar->getDominator()!=this){
             com::Throw("Can NOT bind a addrvar who has had a dominator.",CODEPOS);
         }
@@ -75,7 +76,7 @@ namespace ircode{
             }
         }
         pool.emplace_back(addrLocalVar.getSameExceptScopePointerInstance());
-        AddrVar * pAddr=dynamic_cast<AddrVar*>(pool.rbegin()->get());
+        AddrOperand * pAddr=dynamic_cast<AddrOperand*>(pool.rbegin()->get());
         pScope->bindDominateVar(pAddr);
         pAddr->setDominator(pScope);
         return dynamic_cast<AddrLocalVar*>(pAddr);
@@ -121,8 +122,8 @@ namespace ircode{
         const std::string & varname
     ){
         while(pFrom){
-            Addr * pAddrVar=pFrom->findVarInThisScope(varname);
-            if(pAddrVar) return pAddrVar;
+            Addr * pAddrOperand=pFrom->findVarInThisScope(varname);
+            if(pAddrOperand) return pAddrOperand;
             pFrom=pFrom->getFather();
         }
         return nullptr;
@@ -411,7 +412,7 @@ namespace ircode{
     }
 }
 
-//  Implementation of Addr
+//  Addr
 namespace ircode{
     int Addr::cnt=0;
 
@@ -423,7 +424,7 @@ namespace ircode{
     }
 
 
-    AddrVar::AddrVar(
+    AddrOperand::AddrOperand(
         const std::string & name,
         const TypeInfo & typeInfo,
         bool isConst
@@ -432,22 +433,22 @@ namespace ircode{
             (typeInfo.cloneToUniquePtr());
     }
 
-    AddrPool::Scope * AddrVar::getDominator() const {
+    AddrPool::Scope * AddrOperand::getDominator() const {
         return dominator;
     }
 
-    void AddrVar::setDominator(AddrPool::Scope * dom){
+    void AddrOperand::setDominator(AddrPool::Scope * dom){
         if(dominator && dom!=dominator){
             com::Throw("One addrvar can have only one dominator.");
         }
         dominator=dom;
     }
 
-    bool AddrVar::isconst() const {
+    bool AddrOperand::isconst() const {
         return isConst;
     }
 
-    std::string AddrVar::getVarName() const {
+    std::string AddrOperand::getVarName() const {
         return name;
     }
 
@@ -455,7 +456,7 @@ namespace ircode{
         const std::string & varname,
         const TypeInfo & typeInfo,
         bool isConst
-    ):AddrVar(varname,typeInfo,isConst),uPtrStaticValue(nullptr){
+    ):AddrOperand(varname,typeInfo,isConst),uPtrStaticValue(nullptr){
     }
 
     StaticValue * AddrStaticVar::setStaticValue(const StaticValue & staticValue){
@@ -487,7 +488,7 @@ namespace ircode{
         const std::string & varname,
         const TypeInfo & typeInfo,
         bool isConst
-    ):AddrVar(varname,typeInfo,isConst){
+    ):AddrOperand(varname,typeInfo,isConst){
     }
 
     std::string AddrLocalVar::toLLVMIR() const {
@@ -499,11 +500,6 @@ namespace ircode{
             std::make_unique<AddrLocalVar>(name,*uPtrTypeInfo,isConst);
         return uPtrLocalVar;
     }
-
-    AddrTemp::AddrTemp(const TypeInfo & typeInfo)
-        :uPtrTypeInfo(com::dynamic_cast_unique_ptr<moeconcept::Cloneable,TypeInfo>(
-                typeInfo.cloneToUniquePtr())){
-        }
 
     std::string AddrTemp::toLLVMIR() const {
         return uPtrTypeInfo->toLLVMIR() + " %" + to_string(id);
@@ -618,3 +614,5 @@ namespace ircode{
     //}
 
 }
+
+*/

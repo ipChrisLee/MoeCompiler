@@ -6,7 +6,7 @@
  *              >Notice:
  *                  Legal expression of operator, const BASIC-TYPE value and literals is
  *                  compile time const.
- *          `AddrVar` is address for variable declared in source program.
+ *          `AddrOperand` is address for variable declared in source program.
  *              `AddrStaticVar` is a address for static variable (since sysy does not have
  *              key word like `static`, this is for global variable.).
  *              `AddrLocalVar` is a address for local variable.
@@ -33,7 +33,7 @@
 
 namespace ircode{
     class Addr;
-    class AddrVar;
+    class AddrOperand;
     class AddrLocalVar;
     class AddrStaticVar;
     class StaticValue;
@@ -50,20 +50,15 @@ namespace ircode{
         public:
             Scope();
             Scope(const Scope &) = delete ;
-            //  Add scope as son of this.
             Scope * addSonScope();
-            //  Get father scope of this.
             Scope * getFather() const ;
-            //  Get this.
             Scope * getThis() ;
-            //  Bind AddrVar to this scope.
-            void bindDominateVar(AddrVar * addrvar);
-            //  
-            /*  Find a AddrVar named `varname` in this scope (this method will not search 
+            void bindDominateVar(AddrOperand * addrvar);
+            /*  Find a addr for `varname` in this scope (this method will not search 
              *  `varname` down to the root).
              *  Return nullptr if not find.
              * */
-            Addr * findVarInThisScope(const std::string & varname) const ;
+            Addr * findIdInThisScope(const std::string & varname) const ;
             std::string getIdChain() const ;
         };
     protected:
@@ -72,10 +67,10 @@ namespace ircode{
     public:
         AddrPool();
         AddrPool(const AddrPool &) = delete ;
-        //  Add AddrVar to some scope.
+
         AddrLocalVar * addAddrLocalVar(const AddrLocalVar &,Scope * pScope);
         AddrStaticVar * addAddrStaticVar(const AddrStaticVar &,const StaticValue &);
-        //  Add an Addr to pool. This is the only way you can create addr;
+
         Addr * addAddr(const Addr &);
         //  Add a scope as sub of pFather. This is the only way you can create scope.
         Scope * addScope(Scope * pFather);
@@ -235,76 +230,75 @@ namespace ircode{
      *  NOTICE: Copy constructor of Addr is deleted.
      * */
     class Addr : public LLVMable{
-    public:
+    protected:
         static int cnt;
+    public:
         const int id;
+
         Addr();
         Addr(const Addr &)=delete;
         virtual ~Addr(){}
+
         virtual std::unique_ptr<Addr> getSameExceptScopePointerInstance() const = 0;
     };
 
-    /*  Variable address. When construct with constructor, dominator is nullptr.
-     *  You need to set dominator manually.
+    /*  Address for LLVM-IR variable.
+     *  This is inherited by `AddrNamedVar` and `AddrTmpVar`.
      * */
-    class AddrVar : public Addr {
+    class AddrOperand : public Addr {
     protected:
-        AddrPool::Scope * dominator;
         bool isConst;
         std::string name;
         std::unique_ptr<TypeInfo>uPtrTypeInfo;
     public:
-        explicit AddrVar() = delete;
-        explicit AddrVar(const std::string & name, const TypeInfo &, bool isConst=false);
-        AddrVar(const AddrVar &)=delete;
-        virtual ~AddrVar() = default;
-        AddrPool::Scope * getDominator() const ;
-        void setDominator(AddrPool::Scope * dom);
+        explicit AddrOperand() = delete;
+        explicit AddrOperand(const std::string & name, const TypeInfo &, bool isConst=false);
+        explicit AddrOperand(const AddrOperand &)=delete;
+        virtual ~AddrOperand() = default;
+
         bool isconst() const ;
         std::string getVarName() const ;
     };
 
-    /*  Static variable address. Static variable diff with local variable in initialzation.
-     *  We have a instruction called `staticdef`, which is used to declare and define a 
-     *  static viable. Every static variable has compile time initalization value, which 
-     *  is pointed by `uPtrStaticValue`.
-     *  When a new instance built, `uPtrStaticValue` is `nullptr`, you need to set it 
-     *  manually.
-     *  We need to save init value since there may be a case where 'a static is 
-     *  initialized by a defined const static', like `const int a[2]={1,2};int x=a[0];`.
+    /*  Addr from source code.
+     *  All addr of this type has a name from source code, and can be indexed in symbol table.
+     *  For variable has static value, `AddrNamedOperand` has a pointer to its static value.
      * */
-    class AddrStaticVar : public AddrVar{
+    class AddrMemVar : public AddrOperand { // may it should be inherited from `Addr`
     protected:
         std::unique_ptr<StaticValue>uPtrStaticValue;
+        std::string varname;
+        bool isGlobal;
+        bool isConst;
     public:
-        explicit AddrStaticVar(const std::string & varname, const TypeInfo & typeInfo, bool isConst=false);
+        explicit AddrMemVar(const std::string & name, const TypeInfo & typeInfo, bool isConst=false);
         StaticValue * setStaticValue(const StaticValue &);
         const StaticValue * getStaticValue() const ;
-        //  Only print variable name to LLVMIR.
-        std::string toLLVMIR() const override;
-        virtual std::unique_ptr<Addr> getSameExceptScopePointerInstance() const override;
-    };
 
-    /*  Local variable address. Here is a GREAT difference between local and static variable:
-     *  In sysy, static variable can NOT be a pointer, but local variable (and parameter) can be
-     *  pointers.
-     * */
-    class AddrLocalVar : public AddrVar{
-    public:
-        explicit AddrLocalVar(const std::string & varname,const TypeInfo &,bool isConst=false);
         virtual std::string toLLVMIR() const override;
         virtual std::unique_ptr<Addr> getSameExceptScopePointerInstance() const override;
-
-        static int testLocalVarDecl(const std::vector<std::string>&);
     };
 
-    class AddrTemp : public Addr {
-    protected:
-        std::unique_ptr<TypeInfo>uPtrTypeInfo;
+    /*  Variable generated in processing source code.
+     *  For example, `int x=1+2+3;` => `add t1,1,2;add x,t1,3;`, `t1` is temporary variable.
+     * */
+    class AddrRegOperand : public AddrOperand {
     public:
-        explicit AddrTemp() = delete;
-        explicit AddrTemp(const TypeInfo &);
-        explicit AddrTemp(const AddrTemp &) = delete;
+        explicit AddrRegOperand() = delete;
+        explicit AddrRegOperand(const TypeInfo &);
+        explicit AddrRegOperand(const AddrRegOperand &) = delete;
+
+        virtual std::string toLLVMIR() const override;
+        virtual std::unique_ptr<Addr> getSameExceptScopePointerInstance() const override;
+    };
+
+    /*  Static operand. The value of this type operand can be caculated in compile time.
+     * */
+    class AddrStaticOperand : public AddrOperand {
+    public:
+        explicit AddrStaticOperand() = delete;
+        explicit AddrStaticOperand(const TypeInfo &);
+        explicit AddrStaticOperand(const AddrStaticOperand &) = delete;
 
         virtual std::string toLLVMIR() const override;
         virtual std::unique_ptr<Addr> getSameExceptScopePointerInstance() const override;
@@ -336,7 +330,7 @@ namespace ircode{
     protected:
         std::string name;
         std::unique_ptr<TypeInfo>uPtrReturnTypeInfo; // nullptr for void
-        std::vector<std::unique_ptr<AddrPara>>vecUPtrAddrPara;
+        std::vector<AddrPara*>vecPtrAddrPara;
     public:
         explicit AddrFunction() = delete;
         explicit AddrFunction(const std::string & name);
