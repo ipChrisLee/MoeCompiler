@@ -12,13 +12,13 @@
 #define CODEPOS "File["  __FILE__  "] Line["  LINE_STR(__LINE__) "] "
 //  https://stackoverflow.com/questions/733056/is-there-a-way-to-get-function-name-inside-a-c-function
 #define FUNINFO __PRETTY_FUNCTION__
-#define NVPAIR(v) std::pair(#v,v)
+#define NVPAIR(v) std::pair(#v,v) // name-variable pair
 
 
 /*  Moe debug tool. You can disable some mdb tool for any time.
- *  When you initialzing one instance, you should consider WHERE and print format
+ *  When you're initializing one instance, you should consider WHERE and print format
  *  by setting `std::unique_ptr<com::cprt>` variable. 
- *  However, when you using this model, you should only think of WHAT to debug.
+ *  However, when you're using this model, you should only think of WHAT to debug.
  * */
 namespace com{
 class mdb{ 
@@ -40,7 +40,7 @@ public:
      *  `com::cprt` printer. You should NOT use `com::cprt *` get from another
      *  `com::cprt`. For example, `&com::ccout` is NOT allowed for first argument.
      * */
-    mdb(
+    explicit mdb(
         std::unique_ptr<com::cprt> printer,
         bool enable=false,
         std::string_view header="[mdb] "
@@ -59,8 +59,8 @@ public:
      *  newline (and flush stream) and head string (e.g. '[mdb] ') for every '\n'
      *  and {at the end of printing}.
      *  if you don't want text to be decorated, set decorated=false;
-     *  detect enable flag automaticlly.
-     *  to print the location of message, let printLoc=CODEPOS. (see defination of CODELOC)
+     *  detect enable flag automatically.
+     *  to print the location of message, let printLoc=CODEPOS. (see definition of CODELOC)
      * */
     void msgPrint(
         const std::string & msg, /* Message to print. */
@@ -93,8 +93,8 @@ public:
      *  It will NOT print newline after the end of string.
      *  You should limit the count of the lines of S.to_string() to one.
      *  If you don't want text to be decorated, set decorated=false;
-     *  detect enable flag automaticlly.
-     *  to print the location of message, let printLoc=CODEPOS. (see defination of CODELOC)
+     *  detect enable flag automatically.
+     *  to print the location of message, let printLoc=CODEPOS. (see definition of CODELOC)
      *  usage : 
      *      mdb::getStatic()
      *          .infoPrint(std::tuple( NVPAIR("n",n), NVPAIR("t",t) ),CODEPOS);
@@ -121,8 +121,8 @@ public:
      *  it will noT print newline after the end of string.
      *  you should limit the count of the lines of S.to_string() to one.
      *  if you don't want text to be decorated, set decorated=false;
-     *  detect enable flag automaticlly.
-     *  to print the location of message, let printLoc=CODEPOS. (see defination of CODELOC)
+     *  detect enable flag automatically.
+     *  to print the location of message, let printLoc=CODEPOS. (see definition of CODELOC)
      *  usage : 
      *      mdb::getStatic()
      *          .infoPrint(std::tuple( std::pair("n",n),(std::pair("t",t)) ),CODEPOS);
