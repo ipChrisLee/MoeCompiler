@@ -6,10 +6,10 @@
       <option name="FUNCTION_PARAMETERS_NEW_LINE_AFTER_LPAR" value="true" />
       <option name="FUNCTION_PARAMETERS_NEW_LINE_BEFORE_RPAR" value="true" />
       <option name="SPACE_WITHIN_EMPTY_BRACES" value="true" />
-      <option name="SPACE_WITHIN_EMPTY_LAMBDA_CAPTURE_LIST_BRACKET" value="true" />
       <option name="SPACE_BEFORE_COLON_IN_FOREACH" value="true" />
       <option name="SPACE_AFTER_POINTER_IN_DECLARATION" value="true" />
       <option name="SPACE_AFTER_REFERENCE_IN_DECLARATION" value="true" />
+      <option name="SPACE_BETWEEN_OPERATOR_AND_PUNCTUATOR" value="true" />
       <option name="SPACE_BEFORE_DICTIONARY_LITERAL_COLON" value="true" />
     </Objective-C>
     <codeStyleSettings language="ObjectiveC">
