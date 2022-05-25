@@ -38,11 +38,15 @@ void Assert(bool b, const std::string & msg, const std::string & codepos) {
 	if (!b) { com::Throw(" Assertion failed : [" + msg + "]", codepos); }
 }
 
-void Assert(const std::function<bool(void)>& fun, const std::string & msg, const std::string & codepos) {
+void Assert(const std::function<bool(void)> & fun, const std::string & msg, const std::string & codepos) {
 	if (!fun()) { com::Throw(" Assertion failed : [" + msg + "]", codepos); }
 }
 
-void bmeBrace(const std::function<void(void)>& begin, const std::function<void(void)>& end, std::function<void(void)> middle) {
+void bmeBrace(
+		const std::function<void(void)> & begin,
+		const std::function<void(void)> & end,
+		const std::function<void(void)> & middle
+) {
 	begin();
 	middle();
 	end();
