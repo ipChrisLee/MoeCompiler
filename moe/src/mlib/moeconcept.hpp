@@ -61,7 +61,7 @@ struct Storable {
  *  1.  Assume that `DerivedA` is derived from `Base` and `Base` is derived from `Cloneable`.
  *      Assume we have `unique_ptr<Base>pb=make_unique<DerivedA>()`, to call
  *      `pb->cloneToUniquePtr()` without error, you should have implemented
- *      `DerivedA::__cloneToUniquePtr()`. So this `Cloneable` ensures that, the generated
+ *      `DerivedA::_cloneToUniquePtr()`. So this `Cloneable` ensures that, the generated
  *      instance has same type of copied one.
  *  2.  Since `cloneToUniquePtr()` returns `unique_ptr<Cloneable>`, you should convert it
  *      to other types manually by calling `com::dynamic_cast_unique_ptr`. (See common.hpp)

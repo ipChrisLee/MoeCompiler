@@ -1,20 +1,13 @@
-#include <algorithm>
-#include <cstdlib>
-#include <iterator>
 #include <memory>
-#include <string>
 #include <functional>
-#include <map>
-#include <iostream>
 
-#include "common.hpp"
 #include "submain.hpp"
 #include "cprt.hpp"
 
 std::unique_ptr<com::submain> com::submain::single(nullptr);
 
 
-static int listallWithPositions(std::vector<std::string>){
+static int listallWithPositions(const std::vector<std::string>&){
     com::ccout.cprintLn("Available submain : {");
     auto mp=com::submain::getSingle().getCases();
     for(auto & it:mp){
@@ -31,7 +24,7 @@ static int listallWithPositions(std::vector<std::string>){
 AddSubMain(listallWithPositions,listallWithPositions);
 
 AddSubMain(listall,
-    [](std::vector<std::string>)->int{
+    [](const std::vector<std::string>&)->int{
         com::ccout.cprintLn("Available submain : {");
         com::ccout.cprint("    ");
         auto mp=com::submain::getSingle().getCases();
