@@ -10,10 +10,8 @@ View [conda Tutorial](https://docs.conda.io/projects/conda/en/latest/user-guide/
 
 # Coding Notice
 
-You can code in pycharm, but NOTICE that `MoeCompiler/moe` is always the 
+You can code in pycharm/clion, but NOTICE that `MoeCompiler/moe` is always the 
 working directory.
-
-Set working directory like this is to enable usage like `make pys py="listall"` in `moe` directory.
 
 This is not a part of compiler, but a part of the project. The duty of these
 python scripts is to check compiler, detect the errors and faults in compiler

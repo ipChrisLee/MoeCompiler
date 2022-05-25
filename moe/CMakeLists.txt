@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED true)
 
 file(GLOB_RECURSE allCFiles "src/*.cpp")
 add_compile_options(-g -lm -Wall -Werror -Wextra -Wno-error=unused-parameter)
+add_link_options(-lpthread -v)
 include_directories(src/mlib)
 include_directories(src/)
 include_directories(src/third_party)
