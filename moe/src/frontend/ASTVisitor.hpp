@@ -19,7 +19,6 @@ class ASTVisitor : public SysYBaseVisitor {
 protected:
     ircode::AddrPool addrPool;
     ircode::IRInstrPool irInstrPool;
-    ircode::IRInstrPool irInstr
 public:
     virtual std::any visitCompUnit(SysYParser::CompUnitContext * ctx) override;
 

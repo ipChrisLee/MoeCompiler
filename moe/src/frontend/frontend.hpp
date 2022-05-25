@@ -17,12 +17,13 @@
 #include "frontend/ASTVisitor.hpp"
 
 
-namespace frontend{
+namespace frontend {
 
-class FrontEnd{
+class FrontEnd {
   public:
-    static int Main(std::vector<std::string>argv);
-    static void dfs(antlr4::tree::ParseTree * rt);
+	static int Main(std::vector<std::string> argv);
+	
+	static void dfs(antlr4::tree::ParseTree *rt);
 };
-
+	
 }

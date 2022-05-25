@@ -1,10 +1,5 @@
-#include <iostream>
 #include <unistd.h>
-#include <cstring>
 #include <vector>
-#include <string>
-#include <tuple>
-#include <fstream>
 #include <memory>
 
 #include <cprt.hpp>
@@ -17,7 +12,7 @@
 /*  When `make run`, TESTING is not defined.
  * */
 int Main(int argc,char ** argv){
-    /* Inkove different functions by command line.
+    /* Invoke different functions by command line.
      * */
     
     if(argc<2){
@@ -83,10 +78,10 @@ int Main(int argc,char ** argv){
 int main(int argc,char ** argv){
     //  For better exception handle.
     //  https://www.digitalpeer.com/blog/find-where-a-cpp-exception-is-thrown
-    /*  To get where an exception is thorwn, make the files, and gdb it.
+    /*  To get where an exception is thrown, make the files, and gdb it.
      *  Then type `catch throw` and `run` and `where`.
      *  For this project, gdb is called with '-ex="catch throw"' for the target `gdb`.
-     *  So there is no need to type `catch throw` any more.
+     *  So there is no need to type `catch throw` anymore.
      * */
     try{
         return Main(argc,argv);

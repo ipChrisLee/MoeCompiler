@@ -19,8 +19,8 @@ namespace com{
     class MException : public std::exception {
     public:
         std::string msg=std::string();
-        MException(){}
-        MException(const std::string & msg):msg(msg){}
+        MException()= default;
+        explicit MException(std::string msg):msg(std::move(msg)){}
         const char * what() const noexcept {
             return msg.data();
         }
@@ -44,7 +44,7 @@ namespace com{
     /*  Take place in `assert`. 
      *  This version use a function returning bool as assert condition.
      * */
-    void Assert(std::function<bool(void)>fun,const std::string & msg="",const std::string & codepos="");
+    void Assert(const std::function<bool(void)>&fun,const std::string & msg="",const std::string & codepos="");
 
     /*  Struct for regex switch.
      * */
@@ -58,7 +58,7 @@ namespace com{
      *  Brace which let some execute-when-entering codes and execute-when-leaving
      *  codes come first in source codes.
      * */
-    void bmeBrace(std::function<void(void)>begin,std::function<void(void)>end,std::function<void(void)>middle);
+    void bmeBrace(const std::function<void(void)>&begin,const std::function<void(void)>&end,std::function<void(void)>middle);
 
     /*  dynamic_cast for `unique_ptr`.
      * */
