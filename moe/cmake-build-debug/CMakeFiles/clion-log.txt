@@ -1,4 +1,0 @@
-/snap/clion/190/bin/cmake/linux/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=/snap/clion/190/bin/ninja/linux/ninja -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -G Ninja -S /home/lee/Proj/MoeCompiler/moe -B /home/lee/Proj/MoeCompiler/moe/cmake-build-debug
--- Configuring done
--- Generating done
--- Build files have been written to: /home/lee/Proj/MoeCompiler/moe/cmake-build-debug

@@ -1,3 +1,0 @@
-/home/lee/Proj/MoeCompiler/moe/cmake-build-debug/CMakeFiles/compiler.dir
-/home/lee/Proj/MoeCompiler/moe/cmake-build-debug/CMakeFiles/edit_cache.dir
-/home/lee/Proj/MoeCompiler/moe/cmake-build-debug/CMakeFiles/rebuild_cache.dir
