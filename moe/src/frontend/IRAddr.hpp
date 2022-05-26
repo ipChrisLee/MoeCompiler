@@ -187,60 +187,60 @@ class BoolType : public TypeInfo {
 
 class StaticValue : public LLVMable, public moeconcept::Cloneable {
   protected:
-	virtual std::unique_ptr<moeconcept::Cloneable> _cloneToUniquePtr() const override;
-	
-	explicit StaticValue();
+	[[nodiscard]] std::unique_ptr<moeconcept::Cloneable> _cloneToUniquePtr() const override = 0;
   
   public:
 	std::unique_ptr<TypeInfo> uPtrInfo;
 	
-	explicit StaticValue(const TypeInfo &);
+	StaticValue();
 	
-	explicit StaticValue(const StaticValue &);
+	explicit StaticValue(const TypeInfo & typeInfo);
 	
-	StaticValue & operator =(const StaticValue &);
+	StaticValue(const StaticValue & staticValue);
 	
-	virtual ~StaticValue() { }
+	~StaticValue() override = default;
 };
 
 class FloatStaticValue : public StaticValue {
   protected:
-	virtual std::unique_ptr<moeconcept::Cloneable> _cloneToUniquePtr() const override;
+	[[nodiscard]] std::unique_ptr<moeconcept::Cloneable> _cloneToUniquePtr() const override;
   
   public:
 	float value;
 	
 	explicit FloatStaticValue(const std::string & literal = "0");
 	
-	explicit FloatStaticValue(const FloatStaticValue &) = default;
+	FloatStaticValue(const FloatStaticValue &) = default;
 	
-	virtual std::string toLLVMIR() const override;
+	[[nodiscard]] std::string toLLVMIR() const override;
 };
 
 class IntStaticValue : public StaticValue {
   protected:
-	virtual std::unique_ptr<moeconcept::Cloneable> _cloneToUniquePtr() const override;
+	[[nodiscard]] std::unique_ptr<moeconcept::Cloneable> _cloneToUniquePtr() const override;
   
   public:
 	int value;
 	
 	explicit IntStaticValue(const std::string & literal = "0");
 	
-	explicit IntStaticValue(const IntStaticValue &) = default;
+	IntStaticValue(const IntStaticValue &) = default;
 	
-	virtual std::string toLLVMIR() const override;
+	[[nodiscard]] std::string toLLVMIR() const override;
 };
 
 class FloatArrayStaticValue : public StaticValue {
   protected:
-	virtual std::unique_ptr<moeconcept::Cloneable> _cloneToUniquePtr() const override;
+	[[nodiscard]] std::unique_ptr<moeconcept::Cloneable> _cloneToUniquePtr() const override;
   
   public:
 	std::vector<int> shape;
 	std::vector<FloatStaticValue> value;
 	
+	FloatArrayStaticValue() = delete;
+	
 	//  Create new 1-d, `len` long float array.
-	explicit FloatArrayStaticValue(int len, const std::vector<FloatStaticValue> & vi);
+	explicit FloatArrayStaticValue(int len, std::vector<FloatStaticValue> vi);
 	
 	/*  Create new array from arrays.
 	 *  If arrays in `vi` has shape (3,4) and `len` equals 2, new array
@@ -253,21 +253,21 @@ class FloatArrayStaticValue : public StaticValue {
 			const std::vector<FloatArrayStaticValue> & vi
 	);
 	
-	explicit FloatArrayStaticValue(const FloatArrayStaticValue &) = default;
+	FloatArrayStaticValue(const FloatArrayStaticValue &) = default;
 	
-	virtual std::string toLLVMIR() const override;
+	[[nodiscard]] std::string toLLVMIR() const override;
 };
 
 class IntArrayStaticValue : public StaticValue {
   protected:
-	virtual std::unique_ptr<moeconcept::Cloneable> _cloneToUniquePtr() const override;
+	[[nodiscard]] std::unique_ptr<moeconcept::Cloneable> _cloneToUniquePtr() const override;
   
   public:
 	std::vector<int> shape;
 	std::vector<IntStaticValue> value;
 	
 	//  Create new 1-d, `len` long float array.
-	explicit IntArrayStaticValue(int len, const std::vector<IntStaticValue> & vi);
+	explicit IntArrayStaticValue(int len, std::vector<IntStaticValue> vi);
 	
 	/*  Create new array from arrays.
 	 *  If arrays in `vi` has shape (3,4) and `len` equals 2, new array
@@ -275,14 +275,13 @@ class IntArrayStaticValue : public StaticValue {
 	 *  This constructor will detect legality of arrays. (They should have same shape.)
 	 * */
 	explicit IntArrayStaticValue(
-			int len,
-			const std::vector<int> & preShape,
+			int len, const std::vector<int> & preShape,
 			const std::vector<IntArrayStaticValue> & vi
 	);
 	
-	explicit IntArrayStaticValue(const IntArrayStaticValue &) = default;
+	IntArrayStaticValue(const IntArrayStaticValue &) = default;
 	
-	virtual std::string toLLVMIR() const override;
+	[[nodiscard]] std::string toLLVMIR() const override;
 };
 
 /*  First part of IR design: Address used in three-address-code.
