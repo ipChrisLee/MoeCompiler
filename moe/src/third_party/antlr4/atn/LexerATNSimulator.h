@@ -90,8 +90,8 @@ namespace atn {
     /// for the edge has not yet been computed or is otherwise not available,
     /// this method returns {@code null}.
     /// </summary>
-    /// <param name="s"> The current DFA state </param>
-    /// <param name="t"> The next input symbol </param>
+    /// <param labelName="s"> The current DFA state </param>
+    /// <param labelName="t"> The next input symbol </param>
     /// <returns> The existing target DFA state for the given input symbol
     /// {@code t}, or {@code null} if the target state for this edge is not
     /// already cached </returns>
@@ -101,9 +101,9 @@ namespace atn {
     /// Compute a target state for an edge in the DFA, and attempt to add the
     /// computed state and corresponding edge to the DFA.
     /// </summary>
-    /// <param name="input"> The input stream </param>
-    /// <param name="s"> The current DFA state </param>
-    /// <param name="t"> The next input symbol
+    /// <param labelName="input"> The input stream </param>
+    /// <param labelName="s"> The current DFA state </param>
+    /// <param labelName="t"> The next input symbol
     /// </param>
     /// <returns> The computed target DFA state for the given input symbol
     /// {@code t}. If {@code t} does not lead to a valid DFA state, this method
@@ -155,10 +155,10 @@ namespace atn {
     /// to the original state before returning (i.e. undo the actions made by the
     /// call to <seealso cref="#consume"/>.
     /// </summary>
-    /// <param name="input"> The input stream. </param>
-    /// <param name="ruleIndex"> The rule containing the predicate. </param>
-    /// <param name="predIndex"> The index of the predicate within the rule. </param>
-    /// <param name="speculative"> {@code true} if the current index in {@code input} is
+    /// <param labelName="input"> The input stream. </param>
+    /// <param labelName="ruleIndex"> The rule containing the predicate. </param>
+    /// <param labelName="predIndex"> The index of the predicate within the rule. </param>
+    /// <param labelName="speculative"> {@code true} if the current index in {@code input} is
     /// one character before the predicate's location.
     /// </param>
     /// <returns> {@code true} if the specified predicate evaluates to

@@ -63,7 +63,7 @@ namespace antlr4 {
     /// the parse tree by calling {@link #createErrorNode(ParserRuleContext, Token)} then
     /// {@link ParserRuleContext#addErrorNode(ErrorNode)}.
     /// </summary>
-    /// <param name="ttype"> the token type to match </param>
+    /// <param labelName="ttype"> the token type to match </param>
     /// <returns> the matched symbol </returns>
     /// <exception cref="RecognitionException"> if the current input symbol did not match
     /// {@code ttype} and the error strategy could not recover from the
@@ -117,7 +117,7 @@ namespace antlr4 {
     /// Trim the internal lists of the parse tree during parsing to conserve memory.
     /// This property is set to {@code false} by default for a newly constructed parser.
     /// </summary>
-    /// <param name="trimParseTrees"> {@code true} to trim the capacity of the <seealso cref="ParserRuleContext#children"/>
+    /// <param labelName="trimParseTrees"> {@code true} to trim the capacity of the <seealso cref="ParserRuleContext#children"/>
     /// list to its size after a rule is parsed. </param>
     virtual void setTrimParseTree(bool trimParseTrees);
 
@@ -152,7 +152,7 @@ namespace antlr4 {
     /// may change the behavior of the listener calls.</li>
     /// </ul>
     /// </summary>
-    /// <param name="listener"> the listener to add
+    /// <param labelName="listener"> the listener to add
     /// </param>
     /// <exception cref="NullPointerException"> if {@code} listener is {@code null} </exception>
     virtual void addParseListener(tree::ParseTreeListener *listener);
@@ -165,7 +165,7 @@ namespace antlr4 {
     /// </summary>
     /// <seealso cref= #addParseListener
     /// </seealso>
-    /// <param name="listener"> the listener to remove </param>
+    /// <param labelName="listener"> the listener to remove </param>
     virtual void removeParseListener(tree::ParseTreeListener *listener);
 
     /// <summary>
@@ -310,7 +310,7 @@ namespace antlr4 {
     /// return getExpectedTokens().contains(symbol);
     /// </pre>
     /// </summary>
-    /// <param name="symbol"> the symbol type to check </param>
+    /// <param labelName="symbol"> the symbol type to check </param>
     /// <returns> {@code true} if {@code symbol} can follow the current state in
     /// the ATN, otherwise {@code false}. </returns>
     virtual bool isExpectedToken(size_t symbol);

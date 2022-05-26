@@ -28,7 +28,7 @@ namespace atn {
 
     /// <summary>
     /// Constructs a new {@code channel} action with the specified channel value. </summary>
-    /// <param name="channel"> The channel value to pass to <seealso cref="Lexer#setChannel"/>. </param>
+    /// <param labelName="channel"> The channel value to pass to <seealso cref="Lexer#setChannel"/>. </param>
     explicit LexerChannelAction(int channel);
 
     /// <summary>

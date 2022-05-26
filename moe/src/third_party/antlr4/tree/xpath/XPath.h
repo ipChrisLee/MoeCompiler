@@ -44,9 +44,9 @@ namespace xpath {
   /// and path elements:</para>
   ///
   /// <dl>
-  /// <dt>ID</dt> <dd>token name</dd>
+  /// <dt>ID</dt> <dd>token labelName</dd>
   /// <dt>'string'</dt> <dd>any string literal token from the grammar</dd>
-  /// <dt>expr</dt> <dd>rule name</dd>
+  /// <dt>expr</dt> <dd>rule labelName</dd>
   /// <dt>*</dt> <dd>wildcard matching any node</dd>
   /// </dl>
   ///

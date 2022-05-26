@@ -433,8 +433,8 @@ namespace atn {
     /// for the edge has not yet been computed or is otherwise not available,
     /// this method returns {@code null}.
     /// </summary>
-    /// <param name="previousD"> The current DFA state </param>
-    /// <param name="t"> The next input symbol </param>
+    /// <param labelName="previousD"> The current DFA state </param>
+    /// <param labelName="t"> The next input symbol </param>
     /// <returns> The existing target DFA state for the given input symbol
     /// {@code t}, or {@code null} if the target state for this edge is not
     /// already cached </returns>
@@ -444,9 +444,9 @@ namespace atn {
     /// Compute a target state for an edge in the DFA, and attempt to add the
     /// computed state and corresponding edge to the DFA.
     /// </summary>
-    /// <param name="dfa"> The DFA </param>
-    /// <param name="previousD"> The current DFA state </param>
-    /// <param name="t"> The next input symbol
+    /// <param labelName="dfa"> The DFA </param>
+    /// <param labelName="previousD"> The current DFA state </param>
+    /// <param labelName="t"> The next input symbol
     /// </param>
     /// <returns> The computed target DFA state for the given input symbol
     /// {@code t}. If {@code t} does not lead to a valid DFA state, this method
@@ -472,8 +472,8 @@ namespace atn {
     /// not already in a rule stop state to see if a rule stop state is reachable
     /// from the configuration via epsilon-only transitions.
     /// </summary>
-    /// <param name="configs"> the configuration set to update </param>
-    /// <param name="lookToEndOfRule"> when true, this method checks for rule stop states
+    /// <param labelName="configs"> the configuration set to update </param>
+    /// <param labelName="lookToEndOfRule"> when true, this method checks for rule stop states
     /// reachable by epsilon-only transitions from each configuration in
     /// {@code configs}.
     /// </param>
@@ -858,10 +858,10 @@ namespace atn {
     /// Otherwise, this method returns the <seealso cref="DFAState"/> returned by calling
     /// <seealso cref="#addDFAState"/> for the {@code to} state.
     /// </summary>
-    /// <param name="dfa"> The DFA </param>
-    /// <param name="from"> The source state for the edge </param>
-    /// <param name="t"> The input symbol </param>
-    /// <param name="to"> The target state for the edge
+    /// <param labelName="dfa"> The DFA </param>
+    /// <param labelName="from"> The source state for the edge </param>
+    /// <param labelName="t"> The input symbol </param>
+    /// <param labelName="to"> The target state for the edge
     /// </param>
     /// <returns> If {@code to} is {@code null}, this method returns {@code null};
     /// otherwise this method returns the result of calling <seealso cref="#addDFAState"/>
@@ -877,8 +877,8 @@ namespace atn {
     /// If {@code D} is <seealso cref="#ERROR"/>, this method returns <seealso cref="#ERROR"/> and
     /// does not change the DFA.
     /// </summary>
-    /// <param name="dfa"> The dfa </param>
-    /// <param name="D"> The DFA state to add </param>
+    /// <param labelName="dfa"> The dfa </param>
+    /// <param labelName="D"> The DFA state to add </param>
     /// <returns> The state stored in the DFA. This will be either the existing
     /// state if {@code D} is already in the DFA, or {@code D} itself if the
     /// state was not already present. </returns>

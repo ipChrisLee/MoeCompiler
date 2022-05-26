@@ -19,12 +19,12 @@ namespace antlr4 {
     ANTLRFileStream(const char *data, size_t length) = delete;
     ANTLRFileStream(std::istream &stream) = delete;
 
-    // Assumes a file name encoded in UTF-8 and file content in the same encoding (with or w/o BOM).
+    // Assumes a file labelName encoded in UTF-8 and file content in the same encoding (with or w/o BOM).
     virtual void loadFromFile(const std::string &fileName);
     virtual std::string getSourceName() const override;
 
   private:
-    std::string _fileName; // UTF-8 encoded file name.
+    std::string _fileName; // UTF-8 encoded file labelName.
   };
 
 } // namespace antlr4

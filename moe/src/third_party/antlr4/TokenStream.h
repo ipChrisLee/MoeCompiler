@@ -62,7 +62,7 @@ namespace antlr4 {
     /// }
     /// </pre>
     /// </summary>
-    /// <param name="interval"> The interval of tokens within this stream to get text
+    /// <param labelName="interval"> The interval of tokens within this stream to get text
     /// for. </param>
     /// <returns> The text of all tokens within the specified interval in this
     /// stream.
@@ -98,7 +98,7 @@ namespace antlr4 {
     /// String text = stream.getText(ctx.getSourceInterval());
     /// </pre>
     /// </summary>
-    /// <param name="ctx"> The context providing the source interval of tokens to get
+    /// <param labelName="ctx"> The context providing the source interval of tokens to get
     /// text for. </param>
     /// <returns> The text of all tokens within the source interval of {@code ctx}. </returns>
     virtual std::string getText(RuleContext *ctx) = 0;
@@ -124,8 +124,8 @@ namespace antlr4 {
     /// }
     /// </pre>
     /// </summary>
-    /// <param name="start"> The first token in the interval to get text for. </param>
-    /// <param name="stop"> The last token in the interval to get text for (inclusive). </param>
+    /// <param labelName="start"> The first token in the interval to get text for. </param>
+    /// <param labelName="stop"> The last token in the interval to get text for (inclusive). </param>
     /// <returns> The text of all tokens lying between the specified {@code start}
     /// and {@code stop} tokens.
     /// </returns>

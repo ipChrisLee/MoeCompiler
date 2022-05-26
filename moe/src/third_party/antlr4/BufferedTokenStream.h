@@ -162,7 +162,7 @@ namespace antlr4 {
     /// For example, <seealso cref="CommonTokenStream"/> overrides this method to ensure that
     /// the seek target is always an on-channel token.
     ///
-    /// <param name="i"> The target token index. </param>
+    /// <param labelName="i"> The target token index. </param>
     /// <returns> The adjusted target token index. </returns>
     virtual ssize_t adjustSeekIndex(size_t i);
     void lazyInit();

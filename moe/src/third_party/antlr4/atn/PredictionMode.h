@@ -182,7 +182,7 @@ namespace atn {
     /// the end of the decision rule (local context) or end of start rule (full
     /// context).
     /// </summary>
-    /// <param name="configs"> the configuration set to test </param>
+    /// <param labelName="configs"> the configuration set to test </param>
     /// <returns> {@code true} if any configuration in {@code configs} is in a
     /// <seealso cref="RuleStopState"/>, otherwise {@code false} </returns>
     static bool hasConfigInRuleStopState(ATNConfigSet *configs);
@@ -194,7 +194,7 @@ namespace atn {
     /// the end of the decision rule (local context) or end of start rule (full
     /// context).
     /// </summary>
-    /// <param name="configs"> the configuration set to test </param>
+    /// <param labelName="configs"> the configuration set to test </param>
     /// <returns> {@code true} if all configurations in {@code configs} are in a
     /// <seealso cref="RuleStopState"/>, otherwise {@code false} </returns>
     static bool allConfigsInRuleStopStates(ATNConfigSet *configs);
@@ -346,7 +346,7 @@ namespace atn {
     /// Determines if every alternative subset in {@code altsets} contains more
     /// than one alternative.
     /// </summary>
-    /// <param name="altsets"> a collection of alternative subsets </param>
+    /// <param labelName="altsets"> a collection of alternative subsets </param>
     /// <returns> {@code true} if every <seealso cref="BitSet"/> in {@code altsets}
     /// has
     /// <seealso cref="BitSet#cardinality cardinality"/> &gt; 1, otherwise {@code
@@ -357,7 +357,7 @@ namespace atn {
     /// Determines if any single alternative subset in {@code altsets} contains
     /// exactly one alternative.
     /// </summary>
-    /// <param name="altsets"> a collection of alternative subsets </param>
+    /// <param labelName="altsets"> a collection of alternative subsets </param>
     /// <returns> {@code true} if {@code altsets} contains a <seealso
     /// cref="BitSet"/> with
     /// <seealso cref="BitSet#cardinality cardinality"/> 1, otherwise {@code false}
@@ -368,7 +368,7 @@ namespace atn {
     /// Determines if any single alternative subset in {@code altsets} contains
     /// more than one alternative.
     /// </summary>
-    /// <param name="altsets"> a collection of alternative subsets </param>
+    /// <param labelName="altsets"> a collection of alternative subsets </param>
     /// <returns> {@code true} if {@code altsets} contains a <seealso
     /// cref="BitSet"/> with
     /// <seealso cref="BitSet#cardinality cardinality"/> &gt; 1, otherwise {@code
@@ -378,7 +378,7 @@ namespace atn {
     /// <summary>
     /// Determines if every alternative subset in {@code altsets} is equivalent.
     /// </summary>
-    /// <param name="altsets"> a collection of alternative subsets </param>
+    /// <param labelName="altsets"> a collection of alternative subsets </param>
     /// <returns> {@code true} if every member of {@code altsets} is equal to the
     /// others, otherwise {@code false} </returns>
     static bool allSubsetsEqual(const std::vector<antlrcpp::BitSet> &altsets);
@@ -388,7 +388,7 @@ namespace atn {
     /// {@code altsets}. If no such alternative exists, this method returns
     /// <seealso cref="ATN#INVALID_ALT_NUMBER"/>.
     /// </summary>
-    /// <param name="altsets"> a collection of alternative subsets </param>
+    /// <param labelName="altsets"> a collection of alternative subsets </param>
     static size_t getUniqueAlt(const std::vector<antlrcpp::BitSet> &altsets);
 
     /// <summary>
@@ -397,7 +397,7 @@ namespace atn {
     /// cref="BitSet"/>
     /// in {@code altsets}.
     /// </summary>
-    /// <param name="altsets"> a collection of alternative subsets </param>
+    /// <param labelName="altsets"> a collection of alternative subsets </param>
     /// <returns> the set of represented alternatives in {@code altsets} </returns>
     static antlrcpp::BitSet getAlts(const std::vector<antlrcpp::BitSet> &altsets);
 

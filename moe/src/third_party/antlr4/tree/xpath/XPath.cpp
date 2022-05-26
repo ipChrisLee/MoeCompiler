@@ -104,7 +104,7 @@ std::unique_ptr<XPathElement> XPath::getXPathElement(Token *wordToken, bool anyw
     case XPathLexer::TOKEN_REF:
     case XPathLexer::STRING :
       if (ttype == Token::INVALID_TYPE) {
-        throw IllegalArgumentException(word + " at index " + std::to_string(wordToken->getStartIndex()) + " isn't a valid token name");
+        throw IllegalArgumentException(word + " at index " + std::to_string(wordToken->getStartIndex()) + " isn't a valid token labelName");
       }
       if (anywhere)
         return std::unique_ptr<XPathTokenAnywhereElement>(new XPathTokenAnywhereElement(word, (int)ttype));
@@ -112,7 +112,7 @@ std::unique_ptr<XPathElement> XPath::getXPathElement(Token *wordToken, bool anyw
 
     default :
       if (ruleIndex == -1) {
-        throw IllegalArgumentException(word + " at index " + std::to_string(wordToken->getStartIndex()) + " isn't a valid rule name");
+        throw IllegalArgumentException(word + " at index " + std::to_string(wordToken->getStartIndex()) + " isn't a valid rule labelName");
       }
       if (anywhere)
         return std::unique_ptr<XPathRuleAnywhereElement>(new XPathRuleAnywhereElement(word, (int)ruleIndex));

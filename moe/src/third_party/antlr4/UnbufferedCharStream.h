@@ -15,7 +15,7 @@ namespace antlr4 {
   /// that it doesn't buffer all data, not that's it's on demand loading of char.
   class ANTLR4CPP_PUBLIC UnbufferedCharStream : public CharStream {
   public:
-    /// The name or source of this char stream.
+    /// The labelName or source of this char stream.
     std::string name;
 
     explicit UnbufferedCharStream(std::wistream &input);
@@ -34,7 +34,7 @@ namespace antlr4 {
 
     /// <summary>
     /// Decrement number of markers, resetting buffer if we hit 0. </summary>
-    /// <param name="marker"> </param>
+    /// <param labelName="marker"> </param>
     void release(ssize_t marker) override;
     size_t index() override;
 

@@ -84,11 +84,11 @@ namespace tree {
     /// <seealso cref="#visitChildren"/> will return the result of the last child visited
     /// (or return the initial value if the node has no children).
     /// </summary>
-    /// <param name="aggregate"> The previous aggregate value. In the default
+    /// <param labelName="aggregate"> The previous aggregate value. In the default
     /// implementation, the aggregate value is initialized to
     /// <seealso cref="#defaultResult"/>, which is passed as the {@code aggregate} argument
     /// to this method after the first child node is visited. </param>
-    /// <param name="nextResult"> The result of the immediately preceeding call to visit
+    /// <param labelName="nextResult"> The result of the immediately preceeding call to visit
     /// a child node.
     /// </param>
     /// <returns> The updated aggregate result. </returns>
@@ -111,9 +111,9 @@ namespace tree {
     /// child has the potential to determine the result of the visit operation as
     /// a whole.
     /// </summary>
-    /// <param name="node"> The <seealso cref="ParseTree"/> whose children are currently being
+    /// <param labelName="node"> The <seealso cref="ParseTree"/> whose children are currently being
     /// visited. </param>
-    /// <param name="currentResult"> The current aggregate result of the children visited
+    /// <param labelName="currentResult"> The current aggregate result of the children visited
     /// to the current point.
     /// </param>
     /// <returns> {@code true} to continue visiting children. Otherwise return

@@ -35,7 +35,7 @@ namespace antlr4 {
     //static const size_t _EOF = std::ios::eofbit;
 
     /// <summary>
-    /// The value returned by <seealso cref="#getSourceName"/> when the actual name of the
+    /// The value returned by <seealso cref="#getSourceName"/> when the actual labelName of the
     /// underlying source is not known.
     /// </summary>
     static const std::string UNKNOWN_SOURCE_NAME;
@@ -156,7 +156,7 @@ namespace antlr4 {
     /// <p/>
     /// For more information and an example, see <seealso cref="#mark"/>.
     /// </summary>
-    /// <param name="marker"> A marker returned by a call to {@code mark()}. </param>
+    /// <param labelName="marker"> A marker returned by a call to {@code mark()}. </param>
     /// <seealso cref= #mark </seealso>
     virtual void release(ssize_t marker) = 0;
 
@@ -192,7 +192,7 @@ namespace antlr4 {
     /// an <seealso cref="IntStream initializing method"/> has occurred after this stream
     /// was constructed.
     /// </summary>
-    /// <param name="index"> The absolute index to seek to.
+    /// <param labelName="index"> The absolute index to seek to.
     /// </param>
     /// <exception cref="IllegalArgumentException"> if {@code index} is less than 0 </exception>
     /// <exception cref="UnsupportedOperationException"> if the stream does not support
@@ -208,8 +208,8 @@ namespace antlr4 {
     virtual size_t size() = 0;
 
     /// <summary>
-    /// Gets the name of the underlying symbol source. This method returns a
-    /// non-null, non-empty string. If such a name is not known, this method
+    /// Gets the labelName of the underlying symbol source. This method returns a
+    /// non-null, non-empty string. If such a labelName is not known, this method
     /// returns <seealso cref="#UNKNOWN_SOURCE_NAME"/>.
     /// </summary>
     virtual std::string getSourceName() const = 0;

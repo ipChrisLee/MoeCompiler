@@ -28,7 +28,7 @@ namespace atn {
     /// <em>i</em> leads to a semantic predicate before matching a symbol, the
     /// element at index <em>i</em> of the result will be {@code null}.
     /// </summary>
-    /// <param name="s"> the ATN state </param>
+    /// <param labelName="s"> the ATN state </param>
     /// <returns> the expected symbols for each outgoing transition of {@code s}. </returns>
     std::vector<misc::IntervalSet> getDecisionLookahead(ATNState *s) const;
 
@@ -41,8 +41,8 @@ namespace atn {
     /// If {@code ctx} is not {@code null} and the end of the outermost rule is
     /// reached, <seealso cref="Token#EOF"/> is added to the result set.
     /// </summary>
-    /// <param name="s"> the ATN state </param>
-    /// <param name="ctx"> the complete parser context, or {@code null} if the context
+    /// <param labelName="s"> the ATN state </param>
+    /// <param labelName="ctx"> the complete parser context, or {@code null} if the context
     /// should be ignored
     /// </param>
     /// <returns> The set of tokens that can follow {@code s} in the ATN in the
@@ -58,10 +58,10 @@ namespace atn {
     /// If {@code ctx} is not {@code null} and the end of the outermost rule is
     /// reached, <seealso cref="Token#EOF"/> is added to the result set.
     /// </summary>
-    /// <param name="s"> the ATN state </param>
-    /// <param name="stopState"> the ATN state to stop at. This can be a
+    /// <param labelName="s"> the ATN state </param>
+    /// <param labelName="stopState"> the ATN state to stop at. This can be a
     /// <seealso cref="BlockEndState"/> to detect epsilon paths through a closure. </param>
-    /// <param name="ctx"> the complete parser context, or {@code null} if the context
+    /// <param labelName="ctx"> the complete parser context, or {@code null} if the context
     /// should be ignored
     /// </param>
     /// <returns> The set of tokens that can follow {@code s} in the ATN in the

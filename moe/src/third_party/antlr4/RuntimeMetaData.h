@@ -133,10 +133,10 @@ namespace antlr4 {
     /// of that target's known execution environment, which may or may not
     /// resemble the design provided for the Java target.</para>
     /// </summary>
-    /// <param name="generatingToolVersion"> The version of the tool used to generate a parser.
+    /// <param labelName="generatingToolVersion"> The version of the tool used to generate a parser.
     /// This value may be null when called from user code that was not generated
     /// by, and does not reference, the ANTLR 4 Tool itself. </param>
-    /// <param name="compileTimeVersion"> The version of the runtime the parser was
+    /// <param labelName="compileTimeVersion"> The version of the runtime the parser was
     /// compiled against. This should always be passed using a direct reference
     /// to <seealso cref="#VERSION"/>. </param>
     static void checkVersion(const std::string &generatingToolVersion, const std::string &compileTimeVersion);
@@ -146,7 +146,7 @@ namespace antlr4 {
     /// details about the syntax of the input {@code version}.
     /// E.g., from x.y.z return x.y.
     /// </summary>
-    /// <param name="version"> The complete version string. </param>
+    /// <param labelName="version"> The complete version string. </param>
     /// <returns> A string of the form <em>major</em>.<em>minor</em> containing
     /// only the major and minor components of the version string. </returns>
     static std::string getMajorMinorVersion(const std::string &version);

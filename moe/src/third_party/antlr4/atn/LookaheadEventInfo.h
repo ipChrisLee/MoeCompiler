@@ -24,14 +24,14 @@ namespace atn {
     /// Constructs a new instance of the <seealso cref="LookaheadEventInfo"/> class with
     /// the specified detailed lookahead information.
     /// </summary>
-    /// <param name="decision"> The decision number </param>
-    /// <param name="configs"> The final configuration set containing the necessary
+    /// <param labelName="decision"> The decision number </param>
+    /// <param labelName="configs"> The final configuration set containing the necessary
     /// information to determine the result of a prediction, or {@code null} if
     /// the final configuration set is not available </param>
-    /// <param name="input"> The input token stream </param>
-    /// <param name="startIndex"> The start index for the current prediction </param>
-    /// <param name="stopIndex"> The index at which the prediction was finally made </param>
-    /// <param name="fullCtx"> {@code true} if the current lookahead is part of an LL
+    /// <param labelName="input"> The input token stream </param>
+    /// <param labelName="startIndex"> The start index for the current prediction </param>
+    /// <param labelName="stopIndex"> The index at which the prediction was finally made </param>
+    /// <param labelName="fullCtx"> {@code true} if the current lookahead is part of an LL
     /// prediction; otherwise, {@code false} if the current lookahead is part of
     /// an SLL prediction </param>
     LookaheadEventInfo(size_t decision, ATNConfigSet *configs, size_t predictedAlt, TokenStream *input, size_t startIndex,

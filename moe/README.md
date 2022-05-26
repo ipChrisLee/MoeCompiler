@@ -56,6 +56,6 @@ Before use, you should run the commands memtioned in `moe/third_party/README`
 
 Usage: `make pys pys="<pysName>"`
 
-* `<pysName>`: name of python script you wish to execute.
+* `<pysName>`: labelName of python script you wish to execute.
 
     `listall` will show all supported script names.

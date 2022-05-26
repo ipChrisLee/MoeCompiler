@@ -21,7 +21,7 @@ namespace atn {
 
     /// <summary>
     /// Constructs a new {@code type} action with the specified token type value. </summary>
-    /// <param name="type"> The type to assign to the token using <seealso cref="Lexer#setType"/>. </param>
+    /// <param labelName="type"> The type to assign to the token using <seealso cref="Lexer#setType"/>. </param>
     explicit LexerTypeAction(int type);
 
     /// <summary>

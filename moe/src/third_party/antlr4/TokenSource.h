@@ -60,8 +60,8 @@ namespace antlr4 {
     virtual CharStream* getInputStream() = 0;
 
     /// <summary>
-    /// Gets the name of the underlying input source. This method returns a
-    /// non-null, non-empty string. If such a name is not known, this method
+    /// Gets the labelName of the underlying input source. This method returns a
+    /// non-null, non-empty string. If such a labelName is not known, this method
     /// returns <seealso cref="IntStream#UNKNOWN_SOURCE_NAME"/>.
     /// </summary>
     virtual std::string getSourceName() = 0;
@@ -70,7 +70,7 @@ namespace antlr4 {
     /// Set the <seealso cref="TokenFactory"/> this token source should use for creating
     /// <seealso cref="Token"/> objects from the input.
     /// </summary>
-    /// <param name="factory"> The <seealso cref="TokenFactory"/> to use for creating tokens. </param>
+    /// <param labelName="factory"> The <seealso cref="TokenFactory"/> to use for creating tokens. </param>
     template<typename T1>
     void setTokenFactory(TokenFactory<T1> * /*factory*/) {}
 

@@ -31,7 +31,7 @@ namespace pattern {
     /// Construct a new instance of <seealso cref="TagChunk"/> using the specified tag and
     /// no label.
     /// </summary>
-    /// <param name="tag"> The tag, which should be the name of a parser rule or token
+    /// <param labelName="tag"> The tag, which should be the labelName of a parser rule or token
     /// type.
     /// </param>
     /// <exception cref="IllegalArgumentException"> if {@code tag} is {@code null} or
@@ -43,9 +43,9 @@ namespace pattern {
     /// Construct a new instance of <seealso cref="TagChunk"/> using the specified label
     /// and tag.
     /// </summary>
-    /// <param name="label"> The label for the tag. If this is {@code null}, the
+    /// <param labelName="label"> The label for the tag. If this is {@code null}, the
     /// <seealso cref="TagChunk"/> represents an unlabeled tag. </param>
-    /// <param name="tag"> The tag, which should be the name of a parser rule or token
+    /// <param labelName="tag"> The tag, which should be the labelName of a parser rule or token
     /// type.
     /// </param>
     /// <exception cref="IllegalArgumentException"> if {@code tag} is {@code null} or
@@ -68,7 +68,7 @@ namespace pattern {
     /// <summary>
     /// This method returns a text representation of the tag chunk. Labeled tags
     /// are returned in the form {@code label:tag}, and unlabeled tags are
-    /// returned as just the tag name.
+    /// returned as just the tag labelName.
     /// </summary>
     virtual std::string toString() override;
 

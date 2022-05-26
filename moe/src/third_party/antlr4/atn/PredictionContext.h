@@ -73,11 +73,11 @@ namespace atn {
     /// parent.<br/>
     /// <embed src="images/SingletonMerge_DiffRootDiffPar.svg" type="image/svg+xml"/>
     /// </summary>
-    /// <param name="a"> the first <seealso cref="SingletonPredictionContext"/> </param>
-    /// <param name="b"> the second <seealso cref="SingletonPredictionContext"/> </param>
-    /// <param name="rootIsWildcard"> {@code true} if this is a local-context merge,
+    /// <param labelName="a"> the first <seealso cref="SingletonPredictionContext"/> </param>
+    /// <param labelName="b"> the second <seealso cref="SingletonPredictionContext"/> </param>
+    /// <param labelName="rootIsWildcard"> {@code true} if this is a local-context merge,
     /// otherwise false to indicate a full-context merge </param>
-    /// <param name="mergeCache"> </param>
+    /// <param labelName="mergeCache"> </param>
     static Ref<const PredictionContext> mergeSingletons(Ref<const SingletonPredictionContext> a,
                                                         Ref<const SingletonPredictionContext> b,
                                                         bool rootIsWildcard,

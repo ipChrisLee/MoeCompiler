@@ -20,7 +20,7 @@ namespace antlr4 {
     /// specified interval lies entirely within a marked range. For more
     /// information about marked ranges, see IntStream::mark.
     ///
-    /// <param name="interval"> an interval within the stream </param>
+    /// <param labelName="interval"> an interval within the stream </param>
     /// <returns> the text of the specified interval
     /// </returns>
     /// <exception cref="NullPointerException"> if {@code interval} is {@code null} </exception>

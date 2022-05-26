@@ -26,7 +26,7 @@ namespace atn {
 
     /// <summary>
     /// Constructs a new {@code mode} action with the specified mode value. </summary>
-    /// <param name="mode"> The mode value to pass to <seealso cref="Lexer#mode"/>. </param>
+    /// <param labelName="mode"> The mode value to pass to <seealso cref="Lexer#mode"/>. </param>
     explicit LexerModeAction(int mode);
 
     /// <summary>

@@ -12,7 +12,7 @@
 #define CODEPOS "File["  __FILE__  "] Line["  LINE_STR(__LINE__) "] "
 //  https://stackoverflow.com/questions/733056/is-there-a-way-to-get-function-name-inside-a-c-function
 #define FUNINFO __PRETTY_FUNCTION__
-#define NVPAIR(v) std::pair(#v,v) // name-variable pair
+#define NVPAIR(v) std::pair(#v,v) // labelName-variable pair
 
 
 /*  Moe debug tool. You can disable some mdb tool for any time.

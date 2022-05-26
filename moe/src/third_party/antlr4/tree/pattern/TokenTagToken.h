@@ -29,32 +29,32 @@ namespace pattern {
 
     /// <summary>
     /// Constructs a new instance of <seealso cref="TokenTagToken"/> for an unlabeled tag
-    /// with the specified token name and type.
+    /// with the specified token labelName and type.
     /// </summary>
-    /// <param name="tokenName"> The token name. </param>
-    /// <param name="type"> The token type. </param>
+    /// <param labelName="tokenName"> The token labelName. </param>
+    /// <param labelName="type"> The token type. </param>
   public:
     TokenTagToken(const std::string &tokenName, int type); //this(tokenName, type, nullptr);
 
     /// <summary>
     /// Constructs a new instance of <seealso cref="TokenTagToken"/> with the specified
-    /// token name, type, and label.
+    /// token labelName, type, and label.
     /// </summary>
-    /// <param name="tokenName"> The token name. </param>
-    /// <param name="type"> The token type. </param>
-    /// <param name="label"> The label associated with the token tag, or {@code null} if
+    /// <param labelName="tokenName"> The token labelName. </param>
+    /// <param labelName="type"> The token type. </param>
+    /// <param labelName="label"> The label associated with the token tag, or {@code null} if
     /// the token tag is unlabeled. </param>
     TokenTagToken(const std::string &tokenName, int type, const std::string &label);
 
     /// <summary>
-    /// Gets the token name. </summary>
-    /// <returns> The token name. </returns>
+    /// Gets the token labelName. </summary>
+    /// <returns> The token labelName. </returns>
     std::string getTokenName() const;
 
     /// <summary>
     /// Gets the label associated with the rule tag.
     /// </summary>
-    /// <returns> The name of the label associated with the rule tag, or
+    /// <returns> The labelName of the label associated with the rule tag, or
     /// {@code null} if this is an unlabeled rule tag. </returns>
     std::string getLabel() const;
 

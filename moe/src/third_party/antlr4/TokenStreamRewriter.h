@@ -70,8 +70,8 @@ namespace antlr4 {
    *
    * <p>
    * You can also have multiple "instruction streams" and get multiple rewrites
-   * from a single pass over the input. Just name the instruction streams and use
-   * that name again when printing the buffer. This could be useful for generating
+   * from a single pass over the input. Just labelName the instruction streams and use
+   * that labelName again when printing the buffer. This could be useful for generating
    * a C file and also its header file--all from the same buffer:</p>
    *
    * <pre>
@@ -209,11 +209,11 @@ namespace antlr4 {
 
     /// You may have multiple, named streams of rewrite operations.
     /// I'm calling these things "programs."
-    /// Maps String (name) -> rewrite (List)
+    /// Maps String (labelName) -> rewrite (List)
     std::map<std::string, std::vector<RewriteOperation*>> _programs;
 
     /// <summary>
-    /// Map String (program name) -> Integer index </summary>
+    /// Map String (program labelName) -> Integer index </summary>
     std::map<std::string, size_t> _lastRewriteTokenIndexes;
     virtual size_t getLastRewriteTokenIndex(const std::string &programName);
     virtual void setLastRewriteTokenIndex(const std::string &programName, size_t i);

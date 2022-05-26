@@ -30,9 +30,9 @@ namespace dfa {
     /// Constructs a new instance of <seealso cref="Vocabulary"/> from the specified
     /// literal and symbolic token names.
     /// </summary>
-    /// <param name="literalNames"> The literal names assigned to tokens, or {@code null}
+    /// <param labelName="literalNames"> The literal names assigned to tokens, or {@code null}
     /// if no literal names are assigned. </param>
-    /// <param name="symbolicNames"> The symbolic names assigned to tokens, or
+    /// <param labelName="symbolicNames"> The symbolic names assigned to tokens, or
     /// {@code null} if no symbolic names are assigned.
     /// </param>
     /// <seealso cref= #getLiteralName(int) </seealso>
@@ -43,11 +43,11 @@ namespace dfa {
     /// Constructs a new instance of <seealso cref="Vocabulary"/> from the specified
     /// literal, symbolic, and display token names.
     /// </summary>
-    /// <param name="literalNames"> The literal names assigned to tokens, or {@code null}
+    /// <param labelName="literalNames"> The literal names assigned to tokens, or {@code null}
     /// if no literal names are assigned. </param>
-    /// <param name="symbolicNames"> The symbolic names assigned to tokens, or
+    /// <param labelName="symbolicNames"> The symbolic names assigned to tokens, or
     /// {@code null} if no symbolic names are assigned. </param>
-    /// <param name="displayNames"> The display names assigned to tokens, or {@code null}
+    /// <param labelName="displayNames"> The display names assigned to tokens, or {@code null}
     /// to use the values in {@code literalNames} and {@code symbolicNames} as
     /// the source of display names, as described in
     /// <seealso cref="#getDisplayName(int)"/>.
@@ -95,14 +95,14 @@ namespace dfa {
     ///  </tr>
     /// </table>
     /// </summary>
-    /// <param name="tokenType"> The token type.
+    /// <param labelName="tokenType"> The token type.
     /// </param>
     /// <returns> The string literal associated with the specified token type, or
     /// {@code null} if no string literal is associated with the type. </returns>
     std::string_view getLiteralName(size_t tokenType) const;
 
     /// <summary>
-    /// Gets the symbolic name associated with a token type. The string returned
+    /// Gets the symbolic labelName associated with a token type. The string returned
     /// by this method, when not {@code null}, can be used unaltered in a parser
     /// grammar to represent this token type.
     ///
@@ -139,14 +139,14 @@ namespace dfa {
     ///  </tr>
     /// </table>
     /// </summary>
-    /// <param name="tokenType"> The token type.
+    /// <param labelName="tokenType"> The token type.
     /// </param>
-    /// <returns> The symbolic name associated with the specified token type, or
-    /// {@code null} if no symbolic name is associated with the type. </returns>
+    /// <returns> The symbolic labelName associated with the specified token type, or
+    /// {@code null} if no symbolic labelName is associated with the type. </returns>
     std::string_view getSymbolicName(size_t tokenType) const;
 
     /// <summary>
-    /// Gets the display name of a token type.
+    /// Gets the display labelName of a token type.
     ///
     /// <para>ANTLR provides a default implementation of this method, but
     /// applications are free to override the behavior in any manner which makes
@@ -160,9 +160,9 @@ namespace dfa {
     ///  <li>The result of <seealso cref="Integer#toString"/></li>
     /// </ol>
     /// </summary>
-    /// <param name="tokenType"> The token type.
+    /// <param labelName="tokenType"> The token type.
     /// </param>
-    /// <returns> The display name of the token type, for use in error reporting or
+    /// <returns> The display labelName of the token type, for use in error reporting or
     /// other user-visible messages which reference specific token types. </returns>
     std::string getDisplayName(size_t tokenType) const;
 

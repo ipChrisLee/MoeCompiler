@@ -37,18 +37,18 @@ namespace atn {
     /// Constructs a new instance of the <seealso cref="PredicateEvalInfo"/> class with the
     /// specified detailed predicate evaluation information.
     /// </summary>
-    /// <param name="decision"> The decision number </param>
-    /// <param name="input"> The input token stream </param>
-    /// <param name="startIndex"> The start index for the current prediction </param>
-    /// <param name="stopIndex"> The index at which the predicate evaluation was
+    /// <param labelName="decision"> The decision number </param>
+    /// <param labelName="input"> The input token stream </param>
+    /// <param labelName="startIndex"> The start index for the current prediction </param>
+    /// <param labelName="stopIndex"> The index at which the predicate evaluation was
     /// triggered. Note that the input stream may be reset to other positions for
     /// the actual evaluation of individual predicates. </param>
-    /// <param name="semctx"> The semantic context which was evaluated </param>
-    /// <param name="evalResult"> The results of evaluating the semantic context </param>
-    /// <param name="predictedAlt"> The alternative number for the decision which is
+    /// <param labelName="semctx"> The semantic context which was evaluated </param>
+    /// <param labelName="evalResult"> The results of evaluating the semantic context </param>
+    /// <param labelName="predictedAlt"> The alternative number for the decision which is
     /// guarded by the semantic context {@code semctx}. See <seealso cref="#predictedAlt"/>
     /// for more information. </param>
-    /// <param name="fullCtx"> {@code true} if the semantic context was
+    /// <param labelName="fullCtx"> {@code true} if the semantic context was
     /// evaluated during LL prediction; otherwise, {@code false} if the semantic
     /// context was evaluated during SLL prediction
     /// </param>

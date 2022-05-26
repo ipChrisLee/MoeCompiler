@@ -33,7 +33,7 @@ namespace pattern {
   /// The <seealso cref="#matches"/> routines return {@code true} or {@code false} based
   /// upon a match for the tree rooted at the parameter sent in. The
   /// <seealso cref="#match"/> routines return a <seealso cref="ParseTreeMatch"/> object that
-  /// contains the parse tree, the parse tree pattern, and a map from tag name to
+  /// contains the parse tree, the parse tree pattern, and a map from tag labelName to
   /// matched nodes (more below). A subtree that fails to match, returns with
   /// <seealso cref="ParseTreeMatch#mismatchedNode"/> set to the first tree node that did not
   /// match.
@@ -90,7 +90,7 @@ namespace pattern {
     /// Constructs a <seealso cref="ParseTreePatternMatcher"/> or from a <seealso cref="Lexer"/> and
     /// <seealso cref="Parser"/> object. The lexer input stream is altered for tokenizing
     /// the tree patterns. The parser is used as a convenient mechanism to get
-    /// the grammar name, plus token, rule names.
+    /// the grammar labelName, plus token, rule names.
     ParseTreePatternMatcher(Lexer *lexer, Parser *parser);
     virtual ~ParseTreePatternMatcher();
 
@@ -98,9 +98,9 @@ namespace pattern {
     /// Set the delimiters used for marking rule and token tags within concrete
     /// syntax used by the tree pattern parser.
     /// </summary>
-    /// <param name="start"> The start delimiter. </param>
-    /// <param name="stop"> The stop delimiter. </param>
-    /// <param name="escapeLeft"> The escape sequence to use for escaping a start or stop delimiter.
+    /// <param labelName="start"> The start delimiter. </param>
+    /// <param labelName="stop"> The stop delimiter. </param>
+    /// <param labelName="escapeLeft"> The escape sequence to use for escaping a start or stop delimiter.
     /// </param>
     /// <exception cref="IllegalArgumentException"> if {@code start} is {@code null} or empty. </exception>
     /// <exception cref="IllegalArgumentException"> if {@code stop} is {@code null} or empty. </exception>
@@ -144,7 +144,7 @@ namespace pattern {
     virtual Lexer* getLexer();
 
     /// <summary>
-    /// Used to collect to the grammar file name, token names, rule names for
+    /// Used to collect to the grammar file labelName, token names, rule names for
     /// used to parse the pattern into a parse tree.
     /// </summary>
     virtual Parser* getParser();

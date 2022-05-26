@@ -32,7 +32,7 @@ namespace pattern {
 
     /// This method returns a text representation of the tag chunk. Labeled tags
     /// are returned in the form {@code label:tag}, and unlabeled tags are
-    /// returned as just the tag name.
+    /// returned as just the tag labelName.
     virtual std::string toString() {
       std::string str;
       return str;

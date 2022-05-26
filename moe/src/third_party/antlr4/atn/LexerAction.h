@@ -54,7 +54,7 @@ namespace atn {
     /// <para>For position-dependent actions, the input stream must already be
     /// positioned correctly prior to calling this method.</para>
     /// </summary>
-    /// <param name="lexer"> The lexer instance. </param>
+    /// <param labelName="lexer"> The lexer instance. </param>
     virtual void execute(Lexer *lexer) const = 0;
 
     size_t hashCode() const;

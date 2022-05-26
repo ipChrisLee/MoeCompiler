@@ -48,16 +48,16 @@ namespace atn {
     /// Constructs a new instance of the <seealso cref="AmbiguityInfo"/> class with the
     /// specified detailed ambiguity information.
     /// </summary>
-    /// <param name="decision"> The decision number </param>
-    /// <param name="configs"> The final configuration set identifying the ambiguous
+    /// <param labelName="decision"> The decision number </param>
+    /// <param labelName="configs"> The final configuration set identifying the ambiguous
     /// alternatives for the current input </param>
-    /// <param name="ambigAlts"> The set of alternatives in the decision that lead to a valid parse.
+    /// <param labelName="ambigAlts"> The set of alternatives in the decision that lead to a valid parse.
     ///                  The predicted alt is the min(ambigAlts) </param>
-    /// <param name="input"> The input token stream </param>
-    /// <param name="startIndex"> The start index for the current prediction </param>
-    /// <param name="stopIndex"> The index at which the ambiguity was identified during
+    /// <param labelName="input"> The input token stream </param>
+    /// <param labelName="startIndex"> The start index for the current prediction </param>
+    /// <param labelName="stopIndex"> The index at which the ambiguity was identified during
     /// prediction </param>
-    /// <param name="fullCtx"> {@code true} if the ambiguity was identified during LL
+    /// <param labelName="fullCtx"> {@code true} if the ambiguity was identified during LL
     /// prediction; otherwise, {@code false} if the ambiguity was identified
     /// during SLL prediction </param>
     AmbiguityInfo(size_t decision, ATNConfigSet *configs, const antlrcpp::BitSet &ambigAlts, TokenStream *input,

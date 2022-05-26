@@ -59,7 +59,7 @@ namespace antlr4 {
     }
 
     /// <summary>
-    /// For debugging and other purposes, might want the grammar name.
+    /// For debugging and other purposes, might want the grammar labelName.
     ///  Have ANTLR generate an implementation for this method.
     /// </summary>
     virtual std::string getGrammarFileName() const = 0;

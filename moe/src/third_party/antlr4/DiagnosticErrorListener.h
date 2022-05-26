@@ -48,7 +48,7 @@ namespace antlr4 {
     /// Initializes a new instance of <seealso cref="DiagnosticErrorListener"/>, specifying
     /// whether all ambiguities or only exact ambiguities are reported.
     /// </summary>
-    /// <param name="exactOnly"> {@code true} to report only exact ambiguities, otherwise
+    /// <param labelName="exactOnly"> {@code true} to report only exact ambiguities, otherwise
     /// {@code false} to report all ambiguities. </param>
     DiagnosticErrorListener(bool exactOnly);
 
@@ -69,9 +69,9 @@ namespace antlr4 {
     /// configuration set, if that information was not already provided by the
     /// parser.
     /// </summary>
-    /// <param name="reportedAlts"> The set of conflicting or ambiguous alternatives, as
+    /// <param labelName="reportedAlts"> The set of conflicting or ambiguous alternatives, as
     /// reported by the parser. </param>
-    /// <param name="configs"> The conflicting or ambiguous configuration set. </param>
+    /// <param labelName="configs"> The conflicting or ambiguous configuration set. </param>
     /// <returns> Returns {@code reportedAlts} if it is not {@code null}, otherwise
     /// returns the set of alternatives represented in {@code configs}. </returns>
     virtual antlrcpp::BitSet getConflictingAlts(const antlrcpp::BitSet &reportedAlts, atn::ATNConfigSet *configs);

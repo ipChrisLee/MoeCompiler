@@ -26,13 +26,13 @@ namespace atn {
     /// Constructs a new instance of the <seealso cref="ErrorInfo"/> class with the
     /// specified detailed syntax error information.
     /// </summary>
-    /// <param name="decision"> The decision number </param>
-    /// <param name="configs"> The final configuration set reached during prediction
+    /// <param labelName="decision"> The decision number </param>
+    /// <param labelName="configs"> The final configuration set reached during prediction
     /// prior to reaching the <seealso cref="ATNSimulator#ERROR"/> state </param>
-    /// <param name="input"> The input token stream </param>
-    /// <param name="startIndex"> The start index for the current prediction </param>
-    /// <param name="stopIndex"> The index at which the syntax error was identified </param>
-    /// <param name="fullCtx"> {@code true} if the syntax error was identified during LL
+    /// <param labelName="input"> The input token stream </param>
+    /// <param labelName="startIndex"> The start index for the current prediction </param>
+    /// <param labelName="stopIndex"> The index at which the syntax error was identified </param>
+    /// <param labelName="fullCtx"> {@code true} if the syntax error was identified during LL
     /// prediction; otherwise, {@code false} if the syntax error was identified
     /// during SLL prediction </param>
     ErrorInfo(size_t decision, ATNConfigSet *configs, TokenStream *input, size_t startIndex, size_t stopIndex,

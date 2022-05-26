@@ -33,12 +33,12 @@ namespace atn {
     /// Constructs a new instance of the <seealso cref="ContextSensitivityInfo"/> class
     /// with the specified detailed context sensitivity information.
     /// </summary>
-    /// <param name="decision"> The decision number </param>
-    /// <param name="configs"> The final configuration set containing the unique
+    /// <param labelName="decision"> The decision number </param>
+    /// <param labelName="configs"> The final configuration set containing the unique
     /// alternative identified by full-context prediction </param>
-    /// <param name="input"> The input token stream </param>
-    /// <param name="startIndex"> The start index for the current prediction </param>
-    /// <param name="stopIndex"> The index at which the context sensitivity was
+    /// <param labelName="input"> The input token stream </param>
+    /// <param labelName="startIndex"> The start index for the current prediction </param>
+    /// <param labelName="stopIndex"> The index at which the context sensitivity was
     /// identified during full-context prediction </param>
     ContextSensitivityInfo(size_t decision, ATNConfigSet *configs, TokenStream *input, size_t startIndex, size_t stopIndex);
   };

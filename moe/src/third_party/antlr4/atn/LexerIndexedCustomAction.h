@@ -37,10 +37,10 @@ namespace atn {
     /// <para>Note: This class is only required for lexer actions for which
     /// <seealso cref="LexerAction#isPositionDependent"/> returns {@code true}.</para>
     /// </summary>
-    /// <param name="offset"> The offset into the input <seealso cref="CharStream"/>, relative to
+    /// <param labelName="offset"> The offset into the input <seealso cref="CharStream"/>, relative to
     /// the token start index, at which the specified lexer action should be
     /// executed. </param>
-    /// <param name="action"> The lexer action to execute at a particular offset in the
+    /// <param labelName="action"> The lexer action to execute at a particular offset in the
     /// input <seealso cref="CharStream"/>. </param>
     LexerIndexedCustomAction(int offset, Ref<const LexerAction> action);
 

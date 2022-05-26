@@ -149,7 +149,7 @@ ParseTree* ParseTreePatternMatcher::matchImpl(ParseTree *tree, ParseTree *patter
       if (is<TokenTagToken *>(t2->getSymbol())) { // x and <ID>
         TokenTagToken *tokenTagToken = dynamic_cast<TokenTagToken *>(t2->getSymbol());
 
-        // track label->list-of-nodes for both token name and label (if any)
+        // track label->list-of-nodes for both token labelName and label (if any)
         labels[tokenTagToken->getTokenName()].push_back(tree);
         if (tokenTagToken->getLabel() != "") {
           labels[tokenTagToken->getLabel()].push_back(tree);
@@ -181,7 +181,7 @@ ParseTree* ParseTreePatternMatcher::matchImpl(ParseTree *tree, ParseTree *patter
     if (ruleTagToken != nullptr) {
       //ParseTreeMatch *m = nullptr; // unused?
       if (r1->getRuleIndex() == r2->getRuleIndex()) {
-        // track label->list-of-nodes for both rule name and label (if any)
+        // track label->list-of-nodes for both rule labelName and label (if any)
         labels[ruleTagToken->getRuleName()].push_back(tree);
         if (ruleTagToken->getLabel() != "") {
           labels[ruleTagToken->getLabel()].push_back(tree);
@@ -238,7 +238,7 @@ std::vector<std::unique_ptr<Token>> ParseTreePatternMatcher::tokenize(const std:
   for (auto chunk : chunks) {
     if (is<TagChunk *>(&chunk)) {
       TagChunk &tagChunk = (TagChunk&)chunk;
-      // add special rule token or conjure up new token from name
+      // add special rule token or conjure up new token from labelName
       if (isupper(tagChunk.getTag()[0])) {
         size_t ttype = _parser->getTokenType(tagChunk.getTag());
         if (ttype == Token::INVALID_TYPE) {

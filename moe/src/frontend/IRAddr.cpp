@@ -54,6 +54,18 @@ std::string ircode::Scope::getIdChain() const {
 ircode::TypeInfo::TypeInfo(ircode::TypeInfo::Type type) : type(type) {
 }
 
+bool ircode::TypeInfo::operator ==(const ircode::TypeInfo & typeInfo) const {
+	if (type == Type::Unknown || typeInfo.type == Type::Unknown) {
+		return false;
+	} else {
+		return type == typeInfo.type;
+	}
+}
+
+bool ircode::TypeInfo::operator !=(const ircode::TypeInfo & typeInfo) const {
+	return !operator ==(typeInfo);
+}
+
 std::unique_ptr<moeconcept::Cloneable>
 ircode::IntType::_cloneToUniquePtr() const {
 	return std::make_unique<IntType>(*this);
@@ -99,6 +111,15 @@ std::string ircode::IntArrayType::toLLVMIR() const {
 	return buf;
 }
 
+bool
+ircode::IntArrayType::operator ==(const ircode::TypeInfo & typeInfo) const {
+	if (typeInfo.type != Type::IntArray_t) {
+		return false;
+	} else {
+		return shape == (dynamic_cast<const IntArrayType &>(typeInfo).shape);
+	}
+}
+
 
 std::unique_ptr<moeconcept::Cloneable>
 ircode::FloatArrayType::_cloneToUniquePtr() const {
@@ -119,6 +140,15 @@ std::string ircode::FloatArrayType::toLLVMIR() const {
 		buf += "]";
 	}
 	return buf;
+}
+
+bool
+ircode::FloatArrayType::operator ==(const ircode::TypeInfo & typeInfo) const {
+	if (typeInfo.type != Type::FloatArray_t) {
+		return false;
+	} else {
+		return shape == (dynamic_cast<const FloatArrayType &>(typeInfo).shape);
+	}
 }
 
 
@@ -149,6 +179,15 @@ ircode::PointerType::PointerType(const ircode::TypeInfo & pointToType)
 
 std::string ircode::PointerType::toLLVMIR() const {
 	return pointTo->toLLVMIR() + "*";
+}
+
+bool ircode::PointerType::operator ==(const ircode::TypeInfo & typeInfo) const {
+	if (typeInfo.type != Type::Pointer_t) {
+		return false;
+	} else {
+		return *pointTo ==
+		       *(dynamic_cast<const PointerType &>(typeInfo).pointTo);
+	}
 }
 
 std::unique_ptr<moeconcept::Cloneable>
@@ -281,7 +320,7 @@ ircode::IntArrayStaticValue::_cloneToUniquePtr() const {
 ircode::IntArrayStaticValue::IntArrayStaticValue(
 		int len, std::vector<IntStaticValue> vi
 ) : StaticValue(), shape({len}), value(std::move(vi)) {
-		StaticValue::uPtrInfo = std::make_unique<IntArrayType>(shape);
+	StaticValue::uPtrInfo = std::make_unique<IntArrayType>(shape);
 }
 
 ircode::IntArrayStaticValue::IntArrayStaticValue(
@@ -340,8 +379,117 @@ std::string ircode::IntArrayStaticValue::toLLVMIR() const {
 	return fun(0, sz, 0);
 }
 
-int ircode::Addr::cnt=0;
+int ircode::Addr::cnt = 0;
 
-ircode::Addr::Addr() {
-
+ircode::Addr::Addr() : id(++cnt) {
 }
+
+ircode::AddrOperand::AddrOperand(
+		std::string name, const ircode::TypeInfo & typeInfo,
+		bool isConst
+) : isConst(isConst), name(std::move(name)),
+    uPtrTypeInfo(com::dynamic_cast_unique_ptr<moeconcept::Cloneable, TypeInfo>(
+		    typeInfo.cloneToUniquePtr())) {
+}
+
+bool ircode::AddrOperand::isConstant() const {
+	return isConst;
+}
+
+std::string ircode::AddrOperand::getVarName() const {
+	return name;
+}
+
+ircode::AddrMemVar::AddrMemVar(
+		const std::string & name, const ircode::TypeInfo & typeInfo,
+		bool isConst
+) : AddrOperand(name, typeInfo, isConst), isGlobal(false) {
+}
+
+ircode::StaticValue *
+ircode::AddrMemVar::setStaticValue(const ircode::StaticValue & staticValue) {
+	com::Assert(*staticValue.uPtrInfo == *uPtrTypeInfo, "Not same type.",
+	            CODEPOS);
+	uPtrStaticValue = com::dynamic_cast_unique_ptr<moeconcept::Cloneable, StaticValue>(
+			staticValue.cloneToUniquePtr());
+	return uPtrStaticValue.get();
+}
+
+const ircode::StaticValue * ircode::AddrMemVar::getStaticValue() const {
+	return uPtrStaticValue.get();
+}
+
+std::string ircode::AddrMemVar::toLLVMIR() const {
+	com::TODO("", CODEPOS);
+}
+
+
+ircode::AddrRegOperand::AddrRegOperand(const ircode::TypeInfo & typeInfo)
+		: AddrOperand(".", typeInfo, false) {
+}
+
+std::string ircode::AddrRegOperand::toLLVMIR() const {
+	com::TODO("", CODEPOS);
+}
+
+ircode::AddrStaticOperand::AddrStaticOperand(const ircode::TypeInfo & typeInfo)
+		: AddrOperand(".", typeInfo, CODEPOS) {
+}
+
+std::string ircode::AddrStaticOperand::toLLVMIR() const {
+	com::TODO("", CODEPOS);
+}
+
+ircode::AddrJumpLabel::AddrJumpLabel(std::string name) : labelName(
+		std::move(name)) {
+	
+}
+
+std::string ircode::AddrJumpLabel::toLLVMIR() const {
+	std::string buf = "L" + to_string(id) + "." + labelName + ":";
+	return buf;
+}
+
+ircode::AddrPara::AddrPara(
+		std::string name, const ircode::TypeInfo & typeInfo, int number
+) : number(number), name(std::move(name)),
+    uPtrTypeInfo(com::dynamic_cast_unique_ptr<moeconcept::Cloneable, TypeInfo>(
+		    typeInfo.cloneToUniquePtr())) {
+}
+
+std::string ircode::AddrPara::toLLVMIR() const {
+	com::TODO("", CODEPOS);
+}
+
+ircode::AddrFunction::AddrFunction(std::string name) : name(std::move(name)) {
+}
+
+ircode::TypeInfo *
+ircode::AddrFunction::setReturnTypeInfo(const ircode::TypeInfo & typeInfo) {
+	uPtrReturnTypeInfo = com::dynamic_cast_unique_ptr<moeconcept::Cloneable, TypeInfo>(
+			typeInfo.cloneToUniquePtr());
+	return uPtrReturnTypeInfo.get();
+}
+
+const ircode::TypeInfo * ircode::AddrFunction::getReturnTypeInfo() const {
+	return uPtrReturnTypeInfo.get();
+}
+
+void ircode::AddrFunction::pushParameter(const ircode::AddrPara * addrPara) {
+	vecPtrAddrPara.push_back(addrPara);
+}
+
+const ircode::AddrPara *
+ircode::AddrFunction::getNumberThParameterTypeInfo(int number) const {
+	return vecPtrAddrPara[number];
+}
+
+std::string ircode::AddrFunction::toLLVMIR() const {
+	com::TODO("",CODEPOS);
+}
+
+
+ircode::AddrPool::AddrPool() : pBlockRoot(std::make_unique<Scope>(nullptr)){
+}
+
+

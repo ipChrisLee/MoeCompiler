@@ -20,12 +20,12 @@ namespace pattern {
     /// <summary>
     /// Construct a new instance of the <seealso cref="ParseTreePattern"/> class.
     /// </summary>
-    /// <param name="matcher"> The <seealso cref="ParseTreePatternMatcher"/> which created this
+    /// <param labelName="matcher"> The <seealso cref="ParseTreePatternMatcher"/> which created this
     /// tree pattern. </param>
-    /// <param name="pattern"> The tree pattern in concrete syntax form. </param>
-    /// <param name="patternRuleIndex"> The parser rule which serves as the root of the
+    /// <param labelName="pattern"> The tree pattern in concrete syntax form. </param>
+    /// <param labelName="patternRuleIndex"> The parser rule which serves as the root of the
     /// tree pattern. </param>
-    /// <param name="patternTree"> The tree pattern in <seealso cref="ParseTree"/> form. </param>
+    /// <param labelName="patternTree"> The tree pattern in <seealso cref="ParseTree"/> form. </param>
     ParseTreePattern(ParseTreePatternMatcher *matcher, const std::string &pattern, int patternRuleIndex,
                      ParseTree *patternTree);
     ParseTreePattern(ParseTreePattern const&) = default;
@@ -34,7 +34,7 @@ namespace pattern {
     /// <summary>
     /// Match a specific parse tree against this tree pattern.
     /// </summary>
-    /// <param name="tree"> The parse tree to match against this tree pattern. </param>
+    /// <param labelName="tree"> The parse tree to match against this tree pattern. </param>
     /// <returns> A <seealso cref="ParseTreeMatch"/> object describing the result of the
     /// match operation. The <seealso cref="ParseTreeMatch#succeeded()"/> method can be
     /// used to determine whether or not the match was successful. </returns>
@@ -43,7 +43,7 @@ namespace pattern {
     /// <summary>
     /// Determine whether or not a parse tree matches this tree pattern.
     /// </summary>
-    /// <param name="tree"> The parse tree to match against this tree pattern. </param>
+    /// <param labelName="tree"> The parse tree to match against this tree pattern. </param>
     /// <returns> {@code true} if {@code tree} is a match for the current tree
     /// pattern; otherwise, {@code false}. </returns>
     virtual bool matches(ParseTree *tree);

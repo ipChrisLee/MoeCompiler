@@ -24,7 +24,7 @@ namespace antlr4 {
     size_t p;
 
   public:
-    /// What is name or source of this char stream?
+    /// What is labelName or source of this char stream?
     std::string name;
 
     ANTLRInputStream();

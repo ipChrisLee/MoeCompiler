@@ -55,7 +55,7 @@ namespace antlr4 {
     /// This method is called to enter error recovery mode when a recognition
     /// exception is reported.
     /// </summary>
-    /// <param name="recognizer"> the parser instance </param>
+    /// <param labelName="recognizer"> the parser instance </param>
   protected:
     virtual void beginErrorCondition(Parser *recognizer);
 
@@ -69,7 +69,7 @@ namespace antlr4 {
     /// This method is called to leave error recovery mode after recovering from
     /// a recognition exception.
     /// </summary>
-    /// <param name="recognizer"> </param>
+    /// <param labelName="recognizer"> </param>
   protected:
     virtual void endErrorCondition(Parser *recognizer);
 
@@ -163,8 +163,8 @@ namespace antlr4 {
     /// </summary>
     /// <seealso cref= #reportError
     /// </seealso>
-    /// <param name="recognizer"> the parser instance </param>
-    /// <param name="e"> the recognition exception </param>
+    /// <param labelName="recognizer"> the parser instance </param>
+    /// <param labelName="e"> the recognition exception </param>
   protected:
     virtual void reportNoViableAlternative(Parser *recognizer, const NoViableAltException &e);
 
@@ -174,8 +174,8 @@ namespace antlr4 {
     /// </summary>
     /// <seealso cref= #reportError
     /// </seealso>
-    /// <param name="recognizer"> the parser instance </param>
-    /// <param name="e"> the recognition exception </param>
+    /// <param labelName="recognizer"> the parser instance </param>
+    /// <param labelName="e"> the recognition exception </param>
     virtual void reportInputMismatch(Parser *recognizer, const InputMismatchException &e);
 
     /// <summary>
@@ -184,8 +184,8 @@ namespace antlr4 {
     /// </summary>
     /// <seealso cref= #reportError
     /// </seealso>
-    /// <param name="recognizer"> the parser instance </param>
-    /// <param name="e"> the recognition exception </param>
+    /// <param labelName="recognizer"> the parser instance </param>
+    /// <param labelName="e"> the recognition exception </param>
     virtual void reportFailedPredicate(Parser *recognizer, const FailedPredicateException &e);
 
     /**
@@ -293,7 +293,7 @@ namespace antlr4 {
     /// {@code true}, the caller is responsible for creating and inserting a
     /// token with the correct type to produce this behavior.
     /// </summary>
-    /// <param name="recognizer"> the parser instance </param>
+    /// <param labelName="recognizer"> the parser instance </param>
     /// <returns> {@code true} if single-token insertion is a viable recovery
     /// strategy for the current mismatched input, otherwise {@code false} </returns>
   protected:
@@ -313,7 +313,7 @@ namespace antlr4 {
     /// before returning <seealso cref="#reportMatch"/> is called to signal a successful
     /// match.
     /// </summary>
-    /// <param name="recognizer"> the parser instance </param>
+    /// <param labelName="recognizer"> the parser instance </param>
     /// <returns> the successfully matched <seealso cref="Token"/> instance if single-token
     /// deletion successfully recovers from the mismatched input, otherwise
     /// {@code null} </returns>

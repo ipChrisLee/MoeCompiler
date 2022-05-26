@@ -34,9 +34,9 @@ namespace atn {
     /// Constructs a custom lexer action with the specified rule and action
     /// indexes.
     /// </summary>
-    /// <param name="ruleIndex"> The rule index to use for calls to
+    /// <param labelName="ruleIndex"> The rule index to use for calls to
     /// <seealso cref="Recognizer#action"/>. </param>
-    /// <param name="actionIndex"> The action index to use for calls to
+    /// <param labelName="actionIndex"> The action index to use for calls to
     /// <seealso cref="Recognizer#action"/>. </param>
     LexerCustomAction(size_t ruleIndex, size_t actionIndex);
 

@@ -21,7 +21,7 @@ namespace atn {
   public:
     /// <summary>
     /// Constructs an executor for a sequence of <seealso cref="LexerAction"/> actions. </summary>
-    /// <param name="lexerActions"> The lexer actions to execute. </param>
+    /// <param labelName="lexerActions"> The lexer actions to execute. </param>
     explicit LexerActionExecutor(std::vector<Ref<const LexerAction>> lexerActions);
 
     /// <summary>
@@ -29,11 +29,11 @@ namespace atn {
     /// the input {@code lexerActionExecutor} followed by a specified
     /// {@code lexerAction}.
     /// </summary>
-    /// <param name="lexerActionExecutor"> The executor for actions already traversed by
+    /// <param labelName="lexerActionExecutor"> The executor for actions already traversed by
     /// the lexer while matching a token within a particular
     /// <seealso cref="LexerATNConfig"/>. If this is {@code null}, the method behaves as
     /// though it were an empty executor. </param>
-    /// <param name="lexerAction"> The lexer action to execute after the actions
+    /// <param labelName="lexerAction"> The lexer action to execute after the actions
     /// specified in {@code lexerActionExecutor}.
     /// </param>
     /// <returns> A <seealso cref="LexerActionExecutor"/> for executing the combine actions
@@ -64,7 +64,7 @@ namespace atn {
     /// <para>If the current executor already has offsets assigned to all
     /// position-dependent lexer actions, the method returns {@code this}.</para>
     /// </summary>
-    /// <param name="offset"> The current offset to assign to all position-dependent
+    /// <param labelName="offset"> The current offset to assign to all position-dependent
     /// lexer actions which do not already have offsets assigned.
     /// </param>
     /// <returns> A <seealso cref="LexerActionExecutor"/> which stores input stream offsets
@@ -86,12 +86,12 @@ namespace atn {
     /// method returns, the input position will be restored to the same position
     /// it was in when the method was invoked.</para>
     /// </summary>
-    /// <param name="lexer"> The lexer instance. </param>
-    /// <param name="input"> The input stream which is the source for the current token.
+    /// <param labelName="lexer"> The lexer instance. </param>
+    /// <param labelName="input"> The input stream which is the source for the current token.
     /// When this method is called, the current <seealso cref="IntStream#index"/> for
     /// {@code input} should be the start of the following token, i.e. 1
     /// character past the end of the current token. </param>
-    /// <param name="startIndex"> The token start index. This value may be passed to
+    /// <param labelName="startIndex"> The token start index. This value may be passed to
     /// <seealso cref="IntStream#seek"/> to set the {@code input} position to the beginning
     /// of the token. </param>
     void execute(Lexer *lexer, CharStream *input, size_t startIndex) const;

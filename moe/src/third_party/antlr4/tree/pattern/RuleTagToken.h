@@ -33,10 +33,10 @@ namespace pattern {
   public:
     /// <summary>
     /// Constructs a new instance of <seealso cref="RuleTagToken"/> with the specified rule
-    /// name and bypass token type and no label.
+    /// labelName and bypass token type and no label.
     /// </summary>
-    /// <param name="ruleName"> The name of the parser rule this rule tag matches. </param>
-    /// <param name="bypassTokenType"> The bypass token type assigned to the parser rule.
+    /// <param labelName="ruleName"> The labelName of the parser rule this rule tag matches. </param>
+    /// <param labelName="bypassTokenType"> The bypass token type assigned to the parser rule.
     /// </param>
     /// <exception cref="IllegalArgumentException"> if {@code ruleName} is {@code null}
     /// or empty. </exception>
@@ -44,11 +44,11 @@ namespace pattern {
 
     /// <summary>
     /// Constructs a new instance of <seealso cref="RuleTagToken"/> with the specified rule
-    /// name, bypass token type, and label.
+    /// labelName, bypass token type, and label.
     /// </summary>
-    /// <param name="ruleName"> The name of the parser rule this rule tag matches. </param>
-    /// <param name="bypassTokenType"> The bypass token type assigned to the parser rule. </param>
-    /// <param name="label"> The label associated with the rule tag, or {@code null} if
+    /// <param labelName="ruleName"> The labelName of the parser rule this rule tag matches. </param>
+    /// <param labelName="bypassTokenType"> The bypass token type assigned to the parser rule. </param>
+    /// <param labelName="label"> The label associated with the rule tag, or {@code null} if
     /// the rule tag is unlabeled.
     /// </param>
     /// <exception cref="IllegalArgumentException"> if {@code ruleName} is {@code null}
@@ -56,15 +56,15 @@ namespace pattern {
     RuleTagToken(const std::string &ruleName, size_t bypassTokenType, const std::string &label);
 
     /// <summary>
-    /// Gets the name of the rule associated with this rule tag.
+    /// Gets the labelName of the rule associated with this rule tag.
     /// </summary>
-    /// <returns> The name of the parser rule associated with this rule tag. </returns>
+    /// <returns> The labelName of the parser rule associated with this rule tag. </returns>
     std::string getRuleName() const;
 
     /// <summary>
     /// Gets the label associated with the rule tag.
     /// </summary>
-    /// <returns> The name of the label associated with the rule tag, or
+    /// <returns> The labelName of the label associated with the rule tag, or
     /// {@code null} if this is an unlabeled rule tag. </returns>
     std::string getLabel() const;
 

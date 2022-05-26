@@ -109,8 +109,8 @@ namespace atn {
     /// If {@code context} is {@code null}, it is treated as
     /// <seealso cref="ParserRuleContext#EMPTY"/>.
     /// </summary>
-    /// <param name="stateNumber"> the ATN state number </param>
-    /// <param name="context"> the full parse context </param>
+    /// <param labelName="stateNumber"> the ATN state number </param>
+    /// <param labelName="context"> the full parse context </param>
     /// <returns> The set of potentially valid input symbols which could follow the
     /// specified state in the specified context. </returns>
     /// <exception cref="IllegalArgumentException"> if the ATN does not contain a state with

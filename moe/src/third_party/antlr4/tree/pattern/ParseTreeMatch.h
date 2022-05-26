@@ -31,11 +31,11 @@ namespace pattern {
     /// Constructs a new instance of <seealso cref="ParseTreeMatch"/> from the specified
     /// parse tree and pattern.
     /// </summary>
-    /// <param name="tree"> The parse tree to match against the pattern. </param>
-    /// <param name="pattern"> The parse tree pattern. </param>
-    /// <param name="labels"> A mapping from label names to collections of
+    /// <param labelName="tree"> The parse tree to match against the pattern. </param>
+    /// <param labelName="pattern"> The parse tree pattern. </param>
+    /// <param labelName="labels"> A mapping from label names to collections of
     /// <seealso cref="ParseTree"/> objects located by the tree pattern matching process. </param>
-    /// <param name="mismatchedNode"> The first node which failed to match the tree
+    /// <param labelName="mismatchedNode"> The first node which failed to match the tree
     /// pattern during the matching process.
     /// </param>
     /// <exception cref="IllegalArgumentException"> if {@code tree} is {@code null} </exception>
@@ -57,7 +57,7 @@ namespace pattern {
     /// Pattern tags like {@code <ID>} and {@code <expr>} without labels are
     /// considered to be labeled with {@code ID} and {@code expr}, respectively.
     /// </summary>
-    /// <param name="labe"> The label to check.
+    /// <param labelName="labe"> The label to check.
     /// </param>
     /// <returns> The last <seealso cref="ParseTree"/> to match a tag with the specified
     /// label, or {@code null} if no parse tree matched a tag with the label. </returns>
@@ -66,7 +66,7 @@ namespace pattern {
     /// <summary>
     /// Return all nodes matching a rule or token tag with the specified label.
     /// <p/>
-    /// If the {@code label} is the name of a parser rule or token in the
+    /// If the {@code label} is the labelName of a parser rule or token in the
     /// grammar, the resulting list will contain both the parse trees matching
     /// rule or tags explicitly labeled with the label and the complete set of
     /// parse trees matching the labeled and unlabeled tags in the pattern for
@@ -80,7 +80,7 @@ namespace pattern {
     /// <li>Parse tree nodes matching tags of the form {@code <foo>}.</li>
     /// </ul>
     /// </summary>
-    /// <param name="labe"> The label.
+    /// <param labelName="labe"> The label.
     /// </param>
     /// <returns> A collection of all <seealso cref="ParseTree"/> nodes matching tags with
     /// the specified {@code label}. If no nodes matched the label, an empty list

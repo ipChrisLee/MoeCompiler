@@ -25,7 +25,7 @@ namespace pattern {
     /// <summary>
     /// Constructs a new instance of <seealso cref="TextChunk"/> with the specified text.
     /// </summary>
-    /// <param name="text"> The text of this chunk. </param>
+    /// <param labelName="text"> The text of this chunk. </param>
     /// <exception cref="IllegalArgumentException"> if {@code text} is {@code null}. </exception>
   public:
     TextChunk(const std::string &text);

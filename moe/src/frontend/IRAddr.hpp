@@ -1,15 +1,15 @@
 /*  Intro:
  *      `Addr` is a base class of address.
- *          `AddrCompileConst` is address for compile time const. This inclue a info structure
+ *          `AddrCompileConst` is address for compile time const. This includes an info structure
  *          which provides information basing on type of const variable(`int`,`float`,`intArray` 
  *          and `floatArray`)
  *              >Notice:
  *                  Legal expression of operator, const BASIC-TYPE value and literals is
- *                  compile time const.
+ *                  compiling time const.
  *          `AddrOperand` is address for variable declared in source program.
- *              `AddrStaticVar` is a address for static variable (since sysy does not have
+ *              `AddrStaticVar` is an address for static variable (since sysy does not have
  *              key word like `static`, this is for global variable.).
- *              `AddrLocalVar` is a address for local variable.
+ *              `AddrLocalVar` is an address for local variable.
  *      `AddrPool` is like a memory pool of Addr. It also contains a dominator tree where 
  *      every tree node is a scope in source code.
  *          >Notice:
@@ -68,8 +68,6 @@ class Scope {
 };
 
 class AddrPool {
-  public:
-  
   protected:
 	std::vector<std::unique_ptr<Addr>> pool;
 	std::unique_ptr<Scope> pBlockRoot;
@@ -77,18 +75,6 @@ class AddrPool {
 	AddrPool();
 	
 	AddrPool(const AddrPool &) = delete;
-	
-	AddrLocalVar * addAddrLocalVar(const AddrLocalVar &, Scope * pScope);
-	
-	AddrStaticVar * addAddrStaticVar(const AddrStaticVar &, const StaticValue &);
-	
-	Addr * addAddr(const Addr &);
-	
-	//  Add a scope as sub of pFather. This is the only way you can create scope.
-	Scope * addScope(Scope * pFather);
-	
-	//  Get the root scope.
-	Scope * getRootScopePointer();
 	
 	//  Find var named `varname` from scopes. Search from `pFrom` up to scope root.
 	Addr * findAddrDownToRoot(const Scope * pFrom, const std::string & varname);
@@ -102,6 +88,10 @@ class TypeInfo : public LLVMable, public moeconcept::Cloneable {
 	enum class Type {
 		Float_t, Int_t, FloatArray_t, IntArray_t, Pointer_t, Unknown, Bool_t
 	} type;
+	
+	virtual bool operator == (const TypeInfo & typeInfo) const ;
+	
+	virtual bool operator != (const TypeInfo & typeInfo) const ;
 	
 	explicit TypeInfo(Type type);
 };
@@ -142,6 +132,8 @@ class IntArrayType : public TypeInfo {
 	IntArrayType(const IntArrayType &) = default;
 	
 	[[nodiscard]] std::string toLLVMIR() const override;
+	
+	bool operator == (const TypeInfo & typeInfo) const override;
 };
 
 class FloatArrayType : public TypeInfo {
@@ -156,6 +148,8 @@ class FloatArrayType : public TypeInfo {
 	FloatArrayType(const FloatArrayType &) = default;
 	
 	[[nodiscard]] std::string toLLVMIR() const override;
+	
+	bool operator == (const TypeInfo & typeInfo) const override;
 };
 
 class PointerType : public TypeInfo {
@@ -171,6 +165,8 @@ class PointerType : public TypeInfo {
 	explicit PointerType(const TypeInfo & pointToType);
 	
 	[[nodiscard]] std::string toLLVMIR() const override;
+	
+	bool operator == (const TypeInfo & typeInfo) const override;
 };
 
 class BoolType : public TypeInfo {
@@ -245,7 +241,7 @@ class FloatArrayStaticValue : public StaticValue {
 	/*  Create new array from arrays.
 	 *  If arrays in `vi` has shape (3,4) and `len` equals 2, new array
 	 *  is `(2,3,4)` array.
-	 *  This constructor will detect legality of arrays. (They should have same shape.)
+	 *  This constructor will detect legality of arrays. (They should be same in shape.)
 	 * */
 	explicit FloatArrayStaticValue(
 			int len,
@@ -272,7 +268,7 @@ class IntArrayStaticValue : public StaticValue {
 	/*  Create new array from arrays.
 	 *  If arrays in `vi` has shape (3,4) and `len` equals 2, new array
 	 *  is `(2,3,4)` array.
-	 *  This constructor will detect legality of arrays. (They should have same shape.)
+	 *  This constructor will detect legality of arrays. (They should be same in shape.)
 	 * */
 	explicit IntArrayStaticValue(
 			int len, const std::vector<int> & preShape,
@@ -297,9 +293,9 @@ class Addr : public LLVMable {
 	
 	Addr(const Addr &) = delete;
 	
-	virtual ~Addr() { }
+	virtual ~Addr() = default;
 	
-	virtual std::unique_ptr<Addr> getSameExceptScopePointerInstance() const = 0;
+	[[nodiscard]] virtual std::unique_ptr<Addr> getSameExceptScopePointerInstance() const = 0;
 };
 
 /*  Address for LLVM-IR variable.
@@ -313,37 +309,33 @@ class AddrOperand : public Addr {
   public:
 	explicit AddrOperand() = delete;
 	
-	explicit AddrOperand(const std::string & name, const TypeInfo &, bool isConst = false);
+	explicit AddrOperand(std::string name, const TypeInfo &, bool isConst = false);
 	
 	explicit AddrOperand(const AddrOperand &) = delete;
 	
-	virtual ~AddrOperand() = default;
+	~AddrOperand() override = default;
 	
-	bool isconst() const;
+	[[nodiscard]] bool isConstant() const;
 	
-	std::string getVarName() const;
+	[[nodiscard]] std::string getVarName() const;
 };
 
 /*  Addr from source code.
- *  All addr of this type has a name from source code, and can be indexed in symbol table.
+ *  All addr of this type has a labelName from source code, and can be indexed in symbol table.
  *  For variable has static value, `AddrNamedOperand` has a pointer to its static value.
  * */
 class AddrMemVar : public AddrOperand { // may it should be inherited from `Addr`
   protected:
 	std::unique_ptr<StaticValue> uPtrStaticValue;
-	std::string varname;
 	bool isGlobal;
-	bool isConst;
   public:
 	explicit AddrMemVar(const std::string & name, const TypeInfo & typeInfo, bool isConst = false);
 	
 	StaticValue * setStaticValue(const StaticValue &);
 	
-	const StaticValue * getStaticValue() const;
+	[[nodiscard]] const StaticValue * getStaticValue() const;
 	
-	virtual std::string toLLVMIR() const override;
-	
-	virtual std::unique_ptr<Addr> getSameExceptScopePointerInstance() const override;
+	[[nodiscard]] std::string toLLVMIR() const override;
 };
 
 /*  Variable generated in processing source code.
@@ -357,12 +349,10 @@ class AddrRegOperand : public AddrOperand {
 	
 	explicit AddrRegOperand(const AddrRegOperand &) = delete;
 	
-	virtual std::string toLLVMIR() const override;
-	
-	virtual std::unique_ptr<Addr> getSameExceptScopePointerInstance() const override;
+	[[nodiscard]] std::string toLLVMIR() const override;
 };
 
-/*  Static operand. The value of this type operand can be caculated in compile time.
+/*  Static operand. The value of this type operand can be calculated in compile time.
  * */
 class AddrStaticOperand : public AddrOperand {
   public:
@@ -372,20 +362,16 @@ class AddrStaticOperand : public AddrOperand {
 	
 	explicit AddrStaticOperand(const AddrStaticOperand &) = delete;
 	
-	virtual std::string toLLVMIR() const override;
-	
-	virtual std::unique_ptr<Addr> getSameExceptScopePointerInstance() const override;
+	[[nodiscard]] std::string toLLVMIR() const override;
 };
 
 class AddrJumpLabel : public Addr {
   protected:
-	std::string name;
+	std::string labelName;
   public:
-	explicit AddrJumpLabel(const std::string & name = "");
+	explicit AddrJumpLabel(std::string name = "");
 	
-	virtual std::string toLLVMIR() const override;
-	
-	virtual std::unique_ptr<Addr> getSameExceptScopePointerInstance() const override;
+	[[nodiscard]] std::string toLLVMIR() const override;
 };
 
 class AddrPara : public Addr {
@@ -396,40 +382,34 @@ class AddrPara : public Addr {
   public:
 	explicit AddrPara() = delete;
 	
-	explicit AddrPara(const std::string name, const TypeInfo &, int number);
+	explicit AddrPara(std::string name, const TypeInfo &, int number);
 	
 	explicit AddrPara(const AddrPara &) = delete;
 	
-	virtual std::string toLLVMIR() const override;
-	
-	virtual std::unique_ptr<Addr> getSameExceptScopePointerInstance() const override;
+	[[nodiscard]] std::string toLLVMIR() const override;
 };
 
 class AddrFunction : public Addr {
   protected:
 	std::string name;
 	std::unique_ptr<TypeInfo> uPtrReturnTypeInfo; // nullptr for void
-	std::vector<AddrPara *> vecPtrAddrPara;
+	std::vector<const AddrPara *> vecPtrAddrPara;
   public:
 	explicit AddrFunction() = delete;
 	
-	explicit AddrFunction(const std::string & name);
+	explicit AddrFunction(std::string name);
 	
 	explicit AddrFunction(const AddrFunction &) = delete;
 	
 	TypeInfo * setReturnTypeInfo(const TypeInfo &);
 	
-	const TypeInfo * getReturnTypeInfo() const;
+	[[nodiscard]] const TypeInfo * getReturnTypeInfo() const;
 	
-	void pushParameter(const AddrPara &);
+	void pushParameter(const AddrPara *);
 	
-	void pushParameter(const std::string &, const TypeInfo &);
+	[[nodiscard]] const AddrPara * getNumberThParameterTypeInfo(int) const;
 	
-	const AddrPara * getNumberThParameterTypeInfo(int) const;
-	
-	virtual std::string toLLVMIR() const override;
-	
-	virtual std::unique_ptr<Addr> getSameExceptScopePointerInstance() const override;
+	[[nodiscard]] std::string toLLVMIR() const override;
 };
 }
 

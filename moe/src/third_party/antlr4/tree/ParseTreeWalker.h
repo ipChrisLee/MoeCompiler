@@ -23,8 +23,8 @@ namespace tree {
     * recursively walking down into child nodes, then
     * <seealso cref="ParseTreeWalker#exitRule"/> is called after the recursive call to wind up.
 	* </summary>
-    * <param name='listener'> The listener used by the walker to process grammar rules </param>
-	* <param name='t'> The parse tree to be walked on </param>
+    * <param labelName='listener'> The listener used by the walker to process grammar rules </param>
+	* <param labelName='t'> The parse tree to be walked on </param>
     */
     virtual void walk(ParseTreeListener *listener, ParseTree *t) const;
 
@@ -35,8 +35,8 @@ namespace tree {
     * Enters a grammar rule by first triggering the generic event <seealso cref="ParseTreeListener#enterEveryRule"/>
 	* then by triggering the event specific to the given parse tree node
 	* </summary>
-    * <param name='listener'> The listener responding to the trigger events </param>
-	* <param name='r'> The grammar rule containing the rule context </param>
+    * <param labelName='listener'> The listener responding to the trigger events </param>
+	* <param labelName='r'> The grammar rule containing the rule context </param>
     */
     virtual void enterRule(ParseTreeListener *listener, ParseTree *r) const;
 
@@ -45,8 +45,8 @@ namespace tree {
     * Exits a grammar rule by first triggering the event specific to the given parse tree node
 	* then by triggering the generic event <seealso cref="ParseTreeListener#exitEveryRule"/>
 	* </summary>
-    * <param name='listener'> The listener responding to the trigger events </param>
-	* <param name='r'> The grammar rule containing the rule context </param>
+    * <param labelName='listener'> The listener responding to the trigger events </param>
+	* <param labelName='r'> The grammar rule containing the rule context </param>
     */
     virtual void exitRule(ParseTreeListener *listener, ParseTree *r) const;
   };

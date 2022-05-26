@@ -31,7 +31,7 @@ namespace antlr4 {
 
     /// <summary>
     /// Reset the error handler state for the specified {@code recognizer}. </summary>
-    /// <param name="recognizer"> the parser instance </param>
+    /// <param labelName="recognizer"> the parser instance </param>
     virtual ~ANTLRErrorStrategy();
 
     virtual void reset(Parser *recognizer) = 0;
@@ -63,8 +63,8 @@ namespace antlr4 {
     /// </summary>
     /// <seealso cref= #reportError
     /// </seealso>
-    /// <param name="recognizer"> the parser instance </param>
-    /// <param name="e"> the recognition exception to recover from </param>
+    /// <param labelName="recognizer"> the parser instance </param>
+    /// <param labelName="e"> the recognition exception to recover from </param>
     /// <exception cref="RecognitionException"> if the error strategy could not recover from
     /// the recognition exception </exception>
     virtual void recover(Parser *recognizer, std::exception_ptr e) = 0;
@@ -83,7 +83,7 @@ namespace antlr4 {
     /// </summary>
     /// <seealso cref= DefaultErrorStrategy#sync
     /// </seealso>
-    /// <param name="recognizer"> the parser instance </param>
+    /// <param labelName="recognizer"> the parser instance </param>
     /// <exception cref="RecognitionException"> if an error is detected by the error
     /// strategy but cannot be automatically recovered at the current state in
     /// the parsing process </exception>
@@ -97,7 +97,7 @@ namespace antlr4 {
     /// {@link ParserRuleContext#addErrorNode(ErrorNode)} instead of
     /// {@link Parser#createTerminalNode(ParserRuleContext, Token)}.
     /// </summary>
-    /// <param name="recognizer"> the parser instance </param>
+    /// <param labelName="recognizer"> the parser instance </param>
     /// <returns> {@code true} if the parser is currently recovering from a parse
     /// error, otherwise {@code false} </returns>
     virtual bool inErrorRecoveryMode(Parser *recognizer) = 0;
@@ -106,15 +106,15 @@ namespace antlr4 {
     /// This method is called by when the parser successfully matches an input
     /// symbol.
     /// </summary>
-    /// <param name="recognizer"> the parser instance </param>
+    /// <param labelName="recognizer"> the parser instance </param>
     virtual void reportMatch(Parser *recognizer) = 0;
 
     /// <summary>
     /// Report any kind of <seealso cref="RecognitionException"/>. This method is called by
     /// the default exception handler generated for a rule method.
     /// </summary>
-    /// <param name="recognizer"> the parser instance </param>
-    /// <param name="e"> the recognition exception to report </param>
+    /// <param labelName="recognizer"> the parser instance </param>
+    /// <param labelName="e"> the recognition exception to report </param>
     virtual void reportError(Parser *recognizer, const RecognitionException &e) = 0;
   };
 
