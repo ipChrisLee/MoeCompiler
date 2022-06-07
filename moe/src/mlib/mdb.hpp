@@ -7,9 +7,11 @@
 #include "cprt.hpp"
 
 // https://zhuanlan.zhihu.com/p/141690132
+#ifndef CODEPOS //  prevent redefinition from common.hpp
 #define STR(t) #t 
 #define LINE_STR(v) STR(v)
 #define CODEPOS "File["  __FILE__  "] Line["  LINE_STR(__LINE__) "] "
+#endif
 //  https://stackoverflow.com/questions/733056/is-there-a-way-to-get-function-name-inside-a-c-function
 #define FUNINFO __PRETTY_FUNCTION__
 #define NVPAIR(v) std::pair(#v,v) // labelName-variable pair

@@ -17,28 +17,26 @@ std::string concatToString(std::initializer_list<std::string> listOfStr) {
 
 [[noreturn]] void Throw(const std::string_view msg, std::string_view codepos) {
 	std::string buf;
-	if (codepos.length()) buf = "Code Position [" + std::string(codepos) + "] | ";
+	if (codepos.length())
+		buf = "Code Position [" + std::string(codepos) + "] | ";
 	buf += "Moe Exception! {" + std::string(msg) + "}";
 	throw MException(buf);
 }
 
-[[noreturn]] void ThrowSingletonNotInited(const std::string_view className, std::string_view codepos) {
-	com::Throw("Using uninited singleton [" + std::string(className) + "]", codepos);
-}
-
 [[noreturn]] void TODO(const std::string_view msg, std::string_view codepos) {
-	Throw("Not implemented error by \'TODO()\'[" + std::string(msg) + "].", codepos);
+	Throw("Not implemented error by \'TODO()\'[" + std::string(msg) + "].",
+	      codepos);
 }
 
-void notFinished(const std::string_view msg, const std::string_view codepos) {
-	com::ccerr.cprintLn(std::tuple("Not finished code [", msg, "] in ", codepos));
-}
 
 void Assert(bool b, const std::string & msg, const std::string & codepos) {
 	if (!b) { com::Throw(" Assertion failed : [" + msg + "]", codepos); }
 }
 
-void Assert(const std::function<bool(void)> & fun, const std::string & msg, const std::string & codepos) {
+void Assert(
+		const std::function<bool(void)> & fun, const std::string & msg,
+		const std::string & codepos
+) {
 	if (!fun()) { com::Throw(" Assertion failed : [" + msg + "]", codepos); }
 }
 
@@ -53,12 +51,26 @@ void bmeBrace(
 }
 }
 
-void com::regSwitch(const std::string & str, std::initializer_list<RegexSwitchCase> cases) {
+void com::regSwitch(
+		const std::string & str, std::initializer_list<RegexSwitchCase> cases
+) {
 	for (const auto & kase : cases) {
 		if (std::regex_match(str, std::regex(kase.regex))) {
 			kase.fun();
 			break;
 		}
 	}
+}
+
+
+std::vector<std::pair<std::string,std::string>>com::WarningList::msgAndCodepos;
+
+void com::addWarning(const std::string & msg, std::string_view codepos) {
+	WarningList::msgAndCodepos.push_back(
+			std::make_pair<>(msg, std::string(codepos)));
+}
+
+void com::showAllWarning(const std::string & filePath) {
+	com::TODO("common.cpp::showAllWarning not Finished.");
 }
 

@@ -32,19 +32,24 @@
 
 
 namespace ircode {
+
 class Addr;
-
-class AddrOperand;
-
-class AddrLocalVar;
-
-class AddrStaticVar;
 
 class StaticValue;
 
+enum class IdType {
+	GlobalVarName,
+	FunctionName,
+	ParameterName,
+	LocalVarName,
+	ReservedWord,
+	BuildInFunction,
+	Error
+};
+
 class Scope {
   protected:
-	std::map<std::string, Addr *> addrMap;
+	std::map<std::string, std::tuple<IdType, Addr *>> addrMap;
 	Scope * const father;
 	std::vector<std::unique_ptr<Scope>> sons;
 	const int id;
@@ -60,9 +65,12 @@ class Scope {
 	
 	Scope * getThis();
 	
-	void bindDominateVar(Addr * addrVar);
+	void
+	bindDominateVar(const std::string & str, IdType idType, Addr * addrVar);
 	
-	[[nodiscard]] Addr * findIdInThisScope(const std::string & varname) const;
+	//  Find the Addr* of varname. Return <IdType::Error,nullptr> if not found.
+	[[nodiscard]] std::tuple<IdType, Addr *>
+	findIdInThisScope(const std::string & varname) const;
 	
 	[[nodiscard]] std::string getIdChain() const;
 };
@@ -70,35 +78,47 @@ class Scope {
 class AddrPool {
   protected:
 	std::vector<std::unique_ptr<Addr>> pool;
-	std::unique_ptr<Scope> pBlockRoot;
+	std::unique_ptr<Scope> pScopeRoot;
   public:
 	AddrPool();
 	
 	AddrPool(const AddrPool &) = delete;
 	
 	//  Find var named `varname` from scopes. Search from `pFrom` up to scope root.
-	Addr * findAddrDownToRoot(const Scope * pFrom, const std::string & varname);
+	std::tuple<IdType, Addr *>
+	findAddrDownToRoot(const Scope * pFrom, const std::string & name);
+	
+	Addr * addAddrToScope(
+			const Addr & addr, Scope * pScope, IdType idType,
+			const std::string & name
+	);
+	
+	Addr * addAddrWithoutScope(const Addr & addr);
+	
+	[[nodiscard]] Scope * getRootScope() const;
 };
 
 class TypeInfo : public LLVMable, public moeconcept::Cloneable {
   protected:
-	[[nodiscard]] std::unique_ptr<moeconcept::Cloneable> _cloneToUniquePtr() const override = 0;
+	[[nodiscard]] std::unique_ptr<moeconcept::Cloneable>
+	_cloneToUniquePtr() const override = 0;
   
   public:
 	enum class Type {
 		Float_t, Int_t, FloatArray_t, IntArray_t, Pointer_t, Unknown, Bool_t
 	} type;
 	
-	virtual bool operator == (const TypeInfo & typeInfo) const ;
+	virtual bool operator ==(const TypeInfo & typeInfo) const;
 	
-	virtual bool operator != (const TypeInfo & typeInfo) const ;
+	virtual bool operator !=(const TypeInfo & typeInfo) const;
 	
 	explicit TypeInfo(Type type);
 };
 
 class IntType : public TypeInfo {
   protected:
-	[[nodiscard]] std::unique_ptr<moeconcept::Cloneable> _cloneToUniquePtr() const override;
+	[[nodiscard]] std::unique_ptr<moeconcept::Cloneable>
+	_cloneToUniquePtr() const override;
   
   public:
 	explicit IntType();
@@ -110,7 +130,8 @@ class IntType : public TypeInfo {
 
 class FloatType : public TypeInfo {
   protected:
-	[[nodiscard]] std::unique_ptr<moeconcept::Cloneable> _cloneToUniquePtr() const override;
+	[[nodiscard]] std::unique_ptr<moeconcept::Cloneable>
+	_cloneToUniquePtr() const override;
   
   public:
 	explicit FloatType();
@@ -122,7 +143,8 @@ class FloatType : public TypeInfo {
 
 class IntArrayType : public TypeInfo {
   protected:
-	[[nodiscard]] std::unique_ptr<moeconcept::Cloneable> _cloneToUniquePtr() const override;
+	[[nodiscard]] std::unique_ptr<moeconcept::Cloneable>
+	_cloneToUniquePtr() const override;
   
   public:
 	std::vector<int> shape;
@@ -133,12 +155,13 @@ class IntArrayType : public TypeInfo {
 	
 	[[nodiscard]] std::string toLLVMIR() const override;
 	
-	bool operator == (const TypeInfo & typeInfo) const override;
+	bool operator ==(const TypeInfo & typeInfo) const override;
 };
 
 class FloatArrayType : public TypeInfo {
   protected:
-	[[nodiscard]] std::unique_ptr<moeconcept::Cloneable> _cloneToUniquePtr() const override;
+	[[nodiscard]] std::unique_ptr<moeconcept::Cloneable>
+	_cloneToUniquePtr() const override;
   
   public:
 	std::vector<int> shape;
@@ -149,12 +172,13 @@ class FloatArrayType : public TypeInfo {
 	
 	[[nodiscard]] std::string toLLVMIR() const override;
 	
-	bool operator == (const TypeInfo & typeInfo) const override;
+	bool operator ==(const TypeInfo & typeInfo) const override;
 };
 
 class PointerType : public TypeInfo {
   protected:
-	[[nodiscard]] std::unique_ptr<moeconcept::Cloneable> _cloneToUniquePtr() const override;
+	[[nodiscard]] std::unique_ptr<moeconcept::Cloneable>
+	_cloneToUniquePtr() const override;
   
   public:
 	std::unique_ptr<TypeInfo> pointTo; // This should not be a `PointerType`.
@@ -166,12 +190,13 @@ class PointerType : public TypeInfo {
 	
 	[[nodiscard]] std::string toLLVMIR() const override;
 	
-	bool operator == (const TypeInfo & typeInfo) const override;
+	bool operator ==(const TypeInfo & typeInfo) const override;
 };
 
 class BoolType : public TypeInfo {
   protected:
-	[[nodiscard]] std::unique_ptr<moeconcept::Cloneable> _cloneToUniquePtr() const override;
+	[[nodiscard]] std::unique_ptr<moeconcept::Cloneable>
+	_cloneToUniquePtr() const override;
   
   public:
 	explicit BoolType();
@@ -183,7 +208,8 @@ class BoolType : public TypeInfo {
 
 class StaticValue : public LLVMable, public moeconcept::Cloneable {
   protected:
-	[[nodiscard]] std::unique_ptr<moeconcept::Cloneable> _cloneToUniquePtr() const override = 0;
+	[[nodiscard]] std::unique_ptr<moeconcept::Cloneable>
+	_cloneToUniquePtr() const override = 0;
   
   public:
 	std::unique_ptr<TypeInfo> uPtrInfo;
@@ -195,11 +221,15 @@ class StaticValue : public LLVMable, public moeconcept::Cloneable {
 	StaticValue(const StaticValue & staticValue);
 	
 	~StaticValue() override = default;
+	
+	[[nodiscard]] virtual std::unique_ptr<StaticValue>
+	getValue(const std::vector<int> &) const = 0;
 };
 
 class FloatStaticValue : public StaticValue {
   protected:
-	[[nodiscard]] std::unique_ptr<moeconcept::Cloneable> _cloneToUniquePtr() const override;
+	[[nodiscard]] std::unique_ptr<moeconcept::Cloneable>
+	_cloneToUniquePtr() const override;
   
   public:
 	float value;
@@ -209,11 +239,15 @@ class FloatStaticValue : public StaticValue {
 	FloatStaticValue(const FloatStaticValue &) = default;
 	
 	[[nodiscard]] std::string toLLVMIR() const override;
+	
+	[[nodiscard]] std::unique_ptr<StaticValue>
+	getValue(const std::vector<int> &) const override;
 };
 
 class IntStaticValue : public StaticValue {
   protected:
-	[[nodiscard]] std::unique_ptr<moeconcept::Cloneable> _cloneToUniquePtr() const override;
+	[[nodiscard]] std::unique_ptr<moeconcept::Cloneable>
+	_cloneToUniquePtr() const override;
   
   public:
 	int value;
@@ -223,11 +257,15 @@ class IntStaticValue : public StaticValue {
 	IntStaticValue(const IntStaticValue &) = default;
 	
 	[[nodiscard]] std::string toLLVMIR() const override;
+	
+	[[nodiscard]] std::unique_ptr<StaticValue>
+	getValue(const std::vector<int> &) const override;
 };
 
 class FloatArrayStaticValue : public StaticValue {
   protected:
-	[[nodiscard]] std::unique_ptr<moeconcept::Cloneable> _cloneToUniquePtr() const override;
+	[[nodiscard]] std::unique_ptr<moeconcept::Cloneable>
+	_cloneToUniquePtr() const override;
   
   public:
 	std::vector<int> shape;
@@ -252,11 +290,15 @@ class FloatArrayStaticValue : public StaticValue {
 	FloatArrayStaticValue(const FloatArrayStaticValue &) = default;
 	
 	[[nodiscard]] std::string toLLVMIR() const override;
+	
+	[[nodiscard]] std::unique_ptr<StaticValue>
+	getValue(const std::vector<int> & ind) const override;
 };
 
 class IntArrayStaticValue : public StaticValue {
   protected:
-	[[nodiscard]] std::unique_ptr<moeconcept::Cloneable> _cloneToUniquePtr() const override;
+	[[nodiscard]] std::unique_ptr<moeconcept::Cloneable>
+	_cloneToUniquePtr() const override;
   
   public:
 	std::vector<int> shape;
@@ -278,119 +320,143 @@ class IntArrayStaticValue : public StaticValue {
 	IntArrayStaticValue(const IntArrayStaticValue &) = default;
 	
 	[[nodiscard]] std::string toLLVMIR() const override;
+	
+	[[nodiscard]] std::unique_ptr<StaticValue>
+	getValue(const std::vector<int> & ind) const override;
 };
 
-/*  First part of IR design: Address used in three-address-code.
- *  NOTICE: Copy constructor of Addr is deleted.
- * */
-class Addr : public LLVMable {
+class Addr : public LLVMable, public moeconcept::Cloneable {
   protected:
+	[[nodiscard]] std::unique_ptr<Cloneable> _cloneToUniquePtr() const override;
+	
 	static int cnt;
   public:
 	const int id;
 	
 	Addr();
 	
-	Addr(const Addr &) = delete;
+	Addr(const Addr &);
 	
-	virtual ~Addr() = default;
+	Addr & operator =(const Addr &) = delete;
 	
-	[[nodiscard]] virtual std::unique_ptr<Addr> getSameExceptScopePointerInstance() const = 0;
+	~Addr() override = default;
 };
 
-/*  Address for LLVM-IR variable.
- *  This is inherited by `AddrNamedVar` and `AddrTmpVar`.
+/*  For LLVM-IR variable.
+ *  In LLVM-IR, the `AddrVariable` is like `%V.name` (variable from source code)
+ *  or `%V.1` (for temporary).
  * */
-class AddrOperand : public Addr {
+class AddrVariable : public Addr {
   protected:
-	bool isConst;
+	[[nodiscard]] std::unique_ptr<Cloneable> _cloneToUniquePtr() const override;
+	
+	//  For temporary variable, name is empty.
 	std::string name;
+	//  For SysY, if the variable is const, its value is compile-time value.
+	bool isConst;
+	std::unique_ptr<StaticValue> uPtrStaticValue;
+	
 	std::unique_ptr<TypeInfo> uPtrTypeInfo;
   public:
-	explicit AddrOperand() = delete;
+	explicit AddrVariable(const TypeInfo &, std::string name = "");
 	
-	explicit AddrOperand(std::string name, const TypeInfo &, bool isConst = false);
+	AddrVariable(
+			const TypeInfo &, std::string name, const StaticValue &
+	);
 	
-	explicit AddrOperand(const AddrOperand &) = delete;
+	AddrVariable(const AddrVariable &);
 	
-	~AddrOperand() override = default;
+	~AddrVariable() override = default;
 	
-	[[nodiscard]] bool isConstant() const;
-	
-	[[nodiscard]] std::string getVarName() const;
+	[[nodiscard]] std::string toLLVMIR() const override;
 };
 
-/*  Addr from source code.
- *  All addr of this type has a labelName from source code, and can be indexed in symbol table.
- *  For variable has static value, `AddrNamedOperand` has a pointer to its static value.
- * */
-class AddrMemVar : public AddrOperand { // may it should be inherited from `Addr`
+class AddrGlobalVariable : public Addr {
   protected:
+	[[nodiscard]] std::unique_ptr<Cloneable> _cloneToUniquePtr() const override;
+	
+	//  For temporary variable, name is empty.
+	std::string name;
+	//  For SysY, if the variable is const, its value is compile-time value.
+	bool isConst;
 	std::unique_ptr<StaticValue> uPtrStaticValue;
-	bool isGlobal;
+	
+	std::unique_ptr<TypeInfo> uPtrTypeInfo;
   public:
-	explicit AddrMemVar(const std::string & name, const TypeInfo & typeInfo, bool isConst = false);
 	
-	StaticValue * setStaticValue(const StaticValue &);
+	AddrGlobalVariable(const TypeInfo &, std::string name);
 	
-	[[nodiscard]] const StaticValue * getStaticValue() const;
+	AddrGlobalVariable(const TypeInfo &, std::string name, const StaticValue &);
+	
+	AddrGlobalVariable(const AddrGlobalVariable &);
+	
+	~AddrGlobalVariable() override = default;
 	
 	[[nodiscard]] std::string toLLVMIR() const override;
+	
 };
 
-/*  Variable generated in processing source code.
- *  For example, `int x=1+2+3;` => `add t1,1,2;add x,t1,3;`, `t1` is temporary variable.
+/*  For compile time value.
  * */
-class AddrRegOperand : public AddrOperand {
+class AddrStaticValue : public Addr {
+  protected:
+	[[nodiscard]] std::unique_ptr<Cloneable> _cloneToUniquePtr() const override;
+	
+	std::unique_ptr<TypeInfo> uPtrTypeInfo;
+	std::unique_ptr<StaticValue> uPtrStaticValue;
   public:
-	explicit AddrRegOperand() = delete;
+	AddrStaticValue(const TypeInfo &, const StaticValue &);
 	
-	explicit AddrRegOperand(const TypeInfo &);
+	AddrStaticValue(const AddrStaticValue &);
 	
-	explicit AddrRegOperand(const AddrRegOperand &) = delete;
+	~AddrStaticValue() override = default;
 	
 	[[nodiscard]] std::string toLLVMIR() const override;
 };
 
-/*  Static operand. The value of this type operand can be calculated in compile time.
+/*  For LLVM-IR jump label.
+ *  In LLVM-IR, `AddrJumpLabel` is like `L.123.if.then` where `123` is id of addr,
+ *  `.if.then` is `labelName`.
  * */
-class AddrStaticOperand : public AddrOperand {
-  public:
-	explicit AddrStaticOperand() = delete;
-	
-	explicit AddrStaticOperand(const TypeInfo &);
-	
-	explicit AddrStaticOperand(const AddrStaticOperand &) = delete;
-	
-	[[nodiscard]] std::string toLLVMIR() const override;
-};
-
 class AddrJumpLabel : public Addr {
   protected:
+	[[nodiscard]] std::unique_ptr<Cloneable> _cloneToUniquePtr() const override;
+	
 	std::string labelName;
   public:
-	explicit AddrJumpLabel(std::string name = "");
+	explicit AddrJumpLabel(std::string labelName = "");
+	
+	AddrJumpLabel(const AddrJumpLabel &) = default;
 	
 	[[nodiscard]] std::string toLLVMIR() const override;
 };
 
+/*  For LLVM-IR parameter.
+ *  In LLVM-IR, `AddrPara` is like `%P.name`, where name is the name from source code.
+ * */
 class AddrPara : public Addr {
   protected:
+	[[nodiscard]] std::unique_ptr<Cloneable> _cloneToUniquePtr() const override;
+	
 	int number; // number-th parameter
 	std::string name;
 	std::unique_ptr<TypeInfo> uPtrTypeInfo;
   public:
-	explicit AddrPara() = delete;
-	
 	explicit AddrPara(std::string name, const TypeInfo &, int number);
 	
-	explicit AddrPara(const AddrPara &) = delete;
+	AddrPara(const AddrPara &);
 	
 	[[nodiscard]] std::string toLLVMIR() const override;
 };
 
+/*  For LLVM-IR function.
+ *  In LLVM-IR, the `AddrFunction` is like `F.name` where name is the name of function
+ *  from source code.
+ * */
 class AddrFunction : public Addr {
   protected:
+	[[nodiscard]] std::unique_ptr<Cloneable> _cloneToUniquePtr() const override;
+	
 	std::string name;
 	std::unique_ptr<TypeInfo> uPtrReturnTypeInfo; // nullptr for void
 	std::vector<const AddrPara *> vecPtrAddrPara;
@@ -399,7 +465,7 @@ class AddrFunction : public Addr {
 	
 	explicit AddrFunction(std::string name);
 	
-	explicit AddrFunction(const AddrFunction &) = delete;
+	AddrFunction(const AddrFunction &);
 	
 	TypeInfo * setReturnTypeInfo(const TypeInfo &);
 	

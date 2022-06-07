@@ -61,6 +61,8 @@ class quat_t : public moeconcept::Stringable {
 				return "qUndefined";
 			case QValue::Chaos      :
 				return "qChaos";
+			default:
+				return "";
 		}
 	}
 	

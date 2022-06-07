@@ -65,16 +65,19 @@ struct Storable {
  *      instance has same type of copied one.
  *  2.  Since `cloneToUniquePtr()` returns `unique_ptr<Cloneable>`, you should convert it
  *      to other types manually by calling `com::dynamic_cast_unique_ptr`. (See common.hpp)
+ *      UPD: for now, calling `com::cloneable_cast_uPtr` is also OK.
  *  3.  If you use `make_unique(*this)` as implementation method, notice to define copy
  *      constructor (since in our project, `std::unique_ptr` is always a member, which does NOT
  *      have a copy constructor, and will delete the default copy constructor of you class).
  * */
 class Cloneable {
   protected:
-	[[nodiscard]] virtual std::unique_ptr<Cloneable> _cloneToUniquePtr() const = 0;
+	[[nodiscard]] virtual std::unique_ptr<Cloneable>
+	_cloneToUniquePtr() const = 0;
   
   public:
-	[[nodiscard]] virtual std::unique_ptr<Cloneable> cloneToUniquePtr() const final {
+	[[nodiscard]] virtual std::unique_ptr<Cloneable>
+	cloneToUniquePtr() const final {
 		std::unique_ptr<Cloneable> clonedUniquePtr = _cloneToUniquePtr();
 		Cloneable * clonedPtr = clonedUniquePtr.get(); /* NOLINT */ // For `-Wpotentially-evaluated-expression`.
 		if (typeid(*clonedPtr) != typeid(*this)) {
@@ -84,11 +87,46 @@ class Cloneable {
 					                               "], which is different to the type of `this` [",
 					                               typeid(*this).name(),
 					                               "]. Check if you have implemented `__cloneToUniquePtr` method of type",
-					                               typeid(*this).name(), " first."}));
+					                               typeid(*this).name(),
+					                               " first."}));
 		}
 		return clonedUniquePtr;
 	}
 	
 	virtual ~Cloneable() = default;
 };
+}
+
+namespace com {
+
+/*  dynamic_cast for `unique_ptr` from moeconcept::Cloneable.
+ * */
+template<typename To>
+std::unique_ptr<To>
+cloneable_cast_uPtr(std::unique_ptr<moeconcept::Cloneable> && fromP) {
+	//  return nullptr if source pointer is nullptr.
+	if (!fromP) { return std::unique_ptr<To>(nullptr); }
+	To * p = dynamic_cast<To *>(fromP.release());
+	Assert(p, concatToString({
+			                         "dynamic_cast_unique_ptr failed. From [moeconcept::Cloneable] to [",
+			                         typeid(To).name(), "*]."
+	                         }));
+	return std::unique_ptr<To>(p);
+}
+
+/*  NOTICE:
+ *      If you use this function, you should NOT use ptr you pass to this function any more!
+ * */
+template<typename To>
+std::unique_ptr<To>
+cloneable_cast_uPtr(std::unique_ptr<moeconcept::Cloneable> & fromP) {
+	//  return nullptr if source pointer is nullptr.
+	if (!fromP) { return std::unique_ptr<To>(nullptr); }
+	To * p = dynamic_cast<To *>(fromP.release());
+	Assert(p, concatToString({
+			                         "dynamic_cast_unique_ptr failed. From [moeconcept::Cloneable] to [",
+			                         typeid(To).name(), "*]."
+	                         }));
+	return std::unique_ptr<To>(p);
+}
 }
