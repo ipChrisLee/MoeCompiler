@@ -15,6 +15,13 @@
       <option name="SPACE_BETWEEN_OPERATOR_AND_PUNCTUATOR" value="true" />
       <option name="SPACE_BEFORE_DICTIONARY_LITERAL_COLON" value="true" />
     </Objective-C>
+    <files>
+      <extensions>
+        <pair source="cpp" header="hpp" fileNamingConvention="NONE" />
+        <pair source="c" header="h" fileNamingConvention="NONE" />
+        <pair source="cu" header="cuh" fileNamingConvention="NONE" />
+      </extensions>
+    </files>
     <codeStyleSettings language="ObjectiveC">
       <option name="RIGHT_MARGIN" value="80" />
       <option name="SPACE_WITHIN_EMPTY_ARRAY_INITIALIZER_BRACES" value="true" />

@@ -21,33 +21,60 @@ namespace frontend {
 class ASTVisitor : public SysYBaseVisitor {
   protected:
 	ircode::AddrPool addrPool;
-	bool inGlobal;
+	ircode::Scope * pScope;
 	enum class BType {
 		Float, Int, Error
-	} btype;
-	bool isConst;
+	};
+	
+	struct Info {
+		/*  inGlobal: is visitor processing statements on global field.
+		 *  isGlobal is true at first, and becomes false when enter `FuncDef`, and
+		 *  becomes true after leaving `FuncDef`.
+		 * */
+		bool inGlobal;
+		/*  btype: basic type of decl var.
+		 *  Changed when visiting BType.
+		 * */
+		BType btype;
+		/*  isConst: is decl var constant.
+		 *  Changed just after visiting ConstDecl/VarDecl.
+		 * */
+		bool isConst;
+		/*  visitingConst: is calculating static value.
+		 *  Changed just entering and leaving ConstExp. false in default.
+		 * */
+		bool visitingConst;
+		
+		Info() : inGlobal(true), btype(BType::Error), isConst(false),
+		         visitingConst(false) {
+		}
+	} info;
 	
 	static BType strToBType(const std::string & str) {
 		if (str == "float") {
 			return BType::Float;
-		} else if (str == "Int") {
+		} else if (str == "int") {
 			return BType::Int;
 		} else {
 			com::Throw("Unknown BType[" + str + "]!", CODEPOS);
 		}
 	}
-	ircode::Scope * pScope;
+  
   public:
 	ASTVisitor();
 	
+	//  Visit children, return: nullptr.
 	std::any visitChildren(antlr4::tree::ParseTree * node) override;
 	
+	//  Just visit children, return: nullptr.
 	std::any visitCompUnit(SysYParser::CompUnitContext * ctx) override;
 	
+	//  Just visit children, return: nullptr.
 	std::any visitDecl(SysYParser::DeclContext * ctx) override;
 	
 	std::any visitConstDecl(SysYParser::ConstDeclContext * ctx) override;
 	
+	//  Visit BType, change info.btype according to ctx->getText()
 	std::any visitBType(SysYParser::BTypeContext * ctx) override;
 	
 	std::any visitConstDef(SysYParser::ConstDefContext * ctx) override;
@@ -76,9 +103,7 @@ class ASTVisitor : public SysYBaseVisitor {
 		return visitChildren(ctx);
 	}
 	
-	virtual std::any visitFuncDef(SysYParser::FuncDefContext * ctx) override {
-		return visitChildren(ctx);
-	}
+	std::any visitFuncDef(SysYParser::FuncDefContext * ctx) override;
 	
 	virtual std::any visitFuncType(SysYParser::FuncTypeContext * ctx) override {
 		return visitChildren(ctx);
@@ -255,6 +280,7 @@ class ASTVisitor : public SysYBaseVisitor {
 		return visitChildren(ctx);
 	}
 	
+	//  Just visit AddExp. Return: ircode::StaticValue
 	std::any visitConstExp(SysYParser::ConstExpContext * ctx) override;
 };
 
