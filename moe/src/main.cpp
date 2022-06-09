@@ -5,7 +5,6 @@
 #include <cprt.hpp>
 #include <common.hpp>
 #include <mdb.hpp>
-#include <submain.hpp>
 
 
 #ifndef TESTING
@@ -51,7 +50,6 @@ int Main(int argc,char ** argv){
             std::vector<std::string>subMainArgs;
             subMainArgs.push_back(inFilePath);
             subMainArgs.push_back(outFilePath);
-            com::submain::getSingle().runMain(subFunName,subMainArgs);
             break;
         }
         //case 'l':
@@ -100,7 +98,6 @@ int main(int ,char ** ){
     for(auto it:com::submain::getSingle().getCases()){
         std::cout<<it.first<<std::endl;
     }
-    com::submain::getSingle().runMain("listallWithPositions");
     return 0;
 }
 #endif

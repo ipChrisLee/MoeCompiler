@@ -72,10 +72,10 @@ class quat_t : public moeconcept::Stringable {
 	}
 };
 
-extern quat_t qFalse;
-extern quat_t qTrue;
-extern quat_t qUndefined;
-extern quat_t qChaos;
+extern const quat_t qFalse;
+extern const quat_t qTrue;
+extern const quat_t qUndefined;
+extern const quat_t qChaos;
 
 }
 

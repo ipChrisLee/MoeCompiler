@@ -23,7 +23,6 @@ class FrontEnd {
   public:
 	static int Main(std::vector<std::string> argv);
 	
-	static void dfs(antlr4::tree::ParseTree *rt);
 };
 	
 }
