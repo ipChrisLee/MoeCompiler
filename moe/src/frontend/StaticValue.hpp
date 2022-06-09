@@ -24,8 +24,13 @@ class StaticValue : public LLVMable, public moeconcept::Cloneable {
 	
 	~StaticValue() override = default;
 	
+	
 	[[nodiscard]] virtual std::unique_ptr<StaticValue>
 	getValue(const std::vector<int> &) const = 0;
+	
+	//  op : {"+","-"}
+	virtual std::unique_ptr<StaticValue>
+	calc(const StaticValue &, const std::string & op) const;
 };
 
 class FloatStaticValue : public StaticValue {
@@ -44,6 +49,9 @@ class FloatStaticValue : public StaticValue {
 	
 	[[nodiscard]] std::unique_ptr<StaticValue>
 	getValue(const std::vector<int> &) const override;
+	
+	std::unique_ptr<StaticValue>
+	calc(const StaticValue &, const std::string & op) const override;
 };
 
 class IntStaticValue : public StaticValue {

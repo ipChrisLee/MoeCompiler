@@ -18,6 +18,13 @@ ircode::StaticValue::StaticValue(const ircode::StaticValue & staticValue)
 ircode::StaticValue::StaticValue() : uPtrInfo(nullptr) {
 }
 
+std::unique_ptr<ircode::StaticValue>
+ircode::StaticValue::calc(
+		const ircode::StaticValue &, const std::string & op
+) const {
+	com::Throw("This method should not be invoked.", CODEPOS);
+}
+
 std::unique_ptr<moeconcept::Cloneable>
 ircode::FloatStaticValue::_cloneToUniquePtr() const {
 	return std::make_unique<FloatStaticValue>(*this);
