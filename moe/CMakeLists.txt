@@ -1,17 +1,36 @@
 cmake_minimum_required(VERSION 3.18)
+#   [change compiler to clang++](https://www.jetbrains.com/help/clion/how-to-switch-compilers-in-clion.html#prj-compilers)
 project(MoeCompiler)
 
-add_subdirectory(src/third_party/Google_Test)
-
+#   C++ Standards
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED true)
 
-file(GLOB_RECURSE allCFiles "src/*.cpp")
-add_compile_options(-g -lm -Wall -Werror -Wextra -Wno-error=unused-parameter
-        -Wno-error=deprecated-declarations
-        )
-add_link_options(-lpthread -v)
-include_directories(src/mlib)
+#   Files of project (exclude libraries)
+file(GLOB_RECURSE cppFiles "src/main.cpp" "src/frontend/*.cpp")
+
+#   Include Paths
+# From [CMake Tutorial](https://cmake.org/cmake/help/latest/command/include_directories.html?highlight=include_directories):
+# The include directories are added to the INCLUDE_DIRECTORIES directory property for the current CMakeLists file.
+# They are also added to the INCLUDE_DIRECTORIES target property for each target in the current CMakeLists file.
 include_directories(src)
+include_directories(src/mlib)
 include_directories(src/third_party/antlr4)
-add_executable(compiler ${allCFiles} src/frontend/StaticValue.cpp src/frontend/StaticValue.hpp src/frontend/TypeInfo.cpp src/frontend/TypeInfo.hpp)
+
+#   Compile Options
+# From [CMake Tutorial](https://cmake.org/cmake/help/latest/command/add_compile_options.html?highlight=add_compile_options)
+# This compile options will add to subdirectories.
+add_compile_options(
+		-g -Wall -Werror -Wextra
+		-Wno-unused-parameter
+		)
+
+#   Library Subdirectories
+add_subdirectory(src/mlib)                      #   moe lib
+add_subdirectory(src/third_party/Google_Test)   #   Google-Test
+add_subdirectory(src/third_party/antlr4)        #   antlr4
+
+#   Target of compiler
+add_executable(compiler ${cppFiles})
+
+add_link_options(-lpthread -lm -v)

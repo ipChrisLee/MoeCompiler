@@ -40,10 +40,10 @@ class MException : public std::exception {
 };
 
 namespace WarningList {
-	extern std::vector<std::pair<std::string,std::string>>msgAndCodepos;
+extern std::vector<std::pair<std::string, std::string>> msgAndCodepos;
 };
 
-void addWarning(const std::string & msg,std::string_view codepos);
+void addWarning(const std::string & msg, std::string_view codepos);
 
 void showAllWarning(const std::string & filePath);
 
@@ -80,6 +80,10 @@ struct RegexSwitchCase {
 };
 
 void regSwitch(const std::string & str, std::initializer_list<RegexSwitchCase>);
+
+//  use this if you want to save `cases` in a variable.
+void
+regSwitch(const std::string & str, const std::vector<RegexSwitchCase> & cases);
 
 /*  bmeBrace = begin-middle-end
  *  Brace which let some execute-when-entering codes and execute-when-leaving

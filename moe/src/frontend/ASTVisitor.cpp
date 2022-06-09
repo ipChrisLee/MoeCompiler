@@ -1,3 +1,5 @@
+#ifndef IGNORE_WHEN_TESTING
+
 #include "ASTVisitor.hpp"
 
 
@@ -75,3 +77,4 @@ std::any ASTVisitor::visitBType(SysYParser::BTypeContext * ctx) {
 
 
 }
+#endif

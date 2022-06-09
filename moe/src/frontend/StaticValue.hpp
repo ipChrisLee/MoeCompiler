@@ -1,11 +1,14 @@
 #pragma once
 
 #include <memory>
+#include <any>
 
 #include "moeconcept.hpp"
 
 #include "frontend/frontendHeader.hpp"
 #include "frontend/TypeInfo.hpp"
+
+
 
 namespace ircode {
 class StaticValue : public LLVMable, public moeconcept::Cloneable {
@@ -28,8 +31,8 @@ class StaticValue : public LLVMable, public moeconcept::Cloneable {
 	[[nodiscard]] virtual std::unique_ptr<StaticValue>
 	getValue(const std::vector<int> &) const = 0;
 	
-	//  op : {"+","-"}
-	virtual std::unique_ptr<StaticValue>
+	//  op : {"+","-"} TODO
+	[[nodiscard]] virtual std::unique_ptr<StaticValue>
 	calc(const StaticValue &, const std::string & op) const;
 };
 
@@ -43,6 +46,8 @@ class FloatStaticValue : public StaticValue {
 	
 	explicit FloatStaticValue(const std::string & literal = "0");
 	
+	explicit FloatStaticValue(float value);
+	
 	FloatStaticValue(const FloatStaticValue &) = default;
 	
 	[[nodiscard]] std::string toLLVMIR() const override;
@@ -50,7 +55,7 @@ class FloatStaticValue : public StaticValue {
 	[[nodiscard]] std::unique_ptr<StaticValue>
 	getValue(const std::vector<int> &) const override;
 	
-	std::unique_ptr<StaticValue>
+	[[nodiscard]] std::unique_ptr<StaticValue>
 	calc(const StaticValue &, const std::string & op) const override;
 };
 
@@ -64,12 +69,40 @@ class IntStaticValue : public StaticValue {
 	
 	explicit IntStaticValue(const std::string & literal = "0");
 	
+	explicit IntStaticValue(int value);
+	
 	IntStaticValue(const IntStaticValue &) = default;
 	
 	[[nodiscard]] std::string toLLVMIR() const override;
 	
 	[[nodiscard]] std::unique_ptr<StaticValue>
 	getValue(const std::vector<int> &) const override;
+	
+	[[nodiscard]] std::unique_ptr<StaticValue>
+	calc(const StaticValue &, const std::string & op) const override;
+};
+
+class BoolStaticValue : public StaticValue {
+  protected:
+	[[nodiscard]] std::unique_ptr<moeconcept::Cloneable>
+	_cloneToUniquePtr() const override;
+  
+  public:
+	bool value;
+	
+	explicit BoolStaticValue(const std::string & literal = "0");
+	
+	explicit BoolStaticValue(bool value);
+	
+	BoolStaticValue(const BoolStaticValue &) = default;
+	
+	[[nodiscard]] std::string toLLVMIR() const override;
+	
+	[[nodiscard]] std::unique_ptr<StaticValue>
+	getValue(const std::vector<int> &) const override;
+	
+	[[nodiscard]] std::unique_ptr<StaticValue>
+	calc(const StaticValue &, const std::string & op) const override;
 };
 
 class FloatArrayStaticValue : public StaticValue {
@@ -134,4 +167,16 @@ class IntArrayStaticValue : public StaticValue {
 	[[nodiscard]] std::unique_ptr<StaticValue>
 	getValue(const std::vector<int> & ind) const override;
 };
+
+//  If `op` is "!", `fr` is ignored.
+std::unique_ptr<StaticValue>
+calcOfFloat(float fl, float fr, const std::string & op);
+
+//  If `op` is "!", `fr` is ignored.
+std::unique_ptr<StaticValue>
+calcOfInt(int il, int ir, const std::string & op);
+
+//  If `op` is "!", `fr` is ignored.
+std::unique_ptr<StaticValue>
+calcOfBool(bool bl, bool br, const std::string & op);
 }

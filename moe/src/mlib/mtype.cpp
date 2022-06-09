@@ -1,5 +1,4 @@
 #include "mtype.hpp"
-#include "cprt.hpp"
 
 namespace mtype {
 const quat_t qFalse(quat_t::QValue::False);

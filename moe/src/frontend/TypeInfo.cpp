@@ -3,6 +3,7 @@
 //
 
 #include "TypeInfo.hpp"
+#include "cprt.hpp"
 
 std::unique_ptr<moeconcept::Cloneable>
 ircode::BoolType::_cloneToUniquePtr() const {

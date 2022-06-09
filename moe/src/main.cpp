@@ -2,14 +2,11 @@
 #include <vector>
 #include <memory>
 
-#include <cprt.hpp>
-#include <common.hpp>
-#include <mdb.hpp>
+#include "cprt.hpp"
+#include "common.hpp"
+#include "mdb.hpp"
 
 
-#ifndef TESTING
-/*  When `make run`, TESTING is not defined.
- * */
 int Main(int argc,char ** argv){
     /* Invoke different functions by command line.
      * */
@@ -29,7 +26,7 @@ int Main(int argc,char ** argv){
                 break;
             case 'l':
                 cmd='l';break;
-            case 'f': 
+            case 'f':
                 subFunName=optarg;cmd='f';
                 break;
             case 'S':
@@ -88,16 +85,3 @@ int main(int argc,char ** argv){
         return -1;
     }
 }
-
-#else
-/*  This is just for temp test.
- *  Use submain to do unit test, not this part of code.
- * */
-int main(int ,char ** ){
-    com::mdb::setSysEnable()=true;
-    for(auto it:com::submain::getSingle().getCases()){
-        std::cout<<it.first<<std::endl;
-    }
-    return 0;
-}
-#endif

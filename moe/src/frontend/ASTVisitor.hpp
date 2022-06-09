@@ -1,5 +1,7 @@
 #pragma once
 
+#ifndef IGNORE_WHEN_TESTING
+
 #include <string>
 #include <string_view>
 #include <any>
@@ -285,3 +287,5 @@ class ASTVisitor : public SysYBaseVisitor {
 };
 
 }
+
+#endif

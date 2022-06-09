@@ -5,7 +5,7 @@
 #include <functional>
 #include <memory>
 
-#include <common.hpp>
+#include "common.hpp"
 
 struct EmptyStruct { //  Empty class for good thing.
 	virtual ~EmptyStruct() = default;    // To hold poly.
