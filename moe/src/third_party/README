@@ -1,9 +1,12 @@
-JavaGrunSupport is for grun of antlr4.
-OJ may consider our project written in java if OJ found `.java` file or `'.java'` file.
-To avoid this, JavaGrunSupport folder is add into `.gitignore`, so you should initialize this folder by you hand.
-1.  First you should install antlr4. Read https://www.antlr.org for details.
-2.  Second, just run `./initJavaGrunSupport.sh`
-3.  And then you can run commands like `make grun sysy="testDir/test.sy"` in `moe`.
+This is folder for third party files.
 
-SysYTestCase is folder storing all test cases. Since [test cases](https://gitlab.eduxiji.net/nscscc/compiler2021/-/tree/master/公开用例与运行时库) is too large, you should load it by yourself.
-You only need to load `function_test2020`, `function_test2021`, `performance_test2021-private` and `performanc_test2021-public`.
+`antlr4` is for antlr4 support. We need the files in this folder to compile our
+compiler, so this is not ignored in git.
+
+`SysYTestCase` is folder storing all test cases. Since [test cases](https://gitlab.eduxiji.net/nscscc/compiler2021/-/tree/master/公开用例与运行时库) is too large, you should load it by yourself.
+You only need to load `function_test2020`, `function_test2021`, `performance_test2021-private` and `performance_test2021-public`.
+
+`syLibFiles` are lib files of SysY.
+
+`Google_Test` are lib files of GoogleTest. For test codes, we embrace them with
+`#ifdef TESTING` and `#endif`, so this will cause compilation failure by OJ.

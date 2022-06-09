@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.18)
 project(MoeCompiler)
 
+add_subdirectory(src/third_party/Google_Test)
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED true)
 

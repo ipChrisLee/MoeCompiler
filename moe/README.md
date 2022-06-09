@@ -1,3 +1,9 @@
+# About Project
+
+## antlr4 clion support
+
+CLion has its own antlr4 support.
+
 # Run Compiler
 
 ## Make Command
