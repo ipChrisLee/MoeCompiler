@@ -44,10 +44,10 @@ std::any ASTVisitor::visitConstDef(SysYParser::ConstDefContext * ctx) {
 			son->accept(this);
 			auto len = retVal.restore<std::unique_ptr<ircode::StaticValue>>();
 			shape.push_back(
-				com::dynamic_cast_uPtr<ircode::IntStaticValue>(std::move(len))->value);
+				com::dynamic_cast_uPtr<ircode::IntStaticValue>(len)->value);
 		}
 	}
-	com::TODO("", CODEPOS);
+	com::TODO("Add to addr pool.", CODEPOS);
 }
 
 std::any ASTVisitor::visitConstExp(SysYParser::ConstExpContext * ctx) {
@@ -79,7 +79,7 @@ std::any ASTVisitor::visitBType(SysYParser::BTypeContext * ctx) {
 }
 
 std::any ASTVisitor::visitScalarInitVal(SysYParser::ScalarInitValContext * ctx) {
-	com::TODO("", CODEPOS);
+	// constInitVal -> constExp # scalarConstInitVal
 	return visitChildren(ctx);
 }
 
@@ -105,8 +105,8 @@ std::any ASTVisitor::visitFuncFParams(SysYParser::FuncFParamsContext * ctx) {
 
 std::any
 ASTVisitor::visitListConstInitVal(SysYParser::ListConstInitValContext * ctx) {
+	// constInitVal -> constExp # listConstInitVal
 	com::TODO("", CODEPOS);
-	
 }
 
 std::any
@@ -203,19 +203,50 @@ std::any ASTVisitor::visitNumber(SysYParser::NumberContext * ctx) {
 }
 
 std::any ASTVisitor::visitUnary1(SysYParser::Unary1Context * ctx) {
-	com::TODO("", CODEPOS);
+	// unaryExp -> primaryExp # unary1
+	return visitChildren(ctx);
 }
 
 std::any ASTVisitor::visitUnary2(SysYParser::Unary2Context * ctx) {
-	com::TODO("", CODEPOS);
+	// unaryExp -> Identifier '(' (funcRParams)? ')' # unary2
+	if (info.visitingConst) {
+		com::Throw(
+			com::concatToString(
+				{
+					"Const variable should be initialized with compile-time value, ",
+					"but value calculated by function call is not compile time value ",
+					"according to SysY semantic definition."
+				}), CODEPOS
+		);
+	} else {
+		com::TODO("", CODEPOS);
+	}
 }
 
 std::any ASTVisitor::visitUnary3(SysYParser::Unary3Context * ctx) {
-	com::TODO("", CODEPOS);
+	// unaryExp -> unaryOp unaryExp # unary3
+	ctx->unaryOp()->accept(this);
+	auto op = retVal.restore<std::string>();
+	if(info.visitingConst){
+		
+		return nullptr;
+	}else {
+		com::TODO("",CODEPOS);
+	}
 }
 
 std::any ASTVisitor::visitUnaryOp(SysYParser::UnaryOpContext * ctx) {
-	com::TODO("", CODEPOS);
+	// unaryOp -> '+' | '-' | '!'
+	if (auto p1 = ctx->Addition()) {
+		retVal.save(p1->getText());
+	} else if (auto p2 = ctx->Minus()) {
+		retVal.save(p2->getText());
+	} else if (auto p3 = ctx->Exclamation()) {
+		retVal.save(p3->getText());
+	} else {
+		com::Throw("Unary op should be one of '+','-' or '!'.", CODEPOS);
+	}
+	return nullptr;
 }
 
 std::any ASTVisitor::visitFuncRParams(SysYParser::FuncRParamsContext * ctx) {
@@ -231,21 +262,49 @@ std::any ASTVisitor::visitStringAsRParam(SysYParser::StringAsRParamContext * ctx
 }
 
 std::any ASTVisitor::visitMul2(SysYParser::Mul2Context * ctx) {
-	com::TODO("", CODEPOS);
+	// mulExp -> mulExp ('*' | '/' | '%') unaryExp # mul2
+	if (info.visitingConst) {
+		ctx->mulExp()->accept(this);
+		auto resL = retVal.restore<std::unique_ptr<ircode::StaticValue>>();
+		ctx->unaryExp()->accept(this);
+		auto resR = retVal.restore<std::unique_ptr<ircode::StaticValue>>();
+		std::string op;
+		if (ctx->Division()) {
+			op = "/";
+		} else if (ctx->Modulo()) {
+			op = "%";
+		} else if (ctx->Multiplication()) {
+			op = "*";
+		} else {
+			com::Throw("ctx should contain '/' or '%' or '*'.", CODEPOS);
+		}
+		retVal.save(resL->calc(*resR, op));
+		return nullptr;
+	} else {
+		com::TODO("", CODEPOS);
+	}
 }
 
 std::any ASTVisitor::visitMul1(SysYParser::Mul1Context * ctx) {
-	com::TODO("", CODEPOS);
+	// mulExp -> unaryExp # mul1
+	return visitChildren(ctx);
 }
 
 std::any ASTVisitor::visitAdd2(SysYParser::Add2Context * ctx) {
 	//  addExp -> addExp ('+'|'-') mulExp # add 2
 	if (info.visitingConst) {
-		std::any lRes = ctx->addExp()->accept(this);
-		auto pLRes = std::any_cast<ircode::StaticValue>(&lRes);
-		std::any rRes = ctx->mulExp()->accept(this);
-		auto pRRes = std::any_cast<ircode::StaticValue>(&rRes);
-		
+		ctx->addExp()->accept(this);
+		auto resL = retVal.restore<std::unique_ptr<ircode::StaticValue>>();
+		ctx->mulExp()->accept(this);
+		auto resR = retVal.restore<std::unique_ptr<ircode::StaticValue>>();
+		if (ctx->Minus()) {
+			retVal.save(resL->calc(*resR, "-"));
+		} else if (ctx->Addition()) {
+			retVal.save(resL->calc(*resR, "+"));
+		} else {
+			com::Throw("ctx should contain '+' or '-'.", CODEPOS);
+		}
+		return nullptr;
 	} else {
 		com::TODO("", CODEPOS);
 	}

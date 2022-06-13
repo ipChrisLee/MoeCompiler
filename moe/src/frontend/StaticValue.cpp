@@ -46,8 +46,8 @@ ircode::calcOfFloat(float fl, float fr, const std::string & op) {
 		{"!=",     [&upSV, fl, fr]() {
 			upSV = std::make_unique<ircode::BoolStaticValue>(fl != fr);
 		}},
-		{"!",      [&upSV, fl]() {
-			upSV = std::make_unique<ircode::BoolStaticValue>(!fl);
+		{"!",      [&upSV, fr]() {
+			upSV = std::make_unique<ircode::BoolStaticValue>(!fr);
 		}},
 	};
 	com::regSwitch(op, list);
@@ -97,8 +97,8 @@ ircode::calcOfInt(int il, int ir, const std::string & op) {
 		{"!=",     [&upSV, il, ir]() {
 			upSV = std::make_unique<ircode::BoolStaticValue>(il != ir);
 		}},
-		{"!",      [&upSV, il]() {
-			upSV = std::make_unique<ircode::BoolStaticValue>(!il);
+		{"!",      [&upSV, ir]() {
+			upSV = std::make_unique<ircode::BoolStaticValue>(!ir);
 		}},
 	};
 	com::regSwitch(op, list);
@@ -148,8 +148,8 @@ ircode::calcOfBool(bool bl, bool br, const std::string & op) {
 		{"!=",     [&upSV, bl, br]() {
 			upSV = std::make_unique<ircode::BoolStaticValue>(bl != br);
 		}},
-		{"!",      [&upSV, bl]() {
-			upSV = std::make_unique<ircode::BoolStaticValue>(!bl);
+		{"!",      [&upSV, br]() {
+			upSV = std::make_unique<ircode::BoolStaticValue>(!br);
 		}},
 	};
 	com::regSwitch(op, list);
@@ -170,6 +170,11 @@ std::unique_ptr<ircode::StaticValue>
 ircode::StaticValue::calc(
 	const ircode::StaticValue &, const std::string & op
 ) const {
+	com::Throw("This method should not be invoked.", CODEPOS);
+}
+
+std::unique_ptr<ircode::StaticValue>
+ircode::StaticValue::calc(const std::string & op) const {
 	com::Throw("This method should not be invoked.", CODEPOS);
 }
 
@@ -227,6 +232,11 @@ ircode::FloatStaticValue::FloatStaticValue(float value)
 	: StaticValue(FloatType()), value(value) {
 }
 
+std::unique_ptr<ircode::StaticValue>
+ircode::FloatStaticValue::calc(const std::string & op) const {
+	return calcOfFloat(0, value, op);
+}
+
 std::unique_ptr<moeconcept::Cloneable>
 ircode::IntStaticValue::_cloneToUniquePtr() const {
 	return std::make_unique<IntStaticValue>(*this);
@@ -278,6 +288,11 @@ std::unique_ptr<ircode::StaticValue> ircode::IntStaticValue::calc(
 		}
 	}
 	return upSVRes;
+}
+
+std::unique_ptr<ircode::StaticValue>
+ircode::IntStaticValue::calc(const std::string & op) const {
+	return calcOfInt(0, value, op);
 }
 
 std::unique_ptr<moeconcept::Cloneable>
@@ -497,4 +512,10 @@ std::unique_ptr<ircode::StaticValue> ircode::BoolStaticValue::calc(
 		}
 	}
 	return upSVRes;
+}
+
+std::unique_ptr<ircode::StaticValue>
+ircode::BoolStaticValue::calc(const std::string & op) const {
+	return calcOfBool(false, value, op);
+	
 }

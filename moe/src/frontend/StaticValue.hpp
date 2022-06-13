@@ -31,6 +31,9 @@ class StaticValue : public LLVMable, public moeconcept::Cloneable {
 	
 	[[nodiscard]] virtual std::unique_ptr<StaticValue>
 	calc(const StaticValue &, const std::string & op) const;
+	
+	[[nodiscard]] virtual std::unique_ptr<StaticValue>
+	calc(const std::string & op) const;
 };
 
 class FloatStaticValue : public StaticValue {
@@ -56,6 +59,9 @@ class FloatStaticValue : public StaticValue {
 	
 	[[nodiscard]] std::unique_ptr<StaticValue>
 	calc(const StaticValue &, const std::string & op) const override;
+	
+	[[nodiscard]] std::unique_ptr<StaticValue>
+	calc(const std::string & op) const override;
 };
 
 class IntStaticValue : public StaticValue {
@@ -81,6 +87,9 @@ class IntStaticValue : public StaticValue {
 	
 	[[nodiscard]] std::unique_ptr<StaticValue>
 	calc(const StaticValue &, const std::string & op) const override;
+	
+	[[nodiscard]] std::unique_ptr<StaticValue>
+	calc(const std::string & op) const override;
 };
 
 class BoolStaticValue : public StaticValue {
@@ -106,6 +115,9 @@ class BoolStaticValue : public StaticValue {
 	
 	[[nodiscard]] std::unique_ptr<StaticValue>
 	calc(const StaticValue &, const std::string & op) const override;
+	
+	[[nodiscard]] std::unique_ptr<StaticValue>
+	calc(const std::string & op) const override;
 };
 
 class FloatArrayStaticValue : public StaticValue {

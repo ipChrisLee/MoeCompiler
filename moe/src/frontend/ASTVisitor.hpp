@@ -62,7 +62,10 @@ class ASTVisitor : public SysYBaseVisitor {
 		}
 	}
 	
-	com::UnaryVariant<std::unique_ptr<ircode::StaticValue>> retVal;
+	com::UnaryVariant<
+		std::unique_ptr<ircode::StaticValue>,
+		std::string
+		> retVal;
   
   public:
 	ASTVisitor();
