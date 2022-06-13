@@ -133,15 +133,15 @@ ircode::PointerType::_cloneToUniquePtr() const {
 
 ircode::PointerType::PointerType(const ircode::PointerType & pointerType)
 		: TypeInfo(Type::Pointer_t), pointLevel(pointerType.pointLevel) {
-	pointTo = com::dynamic_cast_unique_ptr<moeconcept::Cloneable, PointerType>(
-			pointerType.pointTo->cloneToUniquePtr()
+	pointTo = com::dynamic_cast_uPtr<PointerType>(
+		pointerType.pointTo->cloneToUniquePtr()
 	);
 }
 
 ircode::PointerType::PointerType(const ircode::TypeInfo & pointToType)
 		: TypeInfo(Type::Pointer_t) {
-	pointTo = com::dynamic_cast_unique_ptr<moeconcept::Cloneable, PointerType>(
-			pointToType.cloneToUniquePtr()
+	pointTo = com::dynamic_cast_uPtr<PointerType>(
+		pointToType.cloneToUniquePtr()
 	);
 	if (pointToType.type == Type::Pointer_t) {
 		pointLevel =

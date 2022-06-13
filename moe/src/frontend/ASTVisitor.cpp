@@ -5,7 +5,7 @@
 
 namespace frontend {
 
-ASTVisitor::ASTVisitor() : addrPool(), info() {
+ASTVisitor::ASTVisitor() : addrPool(), info(), retVal() {
 	pScope = addrPool.getRootScope();
 }
 
@@ -41,38 +41,251 @@ std::any ASTVisitor::visitConstDef(SysYParser::ConstDefContext * ctx) {
 	if (!ctx->constExp().empty()) {   //    Defining an array.
 		std::vector<int> shape;
 		for (auto son : ctx->constExp()) {
-			std::any a = son->accept(this);
-			//  TODO: a maybe StaticValue.
-			shape.push_back(std::any_cast<int>(a));
+			son->accept(this);
+			auto len = retVal.restore<std::unique_ptr<ircode::StaticValue>>();
+			shape.push_back(
+				com::dynamic_cast_uPtr<ircode::IntStaticValue>(std::move(len))->value);
 		}
 	}
-	return SysYBaseVisitor::visitConstDef(ctx);
+	com::TODO("", CODEPOS);
 }
 
 std::any ASTVisitor::visitConstExp(SysYParser::ConstExpContext * ctx) {
 	//  ConstExp -> AddExp
-	info.visitingConst=true;
-	std::any ret=ctx->addExp()->accept(this);
-	info.visitingConst=false;
-	return ret;
+	info.visitingConst = true;
+	ctx->addExp()->accept(this);
+	auto ret = retVal.restore<std::unique_ptr<ircode::StaticValue>>();
+	info.visitingConst = false;
+	retVal.save(std::move(ret));
+	return nullptr;
 }
 
 std::any ASTVisitor::visitFuncDef(SysYParser::FuncDefContext * ctx) {
 	info.inGlobal = false;
-	notFinished("DOING");
+	com::TODO("", CODEPOS);
 	info.inGlobal = true;
 	return nullptr;
 }
 
 std::any ASTVisitor::visitVarDecl(SysYParser::VarDeclContext * ctx) {
 	info.isConst = false;
-	notFinished("DOING");
+	com::TODO("", CODEPOS);
 	return nullptr;
 }
 
 std::any ASTVisitor::visitBType(SysYParser::BTypeContext * ctx) {
 	info.btype = strToBType(ctx->getText());
 	return nullptr;
+}
+
+std::any ASTVisitor::visitScalarInitVal(SysYParser::ScalarInitValContext * ctx) {
+	com::TODO("", CODEPOS);
+	return visitChildren(ctx);
+}
+
+std::any ASTVisitor::visitListInitval(SysYParser::ListInitvalContext * ctx) {
+	com::TODO("", CODEPOS);
+}
+
+std::any ASTVisitor::visitFuncType(SysYParser::FuncTypeContext * ctx) {
+	com::TODO("", CODEPOS);
+}
+
+std::any ASTVisitor::visitInitVarDef(SysYParser::InitVarDefContext * ctx) {
+	com::TODO("", CODEPOS);
+}
+
+std::any ASTVisitor::visitUninitVarDef(SysYParser::UninitVarDefContext * ctx) {
+	com::TODO("", CODEPOS);
+}
+
+std::any ASTVisitor::visitFuncFParams(SysYParser::FuncFParamsContext * ctx) {
+	com::TODO("", CODEPOS);
+}
+
+std::any
+ASTVisitor::visitListConstInitVal(SysYParser::ListConstInitValContext * ctx) {
+	com::TODO("", CODEPOS);
+	
+}
+
+std::any
+ASTVisitor::visitScalarConstInitVal(SysYParser::ScalarConstInitValContext * ctx) {
+	com::TODO("", CODEPOS);
+}
+
+std::any ASTVisitor::visitFuncFParam(SysYParser::FuncFParamContext * ctx) {
+	com::TODO("", CODEPOS);
+}
+
+std::any ASTVisitor::visitBlock(SysYParser::BlockContext * ctx) {
+	com::TODO("", CODEPOS);
+}
+
+std::any ASTVisitor::visitBlockItem(SysYParser::BlockItemContext * ctx) {
+	com::TODO("", CODEPOS);
+}
+
+std::any ASTVisitor::visitAssignment(SysYParser::AssignmentContext * ctx) {
+	com::TODO("", CODEPOS);
+}
+
+std::any ASTVisitor::visitExpStmt(SysYParser::ExpStmtContext * ctx) {
+	com::TODO("", CODEPOS);
+}
+
+std::any ASTVisitor::visitBlockStmt(SysYParser::BlockStmtContext * ctx) {
+	com::TODO("", CODEPOS);
+}
+
+std::any ASTVisitor::visitIfStmt1(SysYParser::IfStmt1Context * ctx) {
+	com::TODO("", CODEPOS);
+}
+
+std::any ASTVisitor::visitIfStmt2(SysYParser::IfStmt2Context * ctx) {
+	com::TODO("", CODEPOS);
+}
+
+std::any ASTVisitor::visitWhileStmt(SysYParser::WhileStmtContext * ctx) {
+	com::TODO("", CODEPOS);
+}
+
+std::any ASTVisitor::visitBreakStmt(SysYParser::BreakStmtContext * ctx) {
+	com::TODO("", CODEPOS);
+}
+
+std::any ASTVisitor::visitContinueStmt(SysYParser::ContinueStmtContext * ctx) {
+	com::TODO("", CODEPOS);
+}
+
+std::any ASTVisitor::visitReturnStmt(SysYParser::ReturnStmtContext * ctx) {
+	com::TODO("", CODEPOS);
+}
+
+std::any ASTVisitor::visitExp(SysYParser::ExpContext * ctx) {
+	com::TODO("", CODEPOS);
+}
+
+std::any ASTVisitor::visitCond(SysYParser::CondContext * ctx) {
+	com::TODO("", CODEPOS);
+}
+
+std::any ASTVisitor::visitLVal(SysYParser::LValContext * ctx) {
+	com::TODO("", CODEPOS);
+}
+
+std::any ASTVisitor::visitPrimaryExp1(SysYParser::PrimaryExp1Context * ctx) {
+	com::TODO("", CODEPOS);
+}
+
+std::any ASTVisitor::visitPrimaryExp2(SysYParser::PrimaryExp2Context * ctx) {
+	com::TODO("", CODEPOS);
+}
+
+std::any ASTVisitor::visitPrimaryExp3(SysYParser::PrimaryExp3Context * ctx) {
+	com::TODO("", CODEPOS);
+}
+
+std::any ASTVisitor::visitNumber(SysYParser::NumberContext * ctx) {
+	if (ctx->FloatLiteral()) {
+		std::unique_ptr<ircode::StaticValue> v =
+			std::make_unique<ircode::IntStaticValue>(ctx->getText());
+		retVal.save(std::move(v));
+		return nullptr;
+	} else if (ctx->IntLiteral()) {
+		std::unique_ptr<ircode::StaticValue> v =
+			std::make_unique<ircode::FloatStaticValue>(ctx->getText());
+		retVal.save(std::move(v));
+		return nullptr;
+	} else {
+		com::Throw("ctx should be float/int literal.", CODEPOS);
+	}
+}
+
+std::any ASTVisitor::visitUnary1(SysYParser::Unary1Context * ctx) {
+	com::TODO("", CODEPOS);
+}
+
+std::any ASTVisitor::visitUnary2(SysYParser::Unary2Context * ctx) {
+	com::TODO("", CODEPOS);
+}
+
+std::any ASTVisitor::visitUnary3(SysYParser::Unary3Context * ctx) {
+	com::TODO("", CODEPOS);
+}
+
+std::any ASTVisitor::visitUnaryOp(SysYParser::UnaryOpContext * ctx) {
+	com::TODO("", CODEPOS);
+}
+
+std::any ASTVisitor::visitFuncRParams(SysYParser::FuncRParamsContext * ctx) {
+	com::TODO("", CODEPOS);
+}
+
+std::any ASTVisitor::visitExpAsRParam(SysYParser::ExpAsRParamContext * ctx) {
+	com::TODO("", CODEPOS);
+}
+
+std::any ASTVisitor::visitStringAsRParam(SysYParser::StringAsRParamContext * ctx) {
+	com::TODO("", CODEPOS);
+}
+
+std::any ASTVisitor::visitMul2(SysYParser::Mul2Context * ctx) {
+	com::TODO("", CODEPOS);
+}
+
+std::any ASTVisitor::visitMul1(SysYParser::Mul1Context * ctx) {
+	com::TODO("", CODEPOS);
+}
+
+std::any ASTVisitor::visitAdd2(SysYParser::Add2Context * ctx) {
+	//  addExp -> addExp ('+'|'-') mulExp # add 2
+	if (info.visitingConst) {
+		std::any lRes = ctx->addExp()->accept(this);
+		auto pLRes = std::any_cast<ircode::StaticValue>(&lRes);
+		std::any rRes = ctx->mulExp()->accept(this);
+		auto pRRes = std::any_cast<ircode::StaticValue>(&rRes);
+		
+	} else {
+		com::TODO("", CODEPOS);
+	}
+}
+
+std::any ASTVisitor::visitAdd1(SysYParser::Add1Context * ctx) {
+	//  addExp -> mulExp # add1
+	return visitChildren(ctx);
+}
+
+std::any ASTVisitor::visitRel2(SysYParser::Rel2Context * ctx) {
+	com::TODO("", CODEPOS);
+}
+
+std::any ASTVisitor::visitRel1(SysYParser::Rel1Context * ctx) {
+	com::TODO("", CODEPOS);
+}
+
+std::any ASTVisitor::visitEq1(SysYParser::Eq1Context * ctx) {
+	com::TODO("", CODEPOS);
+}
+
+std::any ASTVisitor::visitEq2(SysYParser::Eq2Context * ctx) {
+	com::TODO("", CODEPOS);
+}
+
+std::any ASTVisitor::visitLAnd2(SysYParser::LAnd2Context * ctx) {
+	com::TODO("", CODEPOS);
+}
+
+std::any ASTVisitor::visitLAnd1(SysYParser::LAnd1Context * ctx) {
+	com::TODO("", CODEPOS);
+}
+
+std::any ASTVisitor::visitLOr1(SysYParser::LOr1Context * ctx) {
+	com::TODO("", CODEPOS);
+}
+
+std::any ASTVisitor::visitLOr2(SysYParser::LOr2Context * ctx) {
+	com::TODO("", CODEPOS);
 }
 
 

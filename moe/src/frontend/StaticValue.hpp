@@ -9,29 +9,26 @@
 #include "frontend/TypeInfo.hpp"
 
 
-
 namespace ircode {
 class StaticValue : public LLVMable, public moeconcept::Cloneable {
   protected:
 	[[nodiscard]] std::unique_ptr<moeconcept::Cloneable>
 	_cloneToUniquePtr() const override = 0;
+	
+	explicit StaticValue() = default;
+	
+	explicit StaticValue(const TypeInfo & typeInfo);
   
   public:
 	std::unique_ptr<TypeInfo> uPtrInfo;
-	
-	StaticValue();
-	
-	explicit StaticValue(const TypeInfo & typeInfo);
 	
 	StaticValue(const StaticValue & staticValue);
 	
 	~StaticValue() override = default;
 	
-	
 	[[nodiscard]] virtual std::unique_ptr<StaticValue>
 	getValue(const std::vector<int> &) const = 0;
 	
-	//  op : {"+","-"} TODO
 	[[nodiscard]] virtual std::unique_ptr<StaticValue>
 	calc(const StaticValue &, const std::string & op) const;
 };
@@ -49,6 +46,8 @@ class FloatStaticValue : public StaticValue {
 	explicit FloatStaticValue(float value);
 	
 	FloatStaticValue(const FloatStaticValue &) = default;
+	
+	~FloatStaticValue() override = default;
 	
 	[[nodiscard]] std::string toLLVMIR() const override;
 	
@@ -73,6 +72,8 @@ class IntStaticValue : public StaticValue {
 	
 	IntStaticValue(const IntStaticValue &) = default;
 	
+	~IntStaticValue() override = default;
+	
 	[[nodiscard]] std::string toLLVMIR() const override;
 	
 	[[nodiscard]] std::unique_ptr<StaticValue>
@@ -95,6 +96,8 @@ class BoolStaticValue : public StaticValue {
 	explicit BoolStaticValue(bool value);
 	
 	BoolStaticValue(const BoolStaticValue &) = default;
+	
+	~BoolStaticValue() override = default;
 	
 	[[nodiscard]] std::string toLLVMIR() const override;
 	
@@ -125,12 +128,14 @@ class FloatArrayStaticValue : public StaticValue {
 	 *  This constructor will detect legality of arrays. (They should be same in shape.)
 	 * */
 	explicit FloatArrayStaticValue(
-			int len,
-			const std::vector<int> & preShape,
-			const std::vector<FloatArrayStaticValue> & vi
+		int len,
+		const std::vector<int> & preShape,
+		const std::vector<FloatArrayStaticValue> & vi
 	);
 	
 	FloatArrayStaticValue(const FloatArrayStaticValue &) = default;
+	
+	~FloatArrayStaticValue() override = default;
 	
 	[[nodiscard]] std::string toLLVMIR() const override;
 	
@@ -156,11 +161,13 @@ class IntArrayStaticValue : public StaticValue {
 	 *  This constructor will detect legality of arrays. (They should be same in shape.)
 	 * */
 	explicit IntArrayStaticValue(
-			int len, const std::vector<int> & preShape,
-			const std::vector<IntArrayStaticValue> & vi
+		int len, const std::vector<int> & preShape,
+		const std::vector<IntArrayStaticValue> & vi
 	);
 	
 	IntArrayStaticValue(const IntArrayStaticValue &) = default;
+	
+	~IntArrayStaticValue() override = default;
 	
 	[[nodiscard]] std::string toLLVMIR() const override;
 	

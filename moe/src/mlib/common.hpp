@@ -11,6 +11,7 @@
 #include <utility>
 #include <memory>
 #include <typeinfo>
+#include <variant>
 
 #ifndef CODEPOS //  prevent redefinition from mdb.hpp
 #define STR(t) #t
@@ -18,9 +19,13 @@
 #define CODEPOS "File["  __FILE__  "] Line["  LINE_STR(__LINE__) "] "
 #endif
 
-//  Difference between `notFinished` and `TODO_`:
-//  Your code will throw exception when running to `TODO_`.
-//  Your code will not be compiled if `notFinished` exists.
+/**
+ * Indicate that some code should be finished before compiling.
+ * @note
+ * Difference between @c notFinished and @c TODO: \n
+ * Your code will throw exception when running @c TODO. \n
+ * Your code can not be compiled if @c notFinished exists.
+ */
 #define notFinished(msg) static_assert(0,"Not finished in {" CODEPOS "}, msg={" msg "}.")
 
 namespace com {
@@ -50,12 +55,6 @@ void showAllWarning(const std::string & filePath);
 [[noreturn]] void
 TODO(std::string_view msg = std::string_view(), std::string_view codepos = "");
 
-
-/*  To handle code that hasn't been finished. This may avoid some bugs
- *  caused by coders forgetting to implement.
- *  Usually usage:
- *      com::notFinished(FUNINFO,CODEPOS);
- * */
 [[noreturn]] void
 Throw(std::string_view s = std::string_view(), std::string_view codepos = "");
 
@@ -68,8 +67,8 @@ Assert(bool b, const std::string & msg = "", const std::string & codepos = "");
  *  This version use a function returning bool as assert condition.
  * */
 void Assert(
-		const std::function<bool(void)> & fun, const std::string & msg = "",
-		const std::string & codepos = ""
+	const std::function<bool(void)> & fun, const std::string & msg = "",
+	const std::string & codepos = ""
 );
 
 /*  Struct for regex switch.
@@ -90,44 +89,118 @@ regSwitch(const std::string & str, const std::vector<RegexSwitchCase> & cases);
  *  codes come first in source codes.
  * */
 void bmeBrace(
-		const std::function<void(void)> & begin,
-		const std::function<void(void)> & end,
-		const std::function<void(void)> & middle
+	const std::function<void(void)> & begin,
+	const std::function<void(void)> & end,
+	const std::function<void(void)> & middle
 );
 
-/*  dynamic_cast for `unique_ptr`.
- * */
-template<typename From, typename To>
-std::unique_ptr<To> dynamic_cast_unique_ptr(std::unique_ptr<From> && fromP) {
+/**
+ * Dynamic cast for @c unique_ptr. \n
+ * This function will change the ownership!
+ * @note If you use this function, you should @b NOT use ptr you pass to this function anymore!
+ */
+/* Example:
+ * std::unique_ptr<Base>upBase=dynamic_cast_uPtr<Base>(upDerivedB->cloneToUniquePtr());
+ * // The second type parameter `From` can be deduced from argument.
+ * // Here `upBase` is pointing to a cloned instance of `upDerivedB`, whose type is `DerivedB`.
+ * std::unique_ptr<DerivedB>upDerivedB=dynamic_cast_uPtr<DerivedB>(std::move(upBase));
+ * // Dynamic cast unique pointer of type `Base` to `DerivedB`, and after this, `upBase`
+ * // has passed its ownership to `upDerivedB`. So `upBase.get()` is `nullptr` now.
+ * upBase->fun(); // Dangerous! `upBase` has been released.
+ */
+template<typename To, typename From>
+std::unique_ptr<To> dynamic_cast_uPtr(std::unique_ptr<From> && fromP) {
 	//  return nullptr if source pointer is nullptr.
 	if (!fromP) { return std::unique_ptr<To>(nullptr); }
 	To * p = dynamic_cast<To *>(fromP.release());
 	Assert(p, concatToString({
-			                         "dynamic_cast_unique_ptr failed. From [",
-			                         typeid(From).name(), "*] to [",
-			                         typeid(To).name(), "*]."
+		                         "dynamic_cast_uPtr failed. From [",
+		                         typeid(From).name(), "*] to [",
+		                         typeid(To).name(), "*]."
 	                         }));
 	return std::unique_ptr<To>(p);
 }
 
-/*  NOTICE:
- *      If you use this function, you should NOT use ptr you pass to this function any more!
- *  e.g. :
- *      std::unique_ptr<Base>upBase=dynamic_cast_unique_ptr<Cloneable,Base>(upDerivedB1->cloneToUniquePtr());
- *      std::unique_ptr<DerivedB>upDerivedB2=dynamic_cast_unique_ptr<Base,DerivedB>(upBase)
- *      upBase->fun(); // Dangerous! upBase has been released.
- * */
-template<typename From, typename To>
-std::unique_ptr<To> dynamic_cast_unique_ptr(std::unique_ptr<From> & fromP) {
-	//  return nullptr if source pointer is nullptr.
-	if (!fromP) { return std::unique_ptr<To>(nullptr); }
-	To * p = dynamic_cast<To *>(fromP.release());
-	Assert(p, concatToString({
-			                         "dynamic_cast_unique_ptr failed. From [",
-			                         typeid(From).name(), "*] to [",
-			                         typeid(To).name(), "*]."
-	                         }));
-	return std::unique_ptr<To>(p);
+/**
+ * @details
+ * Dynamic cast for @c unique_ptr. \n
+ * This function will @b NOT change the ownership! \n
+ * This equals to @code dynamic_cast<To *>(fromP.get()) @endcode
+ * @note @c fromP will not loss its ownership.
+ */
+/*
+ * Example:
+ *  Since `std::unique_ptr::unique_ptr(pointer)` is declared as `explicit`, code
+ *  like below is forbidden, and will cause compile error.
+ *      std::unique_ptr<Base>upBase=dynamic_cast_uPtr<Base>(upDerivedB);
+ */
+template<typename To, typename From>
+To * dynamic_cast_uPtr(std::unique_ptr<From> & fromP) {
+	return dynamic_cast<To *>(fromP.get());
 }
+
+template<typename T, typename ... Ts>
+constexpr bool isTypeTInTypesTs() {
+	return std::disjunction_v<std::is_same<T, Ts>...>;
+}
+
+/**
+ * @brief
+ * 		A class store exact one variable of class in class pack everytime.
+ * @tparam Types Type pack of the types you want to store.
+ *
+ * @note You can only preserve one instance for one time.
+ * @note You can only restore once for one instance.
+ * @note @c std::monostate can not be stored in this class.
+ * @note The type of instance you stored should have move constructor.
+ *
+ * @example
+ * @code
+ * UnaryVariant<std::unique_ptr<ircode::StaticValue>>uv;
+ * uv.save(std::move(up));
+ * @endcode
+ */
+template<typename ... Types>
+class UnaryVariant {
+  protected:
+	std::variant<std::monostate, Types...> box;
+  public:
+	void clear() {
+		box = std::monostate();
+	}
+	
+	template<typename T>
+	void save(T && t) {
+		static_assert(isTypeTInTypesTs<T, Types...>(),
+		              "Type is not in type pack. Notice to use `std::move`.");
+		/*  For example:
+		 *      `Int i(1);UnaryVariant uv;uv.save(i);`
+		 *      `i` is lvalue! And `int& &&` is deduced to `int &`!
+		 *  Ref: https://stackoverflow.com/a/3582313/17924585
+		 * */
+		if (box.index()) {
+			com::Throw("Saving to `UnaryVariant` where has saved variable.",
+			           CODEPOS);
+		}
+		box = std::forward<T>(t);
+	}
+	
+	[[nodiscard]] bool savedSomething() const {
+		return box.index();
+	}
+	
+	template<typename T>
+	T restore() {
+		static_assert(isTypeTInTypesTs<T, Types...>(), "Type is not in type pack.");
+		if (!std::holds_alternative<T>(box)) {
+			com::Throw("Restoring from UnaryVariant with a type not in type pack ",
+			           CODEPOS);
+		}
+		T ret(std::move(std::get<T>(box)));
+		box = std::monostate();
+		return ret;
+	}
+};
+
 }
 

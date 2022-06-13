@@ -1,182 +1,178 @@
 #include "StaticValue.hpp"
 #include "stlextension.hpp"
 
+#include "frontend/TypeInfo.hpp"
+
 std::unique_ptr<ircode::StaticValue>
-calcOfFloat(float fl, float fr, const std::string & op) {
+ircode::calcOfFloat(float fl, float fr, const std::string & op) {
 	std::unique_ptr<ircode::StaticValue> upSV;
 	static const std::vector<com::RegexSwitchCase> list = {
-			{"\\*",    [&upSV, fl, fr]() {
-				upSV = std::make_unique<ircode::FloatStaticValue>(fl * fr);
-			}},
-			{"\\-",    [&upSV, fl, fr]() {
-				upSV = std::make_unique<ircode::FloatStaticValue>(fl - fr);
-			}},
-			{"\\+",    [&upSV, fl, fr]() {
-				upSV = std::make_unique<ircode::FloatStaticValue>(fl + fr);
-			}},
-			{"\\/",    [&upSV, fl, fr]() {
-				upSV = std::make_unique<ircode::FloatStaticValue>(fl / fr);
-			}},
-			{"%",      []() {
-				com::Throw("`float % float` is illegal.", CODEPOS);
-			}},
-			{"&&",     [&upSV, fl, fr]() {
-				upSV = std::make_unique<ircode::BoolStaticValue>(fl && fr);
-			}},
-			{"\\|\\|", [&upSV, fl, fr]() {
-				upSV = std::make_unique<ircode::BoolStaticValue>(fl || fr);
-			}},
-			{"<",      [&upSV, fl, fr]() {
-				upSV = std::make_unique<ircode::BoolStaticValue>(fl < fr);
-			}},
-			{">",      [&upSV, fl, fr]() {
-				upSV = std::make_unique<ircode::BoolStaticValue>(fl > fr);
-			}},
-			{"<=",     [&upSV, fl, fr]() {
-				upSV = std::make_unique<ircode::BoolStaticValue>(fl <= fr);
-			}},
-			{">=",     [&upSV, fl, fr]() {
-				upSV = std::make_unique<ircode::BoolStaticValue>(fl >= fr);
-			}},
-			{"==",     [&upSV, fl, fr]() {
-				upSV = std::make_unique<ircode::BoolStaticValue>(fl == fr);
-			}},
-			{"!=",     [&upSV, fl, fr]() {
-				upSV = std::make_unique<ircode::BoolStaticValue>(fl != fr);
-			}},
-			{"!",      [&upSV, fl]() {
-				upSV = std::make_unique<ircode::BoolStaticValue>(!fl);
-			}},
+		{"\\*",    [&upSV, fl, fr]() {
+			upSV = std::make_unique<ircode::FloatStaticValue>(fl * fr);
+		}},
+		{"\\-",    [&upSV, fl, fr]() {
+			upSV = std::make_unique<ircode::FloatStaticValue>(fl - fr);
+		}},
+		{"\\+",    [&upSV, fl, fr]() {
+			upSV = std::make_unique<ircode::FloatStaticValue>(fl + fr);
+		}},
+		{"\\/",    [&upSV, fl, fr]() {
+			upSV = std::make_unique<ircode::FloatStaticValue>(fl / fr);
+		}},
+		{"%",      []() {
+			com::Throw("`float % float` is illegal.", CODEPOS);
+		}},
+		{"&&",     [&upSV, fl, fr]() {
+			upSV = std::make_unique<ircode::BoolStaticValue>(fl && fr);
+		}},
+		{"\\|\\|", [&upSV, fl, fr]() {
+			upSV = std::make_unique<ircode::BoolStaticValue>(fl || fr);
+		}},
+		{"<",      [&upSV, fl, fr]() {
+			upSV = std::make_unique<ircode::BoolStaticValue>(fl < fr);
+		}},
+		{">",      [&upSV, fl, fr]() {
+			upSV = std::make_unique<ircode::BoolStaticValue>(fl > fr);
+		}},
+		{"<=",     [&upSV, fl, fr]() {
+			upSV = std::make_unique<ircode::BoolStaticValue>(fl <= fr);
+		}},
+		{">=",     [&upSV, fl, fr]() {
+			upSV = std::make_unique<ircode::BoolStaticValue>(fl >= fr);
+		}},
+		{"==",     [&upSV, fl, fr]() {
+			upSV = std::make_unique<ircode::BoolStaticValue>(fl == fr);
+		}},
+		{"!=",     [&upSV, fl, fr]() {
+			upSV = std::make_unique<ircode::BoolStaticValue>(fl != fr);
+		}},
+		{"!",      [&upSV, fl]() {
+			upSV = std::make_unique<ircode::BoolStaticValue>(!fl);
+		}},
 	};
 	com::regSwitch(op, list);
 	return upSV;
 }
 
 std::unique_ptr<ircode::StaticValue>
-calcOfInt(int il, int ir, const std::string & op) {
+ircode::calcOfInt(int il, int ir, const std::string & op) {
 	std::unique_ptr<ircode::StaticValue> upSV;
 	static const std::vector<com::RegexSwitchCase> list = {
-			{"\\*",    [&upSV, il, ir]() {
-				upSV = std::make_unique<ircode::IntStaticValue>(il * ir);
-			}},
-			{"\\-",    [&upSV, il, ir]() {
-				upSV = std::make_unique<ircode::IntStaticValue>(il - ir);
-			}},
-			{"\\+",    [&upSV, il, ir]() {
-				upSV = std::make_unique<ircode::IntStaticValue>(il + ir);
-			}},
-			{"\\/",    [&upSV, il, ir]() {
-				upSV = std::make_unique<ircode::IntStaticValue>(il / ir);
-			}},
-			{"%",      [&upSV, il, ir]() {
-				upSV = std::make_unique<ircode::IntStaticValue>(il % ir);
-			}},
-			{"&&",     [&upSV, il, ir]() {
-				upSV = std::make_unique<ircode::BoolStaticValue>(il && ir);
-			}},
-			{"\\|\\|", [&upSV, il, ir]() {
-				upSV = std::make_unique<ircode::BoolStaticValue>(il || ir);
-			}},
-			{"<",      [&upSV, il, ir]() {
-				upSV = std::make_unique<ircode::BoolStaticValue>(il < ir);
-			}},
-			{">",      [&upSV, il, ir]() {
-				upSV = std::make_unique<ircode::BoolStaticValue>(il > ir);
-			}},
-			{"<=",     [&upSV, il, ir]() {
-				upSV = std::make_unique<ircode::BoolStaticValue>(il <= ir);
-			}},
-			{">=",     [&upSV, il, ir]() {
-				upSV = std::make_unique<ircode::BoolStaticValue>(il >= ir);
-			}},
-			{"==",     [&upSV, il, ir]() {
-				upSV = std::make_unique<ircode::BoolStaticValue>(il == ir);
-			}},
-			{"!=",     [&upSV, il, ir]() {
-				upSV = std::make_unique<ircode::BoolStaticValue>(il != ir);
-			}},
-			{"!",      [&upSV, il]() {
-				upSV = std::make_unique<ircode::BoolStaticValue>(!il);
-			}},
+		{"\\*",    [&upSV, il, ir]() {
+			upSV = std::make_unique<ircode::IntStaticValue>(il * ir);
+		}},
+		{"\\-",    [&upSV, il, ir]() {
+			upSV = std::make_unique<ircode::IntStaticValue>(il - ir);
+		}},
+		{"\\+",    [&upSV, il, ir]() {
+			upSV = std::make_unique<ircode::IntStaticValue>(il + ir);
+		}},
+		{"\\/",    [&upSV, il, ir]() {
+			upSV = std::make_unique<ircode::IntStaticValue>(il / ir);
+		}},
+		{"%",      [&upSV, il, ir]() {
+			upSV = std::make_unique<ircode::IntStaticValue>(il % ir);
+		}},
+		{"&&",     [&upSV, il, ir]() {
+			upSV = std::make_unique<ircode::BoolStaticValue>(il && ir);
+		}},
+		{"\\|\\|", [&upSV, il, ir]() {
+			upSV = std::make_unique<ircode::BoolStaticValue>(il || ir);
+		}},
+		{"<",      [&upSV, il, ir]() {
+			upSV = std::make_unique<ircode::BoolStaticValue>(il < ir);
+		}},
+		{">",      [&upSV, il, ir]() {
+			upSV = std::make_unique<ircode::BoolStaticValue>(il > ir);
+		}},
+		{"<=",     [&upSV, il, ir]() {
+			upSV = std::make_unique<ircode::BoolStaticValue>(il <= ir);
+		}},
+		{">=",     [&upSV, il, ir]() {
+			upSV = std::make_unique<ircode::BoolStaticValue>(il >= ir);
+		}},
+		{"==",     [&upSV, il, ir]() {
+			upSV = std::make_unique<ircode::BoolStaticValue>(il == ir);
+		}},
+		{"!=",     [&upSV, il, ir]() {
+			upSV = std::make_unique<ircode::BoolStaticValue>(il != ir);
+		}},
+		{"!",      [&upSV, il]() {
+			upSV = std::make_unique<ircode::BoolStaticValue>(!il);
+		}},
 	};
 	com::regSwitch(op, list);
 	return upSV;
 }
 
 std::unique_ptr<ircode::StaticValue>
-calcOfBool(bool bl, bool br, const std::string & op) {
+ircode::calcOfBool(bool bl, bool br, const std::string & op) {
 	std::unique_ptr<ircode::StaticValue> upSV;
 	static const std::vector<com::RegexSwitchCase> list = {
-			{"\\*",    [&upSV, bl, br]() {
-				upSV = std::make_unique<ircode::IntStaticValue>(bl * br);
-			}},
-			{"\\-",    [&upSV, bl, br]() {
-				upSV = std::make_unique<ircode::IntStaticValue>(bl - br);
-			}},
-			{"\\+",    [&upSV, bl, br]() {
-				upSV = std::make_unique<ircode::IntStaticValue>(bl + br);
-			}},
-			{"\\/",    [&upSV, bl, br]() {
-				upSV = std::make_unique<ircode::IntStaticValue>(bl / br);
-			}},
-			{"%",      [&upSV, bl, br]() {
-				upSV = std::make_unique<ircode::IntStaticValue>(bl % br);
-			}},
-			{"&&",     [&upSV, bl, br]() {
-				upSV = std::make_unique<ircode::BoolStaticValue>(bl && br);
-			}},
-			{"\\|\\|", [&upSV, bl, br]() {
-				upSV = std::make_unique<ircode::BoolStaticValue>(bl || br);
-			}},
-			{"<",      [&upSV, bl, br]() {
-				upSV = std::make_unique<ircode::BoolStaticValue>(bl < br);
-			}},
-			{">",      [&upSV, bl, br]() {
-				upSV = std::make_unique<ircode::BoolStaticValue>(bl > br);
-			}},
-			{"<=",     [&upSV, bl, br]() {
-				upSV = std::make_unique<ircode::BoolStaticValue>(bl <= br);
-			}},
-			{">=",     [&upSV, bl, br]() {
-				upSV = std::make_unique<ircode::BoolStaticValue>(bl >= br);
-			}},
-			{"==",     [&upSV, bl, br]() {
-				upSV = std::make_unique<ircode::BoolStaticValue>(bl == br);
-			}},
-			{"!=",     [&upSV, bl, br]() {
-				upSV = std::make_unique<ircode::BoolStaticValue>(bl != br);
-			}},
-			{"!",      [&upSV, bl]() {
-				upSV = std::make_unique<ircode::BoolStaticValue>(!bl);
-			}},
+		{"\\*",    [&upSV, bl, br]() {
+			upSV = std::make_unique<ircode::IntStaticValue>(bl * br);
+		}},
+		{"\\-",    [&upSV, bl, br]() {
+			upSV = std::make_unique<ircode::IntStaticValue>(bl - br);
+		}},
+		{"\\+",    [&upSV, bl, br]() {
+			upSV = std::make_unique<ircode::IntStaticValue>(bl + br);
+		}},
+		{"\\/",    [&upSV, bl, br]() {
+			upSV = std::make_unique<ircode::IntStaticValue>(bl / br);
+		}},
+		{"%",      [&upSV, bl, br]() {
+			upSV = std::make_unique<ircode::IntStaticValue>(bl % br);
+		}},
+		{"&&",     [&upSV, bl, br]() {
+			upSV = std::make_unique<ircode::BoolStaticValue>(bl && br);
+		}},
+		{"\\|\\|", [&upSV, bl, br]() {
+			upSV = std::make_unique<ircode::BoolStaticValue>(bl || br);
+		}},
+		{"<",      [&upSV, bl, br]() {
+			upSV = std::make_unique<ircode::BoolStaticValue>(bl < br);
+		}},
+		{">",      [&upSV, bl, br]() {
+			upSV = std::make_unique<ircode::BoolStaticValue>(bl > br);
+		}},
+		{"<=",     [&upSV, bl, br]() {
+			upSV = std::make_unique<ircode::BoolStaticValue>(bl <= br);
+		}},
+		{">=",     [&upSV, bl, br]() {
+			upSV = std::make_unique<ircode::BoolStaticValue>(bl >= br);
+		}},
+		{"==",     [&upSV, bl, br]() {
+			upSV = std::make_unique<ircode::BoolStaticValue>(bl == br);
+		}},
+		{"!=",     [&upSV, bl, br]() {
+			upSV = std::make_unique<ircode::BoolStaticValue>(bl != br);
+		}},
+		{"!",      [&upSV, bl]() {
+			upSV = std::make_unique<ircode::BoolStaticValue>(!bl);
+		}},
 	};
 	com::regSwitch(op, list);
 	return upSV;
 }
 
 ircode::StaticValue::StaticValue(const ircode::TypeInfo & typeInfo)
-		: uPtrInfo(
-		com::dynamic_cast_unique_ptr<moeconcept::Cloneable, TypeInfo>(
-				typeInfo.cloneToUniquePtr()
-		)) {
+	: uPtrInfo(com::dynamic_cast_uPtr<TypeInfo>(typeInfo.cloneToUniquePtr())) {
 }
 
 ircode::StaticValue::StaticValue(const ircode::StaticValue & staticValue)
-		: uPtrInfo(
-		com::dynamic_cast_unique_ptr<moeconcept::Cloneable, TypeInfo>(
-				staticValue.uPtrInfo->cloneToUniquePtr())
+	: uPtrInfo(
+	com::dynamic_cast_uPtr<TypeInfo>(staticValue.uPtrInfo->cloneToUniquePtr())
 ) {
-}
-
-ircode::StaticValue::StaticValue() : uPtrInfo(nullptr) {
 }
 
 std::unique_ptr<ircode::StaticValue>
 ircode::StaticValue::calc(
-		const ircode::StaticValue &, const std::string & op
+	const ircode::StaticValue &, const std::string & op
 ) const {
 	com::Throw("This method should not be invoked.", CODEPOS);
 }
+
 
 std::unique_ptr<moeconcept::Cloneable>
 ircode::FloatStaticValue::_cloneToUniquePtr() const {
@@ -184,7 +180,7 @@ ircode::FloatStaticValue::_cloneToUniquePtr() const {
 }
 
 ircode::FloatStaticValue::FloatStaticValue(const std::string & literal)
-		: StaticValue(FloatType()), value(std::stof(literal)) {
+	: StaticValue(FloatType()), value(std::stof(literal)) {
 }
 
 std::string ircode::FloatStaticValue::toLLVMIR() const {
@@ -193,31 +189,31 @@ std::string ircode::FloatStaticValue::toLLVMIR() const {
 
 std::unique_ptr<ircode::StaticValue>
 ircode::FloatStaticValue::getValue(const std::vector<int> &) const {
-	return com::dynamic_cast_unique_ptr<moeconcept::Cloneable, StaticValue>(
-			cloneToUniquePtr());
+	return com::dynamic_cast_uPtr<StaticValue>(
+		cloneToUniquePtr());
 }
 
 std::unique_ptr<ircode::StaticValue> ircode::FloatStaticValue::calc(
-		const ircode::StaticValue & oVal, const std::string & op
+	const ircode::StaticValue & oVal, const std::string & op
 ) const {
 	std::unique_ptr<ircode::StaticValue> upRes;
 	switch (oVal.uPtrInfo->type) {
 		case TypeInfo::Type::Float_t: {
 			upRes = std::make_unique<ircode::FloatStaticValue>(
-					value +
-					dynamic_cast<const ircode::FloatStaticValue &>(oVal).value);
+				value +
+				dynamic_cast<const ircode::FloatStaticValue &>(oVal).value);
 			break;
 		}
 		case TypeInfo::Type::Int_t: {
 			upRes = std::make_unique<ircode::FloatStaticValue>(
-					value +
-					float(dynamic_cast<const ircode::IntStaticValue &>(oVal).value));
+				value +
+				float(dynamic_cast<const ircode::IntStaticValue &>(oVal).value));
 			break;
 		}
 		case TypeInfo::Type::Bool_t: {
 			upRes = std::make_unique<ircode::FloatStaticValue>(
-					value +
-					float(dynamic_cast<const ircode::BoolStaticValue &>(oVal).value));
+				value +
+				float(dynamic_cast<const ircode::BoolStaticValue &>(oVal).value));
 			break;
 		}
 		default: {
@@ -227,7 +223,8 @@ std::unique_ptr<ircode::StaticValue> ircode::FloatStaticValue::calc(
 	return upRes;
 }
 
-ircode::FloatStaticValue::FloatStaticValue(float value) : value(value) {
+ircode::FloatStaticValue::FloatStaticValue(float value)
+	: StaticValue(FloatType()), value(value) {
 }
 
 std::unique_ptr<moeconcept::Cloneable>
@@ -236,7 +233,7 @@ ircode::IntStaticValue::_cloneToUniquePtr() const {
 }
 
 ircode::IntStaticValue::IntStaticValue(const std::string & literal)
-		: StaticValue(IntType()), value(std::stoi(literal)) {
+	: StaticValue(IntType()), value(std::stoi(literal)) {
 }
 
 std::string ircode::IntStaticValue::toLLVMIR() const {
@@ -245,34 +242,35 @@ std::string ircode::IntStaticValue::toLLVMIR() const {
 
 std::unique_ptr<ircode::StaticValue>
 ircode::IntStaticValue::getValue(const std::vector<int> &) const {
-	return com::dynamic_cast_unique_ptr<moeconcept::Cloneable, StaticValue>(
-			cloneToUniquePtr());
+	return com::dynamic_cast_uPtr<StaticValue>(
+		cloneToUniquePtr());
 }
 
-ircode::IntStaticValue::IntStaticValue(int value) : value(value) {
+ircode::IntStaticValue::IntStaticValue(int value)
+	: StaticValue(IntType()), value(value) {
 }
 
 std::unique_ptr<ircode::StaticValue> ircode::IntStaticValue::calc(
-		const ircode::StaticValue & oVal, const std::string & op
+	const ircode::StaticValue & oVal, const std::string & op
 ) const {
 	std::unique_ptr<ircode::StaticValue> upSVRes;
 	switch (oVal.uPtrInfo->type) {
 		case TypeInfo::Type::Float_t: {
 			upSVRes = calcOfFloat(
-					float(value),
-					dynamic_cast<const ircode::FloatStaticValue &>(oVal).value, op);
+				float(value),
+				dynamic_cast<const ircode::FloatStaticValue &>(oVal).value, op);
 			break;
 		}
 		case TypeInfo::Type::Int_t: {
 			upSVRes = calcOfInt(
-					value,
-					dynamic_cast<const ircode::IntStaticValue &>(oVal).value, op);
+				value,
+				dynamic_cast<const ircode::IntStaticValue &>(oVal).value, op);
 			break;
 		}
 		case TypeInfo::Type::Bool_t: {
 			upSVRes = calcOfInt(
-					value,
-					dynamic_cast<const ircode::BoolStaticValue &>(oVal).value, op);
+				value,
+				dynamic_cast<const ircode::BoolStaticValue &>(oVal).value, op);
 			break;
 		}
 		default: {
@@ -288,15 +286,15 @@ ircode::FloatArrayStaticValue::_cloneToUniquePtr() const {
 }
 
 ircode::FloatArrayStaticValue::FloatArrayStaticValue(
-		int len, std::vector<FloatStaticValue> vi
+	int len, std::vector<FloatStaticValue> vi
 )
-		: StaticValue(), shape({len}), value(std::move(vi)) {
+	: StaticValue(), shape({len}), value(std::move(vi)) {
 	StaticValue::uPtrInfo = std::make_unique<FloatArrayType>(shape);
 }
 
 ircode::FloatArrayStaticValue::FloatArrayStaticValue(
-		int len, const std::vector<int> & preShape,
-		const std::vector<FloatArrayStaticValue> & vi
+	int len, const std::vector<int> & preShape,
+	const std::vector<FloatArrayStaticValue> & vi
 ) {
 	com::Assert(len <= (int) vi.size(), "len should less than vi.size().",
 	            CODEPOS);
@@ -313,13 +311,13 @@ ircode::FloatArrayStaticValue::FloatArrayStaticValue(
 	int sz = 1;
 	for (int x : preShape) sz *= x;
 	stlextension::vector::PushBackByNumberAndInstance(
-			value, (len - int(vi.size()) * sz), FloatStaticValue());
+		value, (len - int(vi.size()) * sz), FloatStaticValue());
 	StaticValue::uPtrInfo = std::make_unique<FloatArrayType>(shape);
 }
 
 std::string ircode::FloatArrayStaticValue::toLLVMIR() const {
 	std::function<std::string(int, int, int)> fun = [&](
-			int from, int to, int dim
+		int from, int to, int dim
 	) -> std::string {
 		if (dim == int(shape.size())) {
 			std::string buf;
@@ -358,8 +356,8 @@ ircode::FloatArrayStaticValue::getValue(const std::vector<int> & ind) const {
 			idx += *itInd * stride;
 			stride *= *itShape;
 		}
-		return com::dynamic_cast_unique_ptr<moeconcept::Cloneable, StaticValue>(
-				value[idx].cloneToUniquePtr());
+		return com::dynamic_cast_uPtr<StaticValue>(
+			value[idx].cloneToUniquePtr());
 	} else {
 		com::TODO("Maybe do not need this.", CODEPOS);
 	}
@@ -371,14 +369,14 @@ ircode::IntArrayStaticValue::_cloneToUniquePtr() const {
 }
 
 ircode::IntArrayStaticValue::IntArrayStaticValue(
-		int len, std::vector<IntStaticValue> vi
+	int len, std::vector<IntStaticValue> vi
 ) : StaticValue(), shape({len}), value(std::move(vi)) {
 	StaticValue::uPtrInfo = std::make_unique<IntArrayType>(shape);
 }
 
 ircode::IntArrayStaticValue::IntArrayStaticValue(
-		int len, const std::vector<int> & preShape,
-		const std::vector<IntArrayStaticValue> & vi
+	int len, const std::vector<int> & preShape,
+	const std::vector<IntArrayStaticValue> & vi
 ) {
 	
 	com::Assert(len <= (int) vi.size(), "len should less than vi.size().",
@@ -396,13 +394,13 @@ ircode::IntArrayStaticValue::IntArrayStaticValue(
 	int sz = 1;
 	for (int x : preShape) sz *= x;
 	stlextension::vector::PushBackByNumberAndInstance(
-			value, (len - int(vi.size()) * sz), IntStaticValue());
+		value, (len - int(vi.size()) * sz), IntStaticValue());
 	StaticValue::uPtrInfo = std::make_unique<IntArrayType>(shape);
 }
 
 std::string ircode::IntArrayStaticValue::toLLVMIR() const {
 	std::function<std::string(int, int, int)> fun = [&](
-			int from, int to, int dim
+		int from, int to, int dim
 	) -> std::string {
 		if (dim == int(shape.size())) {
 			std::string buf;
@@ -441,8 +439,8 @@ ircode::IntArrayStaticValue::getValue(const std::vector<int> & ind) const {
 			idx += *itInd * stride;
 			stride *= *itShape;
 		}
-		return com::dynamic_cast_unique_ptr<moeconcept::Cloneable, StaticValue>(
-				value[idx].cloneToUniquePtr());
+		return com::dynamic_cast_uPtr<StaticValue>(
+			value[idx].cloneToUniquePtr());
 	} else {
 		com::TODO("Maybe do not need this.", CODEPOS);
 	}
@@ -454,10 +452,11 @@ ircode::BoolStaticValue::_cloneToUniquePtr() const {
 }
 
 ircode::BoolStaticValue::BoolStaticValue(const std::string & literal)
-		: StaticValue(BoolType()), value(std::stoi(literal)) {
+	: StaticValue(BoolType()), value(std::stoi(literal)) {
 }
 
-ircode::BoolStaticValue::BoolStaticValue(bool value) : value(value) {
+ircode::BoolStaticValue::BoolStaticValue(bool value)
+	: StaticValue(BoolType()), value(value) {
 }
 
 std::string ircode::BoolStaticValue::toLLVMIR() const {
@@ -466,31 +465,31 @@ std::string ircode::BoolStaticValue::toLLVMIR() const {
 
 std::unique_ptr<ircode::StaticValue>
 ircode::BoolStaticValue::getValue(const std::vector<int> &) const {
-	return com::dynamic_cast_unique_ptr<moeconcept::Cloneable, StaticValue>(
-			cloneToUniquePtr());
+	return com::dynamic_cast_uPtr<StaticValue>(
+		cloneToUniquePtr());
 }
 
 std::unique_ptr<ircode::StaticValue> ircode::BoolStaticValue::calc(
-		const ircode::StaticValue & oVal, const std::string & op
+	const ircode::StaticValue & oVal, const std::string & op
 ) const {
 	std::unique_ptr<ircode::StaticValue> upSVRes;
 	switch (oVal.uPtrInfo->type) {
 		case TypeInfo::Type::Float_t: {
 			upSVRes = calcOfFloat(
-					float(value),
-					dynamic_cast<const ircode::FloatStaticValue &>(oVal).value, op);
+				float(value),
+				dynamic_cast<const ircode::FloatStaticValue &>(oVal).value, op);
 			break;
 		}
 		case TypeInfo::Type::Int_t: {
 			upSVRes = calcOfInt(
-					value,
-					dynamic_cast<const ircode::IntStaticValue &>(oVal).value, op);
+				value,
+				dynamic_cast<const ircode::IntStaticValue &>(oVal).value, op);
 			break;
 		}
 		case TypeInfo::Type::Bool_t: {
 			upSVRes = calcOfBool(
-					value,
-					dynamic_cast<const ircode::BoolStaticValue &>(oVal).value, op);
+				value,
+				dynamic_cast<const ircode::BoolStaticValue &>(oVal).value, op);
 			break;
 		}
 		default: {

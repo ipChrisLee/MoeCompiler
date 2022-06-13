@@ -17,13 +17,16 @@ include_directories(src)
 include_directories(src/mlib)
 include_directories(src/third_party/antlr4)
 
-#   Compile Options
-# From [CMake Tutorial](https://cmake.org/cmake/help/latest/command/add_compile_options.html?highlight=add_compile_options)
-# This compile options will add to subdirectories.
+#   Compile and Options
+# From
+#   [1](https://cmake.org/cmake/help/latest/command/add_compile_options.html?highlight=add_compile_options)
+#   [2](https://cmake.org/cmake/help/latest/command/add_link_options.html?highlight=add_link_options)
+# These options will add to subdirectories.
 add_compile_options(
-		-g -Wall -Werror -Wextra
+		-g -Wall -Werror -Wextra -pthread
 		-Wno-unused-parameter
 		)
+add_link_options(-lpthread -lm -v -pthread)
 
 #   Library Subdirectories
 add_subdirectory(src/mlib)                      #   moe lib
@@ -32,5 +35,6 @@ add_subdirectory(src/third_party/antlr4)        #   antlr4
 
 #   Target of compiler
 add_executable(compiler ${cppFiles})
+target_link_libraries(compiler mlib)
+target_link_libraries(compiler antlr4Lib)
 
-add_link_options(-lpthread -lm -v)

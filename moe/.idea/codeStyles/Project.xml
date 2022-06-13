@@ -33,6 +33,7 @@
       <option name="SPACE_WITHIN_EMPTY_ARRAY_INITIALIZER_BRACES" value="true" />
       <option name="WRAP_ON_TYPING" value="0" />
       <indentOptions>
+        <option name="CONTINUATION_INDENT_SIZE" value="4" />
         <option name="USE_TAB_CHARACTER" value="true" />
         <option name="SMART_TABS" value="true" />
         <option name="LABEL_INDENT_SIZE" value="-4" />

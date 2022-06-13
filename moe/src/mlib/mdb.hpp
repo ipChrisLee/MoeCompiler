@@ -44,7 +44,7 @@ public:
      * */
     explicit mdb(
         std::unique_ptr<com::cprt> printer,
-        bool enable=false,
+        bool enable=true,
         std::string_view header="[mdb] "
        ):printer(std::move(printer)),enable(enable),headstr(header){
     }

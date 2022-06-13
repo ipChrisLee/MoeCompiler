@@ -7,6 +7,8 @@
 namespace ircode {
 struct LLVMable {
 	[[nodiscard]] virtual std::string toLLVMIR() const = 0;
+	
+	virtual ~LLVMable() = default;
 };
 
 std::string floatToString(float f);

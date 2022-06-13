@@ -5,5 +5,8 @@
 
 
 bool com::mdb::sysEnable = false;
-com::mdb com::ccdbg(std::make_unique<com::cprt>(std::cout, com::color::blue), false, "[ccdbg] ");
+com::mdb com::ccdbg(
+		std::make_unique<com::cprt>(
+				std::cout, com::color::blue), true, "[ccdbg] "
+);
 

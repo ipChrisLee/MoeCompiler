@@ -88,8 +88,8 @@ ircode::AddrJumpLabel::_cloneToUniquePtr() const {
 ircode::AddrPara::AddrPara(
 		std::string name, const ircode::TypeInfo & typeInfo, int number
 ) : number(number), name(std::move(name)),
-    uPtrTypeInfo(com::dynamic_cast_unique_ptr<moeconcept::Cloneable, TypeInfo>(
-		    typeInfo.cloneToUniquePtr())) {
+    uPtrTypeInfo(com::dynamic_cast_uPtr<TypeInfo>(
+	    typeInfo.cloneToUniquePtr())) {
 }
 
 std::string ircode::AddrPara::toLLVMIR() const {
@@ -101,8 +101,8 @@ ircode::AddrPara::AddrPara(const ircode::AddrPara & addrPara)
 		  number(addrPara.number),
 		  name(addrPara.name),
 		  uPtrTypeInfo(
-				  com::dynamic_cast_unique_ptr<moeconcept::Cloneable, TypeInfo>(
-						  addrPara.uPtrTypeInfo->cloneToUniquePtr())) {
+			  com::dynamic_cast_uPtr<TypeInfo>(
+				  addrPara.uPtrTypeInfo->cloneToUniquePtr())) {
 }
 
 std::unique_ptr<moeconcept::Cloneable>
@@ -115,8 +115,8 @@ ircode::AddrFunction::AddrFunction(std::string name) : name(std::move(name)) {
 
 ircode::TypeInfo *
 ircode::AddrFunction::setReturnTypeInfo(const ircode::TypeInfo & typeInfo) {
-	uPtrReturnTypeInfo = com::dynamic_cast_unique_ptr<moeconcept::Cloneable, TypeInfo>(
-			typeInfo.cloneToUniquePtr());
+	uPtrReturnTypeInfo = com::dynamic_cast_uPtr<TypeInfo>(
+		typeInfo.cloneToUniquePtr());
 	return uPtrReturnTypeInfo.get();
 }
 
@@ -139,8 +139,8 @@ std::string ircode::AddrFunction::toLLVMIR() const {
 
 ircode::AddrFunction::AddrFunction(const ircode::AddrFunction & addrFun)
 		: Addr(addrFun), name(addrFun.name), uPtrReturnTypeInfo(
-		com::dynamic_cast_unique_ptr<moeconcept::Cloneable, TypeInfo>(
-				addrFun.uPtrReturnTypeInfo->cloneToUniquePtr())),
+	com::dynamic_cast_uPtr<TypeInfo>(
+		addrFun.uPtrReturnTypeInfo->cloneToUniquePtr())),
 		  vecPtrAddrPara(addrFun.vecPtrAddrPara) {
 }
 
@@ -173,7 +173,7 @@ ircode::Addr * ircode::AddrPool::addAddrToScope(
 		const ircode::Addr & addr, ircode::Scope * pScope,
 		ircode::IdType idType, const std::string & name
 ) {
-	pool.emplace_back(com::cloneable_cast_uPtr<Addr>(addr.cloneToUniquePtr()));
+	pool.emplace_back(com::dynamic_cast_uPtr<Addr>(addr.cloneToUniquePtr()));
 	pScope->bindDominateVar(name, idType, pool.rbegin()->get());
 	return pool.rbegin()->get();
 }
@@ -184,7 +184,7 @@ ircode::Scope * ircode::AddrPool::getRootScope() const {
 
 ircode::Addr *
 ircode::AddrPool::addAddrWithoutScope(const ircode::Addr & addr) {
-	pool.emplace_back(com::cloneable_cast_uPtr<Addr>(addr.cloneToUniquePtr()));
+	pool.emplace_back(com::dynamic_cast_uPtr<Addr>(addr.cloneToUniquePtr()));
 	return pool.rbegin()->get();
 }
 
@@ -193,7 +193,7 @@ ircode::AddrVariable::AddrVariable(
 		const ircode::TypeInfo & typeInfo, std::string name
 ) : Addr(), name(std::move(name)), isConst(false),
     uPtrStaticValue(nullptr), uPtrTypeInfo(
-				com::cloneable_cast_uPtr<TypeInfo>(
+				com::dynamic_cast_uPtr<TypeInfo>(
 						typeInfo.cloneToUniquePtr())) {
 }
 
@@ -202,17 +202,17 @@ ircode::AddrVariable::AddrVariable(
 		const ircode::StaticValue & staticValue
 )
 		: Addr(), name(std::move(name)), isConst(true), uPtrStaticValue(
-		com::cloneable_cast_uPtr<StaticValue>(staticValue.cloneToUniquePtr())),
-		  uPtrTypeInfo(com::cloneable_cast_uPtr<TypeInfo>(
+		com::dynamic_cast_uPtr<StaticValue>(staticValue.cloneToUniquePtr())),
+		  uPtrTypeInfo(com::dynamic_cast_uPtr<TypeInfo>(
 				  typeInfo.cloneToUniquePtr())) {
 }
 
 ircode::AddrVariable::AddrVariable(const AddrVariable & addrVariable)
 		: Addr(addrVariable), name(addrVariable.name),
 		  isConst(addrVariable.isConst), uPtrStaticValue(
-				com::cloneable_cast_uPtr<StaticValue>(
+				com::dynamic_cast_uPtr<StaticValue>(
 						addrVariable.uPtrStaticValue->cloneToUniquePtr())),
-		  uPtrTypeInfo(com::cloneable_cast_uPtr<TypeInfo>(
+		  uPtrTypeInfo(com::dynamic_cast_uPtr<TypeInfo>(
 				  addrVariable.uPtrTypeInfo->cloneToUniquePtr())) {
 }
 
@@ -234,8 +234,8 @@ ircode::AddrGlobalVariable::AddrGlobalVariable(
 		const ircode::StaticValue & staticValue
 )
 		: Addr(), name(std::move(name)), isConst(true), uPtrStaticValue(
-		com::cloneable_cast_uPtr<StaticValue>(staticValue.cloneToUniquePtr())),
-		  uPtrTypeInfo(com::cloneable_cast_uPtr<TypeInfo>(
+		com::dynamic_cast_uPtr<StaticValue>(staticValue.cloneToUniquePtr())),
+		  uPtrTypeInfo(com::dynamic_cast_uPtr<TypeInfo>(
 				  typeInfo.cloneToUniquePtr())) {
 }
 
@@ -244,16 +244,16 @@ ircode::AddrGlobalVariable::AddrGlobalVariable(
 )
 		: Addr(), name(std::move(name)), isConst(false),
 		  uPtrStaticValue(nullptr), uPtrTypeInfo(
-				com::cloneable_cast_uPtr<TypeInfo>(
+				com::dynamic_cast_uPtr<TypeInfo>(
 						typeInfo.cloneToUniquePtr())) {
 }
 
 ircode::AddrGlobalVariable::AddrGlobalVariable(
 		const ircode::AddrGlobalVariable & addr
 ) : Addr(addr), name(addr.name), isConst(addr.isConst), uPtrStaticValue(
-		com::cloneable_cast_uPtr<StaticValue>(
+		com::dynamic_cast_uPtr<StaticValue>(
 				addr.uPtrStaticValue->cloneToUniquePtr())), uPtrTypeInfo(
-		com::cloneable_cast_uPtr<TypeInfo>(
+		com::dynamic_cast_uPtr<TypeInfo>(
 				addr.uPtrTypeInfo->cloneToUniquePtr())) {
 }
 
@@ -270,18 +270,18 @@ ircode::AddrStaticValue::AddrStaticValue(
 		const TypeInfo & typeInfo, const StaticValue & staticValue
 )
 		: uPtrTypeInfo(
-		com::cloneable_cast_uPtr<TypeInfo>(typeInfo.cloneToUniquePtr())),
-		  uPtrStaticValue(com::cloneable_cast_uPtr<StaticValue>(
+		com::dynamic_cast_uPtr<TypeInfo>(typeInfo.cloneToUniquePtr())),
+		  uPtrStaticValue(com::dynamic_cast_uPtr<StaticValue>(
 				  staticValue.cloneToUniquePtr())) {
 	com::Assert(*staticValue.uPtrInfo == typeInfo);
 }
 
 ircode::AddrStaticValue::AddrStaticValue(const AddrStaticValue & addr) :
 		Addr(addr),
-		uPtrTypeInfo(com::cloneable_cast_uPtr<TypeInfo>(
+		uPtrTypeInfo(com::dynamic_cast_uPtr<TypeInfo>(
 				addr.uPtrTypeInfo->cloneToUniquePtr())),
 		uPtrStaticValue(
-				com::cloneable_cast_uPtr<StaticValue>(
+				com::dynamic_cast_uPtr<StaticValue>(
 						addr.uPtrStaticValue->cloneToUniquePtr())) {
 }
 

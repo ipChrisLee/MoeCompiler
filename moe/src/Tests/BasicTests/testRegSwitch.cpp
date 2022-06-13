@@ -9,7 +9,7 @@
 
 #include "common.hpp"
 
-TEST(RegSwitch1, VecCases) {
+TEST(RegSwitch, VecCases) {
 	std::vector<std::string> ans;
 	std::vector<com::RegexSwitchCase> list = {
 			{"\\*",    [&ans]() { ans.emplace_back("*"); }},
@@ -37,7 +37,7 @@ TEST(RegSwitch1, VecCases) {
 	EXPECT_EQ(vec, ans);
 }
 
-TEST(RegSwitch2, InitListCases) {
+TEST(RegSwitch, InitListCases) {
 	std::vector<std::string> ans;
 	std::vector<std::string> vec = {
 			"*", "-", "+", "/", "&&", "||", "|", "!"

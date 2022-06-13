@@ -99,34 +99,24 @@ class Cloneable {
 
 namespace com {
 
-/*  dynamic_cast for `unique_ptr` from moeconcept::Cloneable.
- * */
+/**
+ * @brief
+ * Dynamic_cast for @c unique_ptr from @c moeconcept::Cloneable.
+ * @deprecated
+ * Not @c com::dynamic_cast_uPtr can do the same thing, but is more general.
+ */
 template<typename To>
+[[deprecated("Use com::dynamic_cast_uPtr instead.")]]
 std::unique_ptr<To>
 cloneable_cast_uPtr(std::unique_ptr<moeconcept::Cloneable> && fromP) {
 	//  return nullptr if source pointer is nullptr.
 	if (!fromP) { return std::unique_ptr<To>(nullptr); }
 	To * p = dynamic_cast<To *>(fromP.release());
 	Assert(p, concatToString({
-			                         "dynamic_cast_unique_ptr failed. From [moeconcept::Cloneable] to [",
+			                         "dynamic_cast_uPtr failed. From [moeconcept::Cloneable] to [",
 			                         typeid(To).name(), "*]."
 	                         }));
 	return std::unique_ptr<To>(p);
 }
 
-/*  NOTICE:
- *      If you use this function, you should NOT use ptr you pass to this function any more!
- * */
-template<typename To>
-std::unique_ptr<To>
-cloneable_cast_uPtr(std::unique_ptr<moeconcept::Cloneable> & fromP) {
-	//  return nullptr if source pointer is nullptr.
-	if (!fromP) { return std::unique_ptr<To>(nullptr); }
-	To * p = dynamic_cast<To *>(fromP.release());
-	Assert(p, concatToString({
-			                         "dynamic_cast_unique_ptr failed. From [moeconcept::Cloneable] to [",
-			                         typeid(To).name(), "*]."
-	                         }));
-	return std::unique_ptr<To>(p);
-}
 }
