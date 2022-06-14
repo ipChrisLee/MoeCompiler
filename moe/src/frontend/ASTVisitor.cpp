@@ -45,6 +45,7 @@ std::any ASTVisitor::visitConstDef(SysYParser::ConstDefContext * ctx) {
 			auto len = retVal.restore<std::unique_ptr<ircode::StaticValue>>();
 			shape.push_back(
 				com::dynamic_cast_uPtr<ircode::IntStaticValue>(len)->value);
+			// TODO
 		}
 	}
 	com::TODO("Add to addr pool.", CODEPOS);
@@ -163,7 +164,8 @@ std::any ASTVisitor::visitReturnStmt(SysYParser::ReturnStmtContext * ctx) {
 }
 
 std::any ASTVisitor::visitExp(SysYParser::ExpContext * ctx) {
-	com::TODO("", CODEPOS);
+	// exp -> addExp
+	return visitChildren(ctx);
 }
 
 std::any ASTVisitor::visitCond(SysYParser::CondContext * ctx) {
@@ -171,22 +173,31 @@ std::any ASTVisitor::visitCond(SysYParser::CondContext * ctx) {
 }
 
 std::any ASTVisitor::visitLVal(SysYParser::LValContext * ctx) {
-	com::TODO("", CODEPOS);
+	// lVal -> Identifier ('[' exp ']')*
+	if(info.visitingConst){
+		com::TODO("To write after addr pool finished.",CODEPOS);
+	}else{
+		com::TODO("",CODEPOS);
+	}
 }
 
 std::any ASTVisitor::visitPrimaryExp1(SysYParser::PrimaryExp1Context * ctx) {
-	com::TODO("", CODEPOS);
+	// primaryExp -> '(' exp ')' # primaryExp1
+	return visitChildren(ctx);
 }
 
 std::any ASTVisitor::visitPrimaryExp2(SysYParser::PrimaryExp2Context * ctx) {
-	com::TODO("", CODEPOS);
+	// primaryExp -> lVal # primaryExp2
+	return visitChildren(ctx);
 }
 
 std::any ASTVisitor::visitPrimaryExp3(SysYParser::PrimaryExp3Context * ctx) {
-	com::TODO("", CODEPOS);
+	// primaryExp -> number # primaryExp3
+	return visitChildren(ctx);
 }
 
 std::any ASTVisitor::visitNumber(SysYParser::NumberContext * ctx) {
+	// number -> IntLiteral | FloatLiteral
 	if (ctx->FloatLiteral()) {
 		std::unique_ptr<ircode::StaticValue> v =
 			std::make_unique<ircode::IntStaticValue>(ctx->getText());
@@ -227,11 +238,12 @@ std::any ASTVisitor::visitUnary3(SysYParser::Unary3Context * ctx) {
 	// unaryExp -> unaryOp unaryExp # unary3
 	ctx->unaryOp()->accept(this);
 	auto op = retVal.restore<std::string>();
-	if(info.visitingConst){
-		
+	if (info.visitingConst) {
+		auto p = retVal.restore<std::unique_ptr<ircode::StaticValue>>();
+		retVal.save(p->calc(op));
 		return nullptr;
-	}else {
-		com::TODO("",CODEPOS);
+	} else {
+		com::TODO("", CODEPOS);
 	}
 }
 

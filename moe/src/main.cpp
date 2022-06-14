@@ -1,78 +1,24 @@
 #include <sys/resource.h>
 
 #include <vector>
-#include <string>
-#include <getopt.h> //  For getopt_long
 
 #include "cprt.hpp"
 #include "common.hpp"
-#include "mdb.hpp"
+#include "SysY.hpp"
 #include "antlr4-runtime.h"
+
 #include "frontend/SysAntlr/SysYParser.h"
 #include "frontend/SysAntlr/SysYLexer.h"
-
 #include "frontend/ASTVisitor.hpp"
 
-std::string inFilePath, outFilePath;
-bool optimization;
-
-void parseArgs(int argc, char ** argv) {
-	int c;
-	while (true) {
-		int optionIndex = 0;
-		static struct option longOptions[] = {
-			{"verbose", no_argument, nullptr, 0},
-			{"debug",   no_argument, nullptr, 0},
-			{nullptr,   0,           nullptr, 0}
-		};
-		c = getopt_long(argc, argv, "-o:SO:", longOptions, &optionIndex);
-		if (c == -1) {
-			break;
-		}
-		switch (c) {
-			case 0: {
-				com::regSwitch(
-					longOptions[optionIndex].name, {
-						{"debug", []() { com::mdb::setSysEnable() = true; }}
-					});
-				break;
-			}
-			case 'S': {
-				break;
-			}
-			case 'd': {
-				com::mdb::setSysEnable() = true;
-			}
-			case 'O': {
-				optimization = true;
-				break;
-			}
-			case 'o': {
-				outFilePath = optarg;
-				break;
-			}
-			case 1: {
-				inFilePath = optarg;
-				break;
-			}
-			default: {
-				com::Throw("getopt_long return character code " + std::to_string(c),
-				           CODEPOS);
-			}
-		}
-	}
-}
 
 int Main(int argc, char ** argv) {
 	if (argc < 2) {
 		com::Throw("You should specify input file path.");
 	}
-	parseArgs(argc, argv);
-	com::ccdbg.infoPrint(NVPAIR(inFilePath), CODEPOS);
-	std::ifstream source(inFilePath);
-	com::Assert(source.is_open(), "Cannot open input file!", CODEPOS);
+	SysY::parseArgs(argc, argv);
 	
-	antlr4::ANTLRInputStream input(source);
+	antlr4::ANTLRInputStream input(SysY::source);
 	SysYLexer lexer(&input);
 	antlr4::CommonTokenStream tokens(&lexer);
 	SysYParser parser(&tokens);
