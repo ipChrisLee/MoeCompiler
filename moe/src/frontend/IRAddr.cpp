@@ -23,7 +23,7 @@ ircode::Scope * ircode::Scope::getThis() {
 }
 
 void ircode::Scope::bindDominateVar(
-		const std::string & str, IdType idType, ircode::Addr * addrVar
+	const std::string & str, IdType idType, ircode::Addr * addrVar
 ) {
 	if (addrMap.count(str)) {
 		com::Throw("Same name!", CODEPOS);
@@ -57,8 +57,6 @@ ircode::Scope::findIdInThisScope(const std::string & name) const {
 }
 
 
-
-
 int ircode::Addr::cnt = 0;
 
 ircode::Addr::Addr() : id(++cnt) {
@@ -72,7 +70,7 @@ std::unique_ptr<moeconcept::Cloneable> ircode::Addr::_cloneToUniquePtr() const {
 }
 
 ircode::AddrJumpLabel::AddrJumpLabel(std::string name) : labelName(
-		std::move(name)) {
+	std::move(name)) {
 }
 
 std::string ircode::AddrJumpLabel::toLLVMIR() const {
@@ -86,7 +84,7 @@ ircode::AddrJumpLabel::_cloneToUniquePtr() const {
 }
 
 ircode::AddrPara::AddrPara(
-		std::string name, const ircode::TypeInfo & typeInfo, int number
+	std::string name, const ircode::TypeInfo & typeInfo, int number
 ) : number(number), name(std::move(name)),
     uPtrTypeInfo(com::dynamic_cast_uPtr<TypeInfo>(
 	    typeInfo.cloneToUniquePtr())) {
@@ -97,12 +95,12 @@ std::string ircode::AddrPara::toLLVMIR() const {
 }
 
 ircode::AddrPara::AddrPara(const ircode::AddrPara & addrPara)
-		: Addr(addrPara),
-		  number(addrPara.number),
-		  name(addrPara.name),
-		  uPtrTypeInfo(
-			  com::dynamic_cast_uPtr<TypeInfo>(
-				  addrPara.uPtrTypeInfo->cloneToUniquePtr())) {
+	: Addr(addrPara),
+	  number(addrPara.number),
+	  name(addrPara.name),
+	  uPtrTypeInfo(
+		  com::dynamic_cast_uPtr<TypeInfo>(
+			  addrPara.uPtrTypeInfo->cloneToUniquePtr())) {
 }
 
 std::unique_ptr<moeconcept::Cloneable>
@@ -138,10 +136,10 @@ std::string ircode::AddrFunction::toLLVMIR() const {
 }
 
 ircode::AddrFunction::AddrFunction(const ircode::AddrFunction & addrFun)
-		: Addr(addrFun), name(addrFun.name), uPtrReturnTypeInfo(
+	: Addr(addrFun), name(addrFun.name), uPtrReturnTypeInfo(
 	com::dynamic_cast_uPtr<TypeInfo>(
 		addrFun.uPtrReturnTypeInfo->cloneToUniquePtr())),
-		  vecPtrAddrPara(addrFun.vecPtrAddrPara) {
+	  vecPtrAddrPara(addrFun.vecPtrAddrPara) {
 }
 
 std::unique_ptr<moeconcept::Cloneable>
@@ -155,7 +153,7 @@ ircode::AddrPool::AddrPool() : pScopeRoot(std::make_unique<Scope>(nullptr)) {
 
 std::tuple<ircode::IdType, ircode::Addr *>
 ircode::AddrPool::findAddrDownToRoot( /*NOLINT*/
-		const ircode::Scope * pFrom, const std::string & name
+	const ircode::Scope * pFrom, const std::string & name
 ) {
 	if (pFrom == nullptr) {
 		com::Throw("Var [" + name + "] Not Fount", CODEPOS);
@@ -170,8 +168,8 @@ ircode::AddrPool::findAddrDownToRoot( /*NOLINT*/
 }
 
 ircode::Addr * ircode::AddrPool::addAddrToScope(
-		const ircode::Addr & addr, ircode::Scope * pScope,
-		ircode::IdType idType, const std::string & name
+	const ircode::Addr & addr, ircode::Scope * pScope,
+	ircode::IdType idType, const std::string & name
 ) {
 	pool.emplace_back(com::dynamic_cast_uPtr<Addr>(addr.cloneToUniquePtr()));
 	pScope->bindDominateVar(name, idType, pool.rbegin()->get());
@@ -190,30 +188,33 @@ ircode::AddrPool::addAddrWithoutScope(const ircode::Addr & addr) {
 
 
 ircode::AddrVariable::AddrVariable(
-		const ircode::TypeInfo & typeInfo, std::string name
+	const ircode::TypeInfo & typeInfo, std::string name
 ) : Addr(), name(std::move(name)), isConst(false),
     uPtrStaticValue(nullptr), uPtrTypeInfo(
-				com::dynamic_cast_uPtr<TypeInfo>(
-						typeInfo.cloneToUniquePtr())) {
+		com::dynamic_cast_uPtr<TypeInfo>(
+			typeInfo.cloneToUniquePtr())) {
 }
 
 ircode::AddrVariable::AddrVariable(
-		const ircode::TypeInfo & typeInfo, std::string name,
-		const ircode::StaticValue & staticValue
+	const ircode::TypeInfo & typeInfo, std::string name,
+	const ircode::StaticValue & staticValue
 )
-		: Addr(), name(std::move(name)), isConst(true), uPtrStaticValue(
-		com::dynamic_cast_uPtr<StaticValue>(staticValue.cloneToUniquePtr())),
-		  uPtrTypeInfo(com::dynamic_cast_uPtr<TypeInfo>(
-				  typeInfo.cloneToUniquePtr())) {
+	: Addr(), name(std::move(name)), isConst(true), uPtrStaticValue(
+	com::dynamic_cast_uPtr<StaticValue>(staticValue.cloneToUniquePtr())),
+	  uPtrTypeInfo(com::dynamic_cast_uPtr<TypeInfo>(
+		  typeInfo.cloneToUniquePtr())) {
+	com::Assert(uPtrStaticValue->getTypeInfo() == *(uPtrTypeInfo),
+	            "Type of static value and variable should be same.", CODEPOS);
 }
 
+
 ircode::AddrVariable::AddrVariable(const AddrVariable & addrVariable)
-		: Addr(addrVariable), name(addrVariable.name),
-		  isConst(addrVariable.isConst), uPtrStaticValue(
-				com::dynamic_cast_uPtr<StaticValue>(
-						addrVariable.uPtrStaticValue->cloneToUniquePtr())),
-		  uPtrTypeInfo(com::dynamic_cast_uPtr<TypeInfo>(
-				  addrVariable.uPtrTypeInfo->cloneToUniquePtr())) {
+	: Addr(addrVariable), name(addrVariable.name),
+	  isConst(addrVariable.isConst), uPtrStaticValue(
+		com::dynamic_cast_uPtr<StaticValue>(
+			addrVariable.uPtrStaticValue->cloneToUniquePtr())),
+	  uPtrTypeInfo(com::dynamic_cast_uPtr<TypeInfo>(
+		  addrVariable.uPtrTypeInfo->cloneToUniquePtr())) {
 }
 
 std::unique_ptr<moeconcept::Cloneable>
@@ -230,13 +231,16 @@ std::string ircode::AddrVariable::toLLVMIR() const {
 }
 
 ircode::AddrGlobalVariable::AddrGlobalVariable(
-		const ircode::TypeInfo & typeInfo, std::string name,
-		const ircode::StaticValue & staticValue
-)
-		: Addr(), name(std::move(name)), isConst(true), uPtrStaticValue(
-		com::dynamic_cast_uPtr<StaticValue>(staticValue.cloneToUniquePtr())),
-		  uPtrTypeInfo(com::dynamic_cast_uPtr<TypeInfo>(
-				  typeInfo.cloneToUniquePtr())) {
+	const ircode::TypeInfo & typeInfo, std::string name,
+	const ircode::StaticValue & staticValue
+) : Addr(), name(std::move(name)), isConst(true),
+    uPtrStaticValue(
+	    com::dynamic_cast_uPtr<StaticValue>(staticValue.cloneToUniquePtr())
+    ),
+    uPtrTypeInfo(com::dynamic_cast_uPtr<TypeInfo>(typeInfo.cloneToUniquePtr())) {
+	com::Assert(uPtrStaticValue->getTypeInfo() == *(uPtrTypeInfo),
+	            "Type of static value and type of variable should be same.",
+	            CODEPOS);
 }
 
 // ircode::AddrGlobalVariable::AddrGlobalVariable(
@@ -249,12 +253,12 @@ ircode::AddrGlobalVariable::AddrGlobalVariable(
 // }
 
 ircode::AddrGlobalVariable::AddrGlobalVariable(
-		const ircode::AddrGlobalVariable & addr
+	const ircode::AddrGlobalVariable & addr
 ) : Addr(addr), name(addr.name), isConst(addr.isConst), uPtrStaticValue(
-		com::dynamic_cast_uPtr<StaticValue>(
-				addr.uPtrStaticValue->cloneToUniquePtr())), uPtrTypeInfo(
-		com::dynamic_cast_uPtr<TypeInfo>(
-				addr.uPtrTypeInfo->cloneToUniquePtr())) {
+	com::dynamic_cast_uPtr<StaticValue>(
+		addr.uPtrStaticValue->cloneToUniquePtr())), uPtrTypeInfo(
+	com::dynamic_cast_uPtr<TypeInfo>(
+		addr.uPtrTypeInfo->cloneToUniquePtr())) {
 }
 
 std::unique_ptr<moeconcept::Cloneable>
@@ -263,26 +267,26 @@ ircode::AddrGlobalVariable::_cloneToUniquePtr() const {
 }
 
 std::string ircode::AddrGlobalVariable::toLLVMIR() const {
-	return "@G."+name;
+	return "@G." + name;
 }
 
 ircode::AddrStaticValue::AddrStaticValue(
-		const TypeInfo & typeInfo, const StaticValue & staticValue
+	const TypeInfo & typeInfo, const StaticValue & staticValue
 )
-		: uPtrTypeInfo(
-		com::dynamic_cast_uPtr<TypeInfo>(typeInfo.cloneToUniquePtr())),
-		  uPtrStaticValue(com::dynamic_cast_uPtr<StaticValue>(
-				  staticValue.cloneToUniquePtr())) {
-	com::Assert(*staticValue.uPtrInfo == typeInfo);
+	: uPtrTypeInfo(
+	com::dynamic_cast_uPtr<TypeInfo>(typeInfo.cloneToUniquePtr())),
+	  uPtrStaticValue(com::dynamic_cast_uPtr<StaticValue>(
+		  staticValue.cloneToUniquePtr())) {
+	com::Assert(staticValue.getTypeInfo() == typeInfo,"",CODEPOS);
 }
 
 ircode::AddrStaticValue::AddrStaticValue(const AddrStaticValue & addr) :
-		Addr(addr),
-		uPtrTypeInfo(com::dynamic_cast_uPtr<TypeInfo>(
-				addr.uPtrTypeInfo->cloneToUniquePtr())),
-		uPtrStaticValue(
-				com::dynamic_cast_uPtr<StaticValue>(
-						addr.uPtrStaticValue->cloneToUniquePtr())) {
+	Addr(addr),
+	uPtrTypeInfo(com::dynamic_cast_uPtr<TypeInfo>(
+		addr.uPtrTypeInfo->cloneToUniquePtr())),
+	uPtrStaticValue(
+		com::dynamic_cast_uPtr<StaticValue>(
+			addr.uPtrStaticValue->cloneToUniquePtr())) {
 }
 
 std::string ircode::AddrStaticValue::toLLVMIR() const {

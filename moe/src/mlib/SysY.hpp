@@ -47,6 +47,9 @@ class Options {
 	
 	struct Verbose : public Option<bool, false> {
 	} verbose;
+	
+	struct EmitLLVM : public Option<bool, false> {
+	} emitLLVM;
 };
 
 extern Options options;

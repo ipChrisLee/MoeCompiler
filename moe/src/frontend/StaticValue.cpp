@@ -7,7 +7,7 @@
 std::unique_ptr<ircode::StaticValue>
 ircode::calcOfFloat(float fl, float fr, const std::string & op) {
 	std::unique_ptr<ircode::StaticValue> upSV;
-	com::regSwitch(op,{
+	com::regSwitch(op, {
 		{"\\*",    [&upSV, fl, fr]() {
 			upSV = std::make_unique<ircode::FloatStaticValue>(fl * fr);
 		}},
@@ -57,7 +57,7 @@ ircode::calcOfFloat(float fl, float fr, const std::string & op) {
 std::unique_ptr<ircode::StaticValue>
 ircode::calcOfInt(int il, int ir, const std::string & op) {
 	std::unique_ptr<ircode::StaticValue> upSV;
-	com::regSwitch(op,{
+	com::regSwitch(op, {
 		{"\\*",    [&upSV, il, ir]() {
 			upSV = std::make_unique<ircode::IntStaticValue>(il * ir);
 		}},
@@ -176,6 +176,11 @@ ircode::StaticValue::calc(const std::string & op) const {
 	com::Throw("This method should not be invoked.", CODEPOS);
 }
 
+std::unique_ptr<ircode::StaticValue>
+ircode::StaticValue::convertTo(const ircode::TypeInfo &) {
+	com::Throw("Cannot convert to other type from this type.", CODEPOS);
+}
+
 
 std::unique_ptr<moeconcept::Cloneable>
 ircode::FloatStaticValue::_cloneToUniquePtr() const {
@@ -200,7 +205,7 @@ std::unique_ptr<ircode::StaticValue> ircode::FloatStaticValue::calc(
 	const ircode::StaticValue & oVal, const std::string & op
 ) const {
 	std::unique_ptr<ircode::StaticValue> upRes;
-	switch (oVal.uPtrInfo->type) {
+	switch (oVal.getTypeInfo().type) {
 		case TypeInfo::Type::Float_t: {
 			upRes = std::make_unique<ircode::FloatStaticValue>(
 				value +
@@ -235,6 +240,24 @@ ircode::FloatStaticValue::calc(const std::string & op) const {
 	return calcOfFloat(0, value, op);
 }
 
+std::unique_ptr<ircode::StaticValue>
+ircode::FloatStaticValue::convertTo(const ircode::TypeInfo & toType) {
+	switch (toType.type) {
+		case TypeInfo::Type::Bool_t: {
+			return std::make_unique<ircode::BoolStaticValue>(bool(value));
+		}
+		case TypeInfo::Type::Int_t: {
+			return std::make_unique<ircode::IntStaticValue>(int(value));
+		}
+		case TypeInfo::Type::Float_t: {
+			return std::make_unique<ircode::FloatStaticValue>(float(value));
+		}
+		default: {
+			com::Throw("Conversion failed since toType unsupported.", CODEPOS);
+		}
+	}
+}
+
 std::unique_ptr<moeconcept::Cloneable>
 ircode::IntStaticValue::_cloneToUniquePtr() const {
 	return std::make_unique<IntStaticValue>(*this);
@@ -262,7 +285,7 @@ std::unique_ptr<ircode::StaticValue> ircode::IntStaticValue::calc(
 	const ircode::StaticValue & oVal, const std::string & op
 ) const {
 	std::unique_ptr<ircode::StaticValue> upSVRes;
-	switch (oVal.uPtrInfo->type) {
+	switch (oVal.getTypeInfo().type) {
 		case TypeInfo::Type::Float_t: {
 			upSVRes = calcOfFloat(
 				float(value),
@@ -293,6 +316,24 @@ ircode::IntStaticValue::calc(const std::string & op) const {
 	return calcOfInt(0, value, op);
 }
 
+std::unique_ptr<ircode::StaticValue>
+ircode::IntStaticValue::convertTo(const ircode::TypeInfo & toType) {
+	switch (toType.type) {
+		case TypeInfo::Type::Bool_t: {
+			return std::make_unique<ircode::BoolStaticValue>(bool(value));
+		}
+		case TypeInfo::Type::Int_t: {
+			return std::make_unique<ircode::IntStaticValue>(int(value));
+		}
+		case TypeInfo::Type::Float_t: {
+			return std::make_unique<ircode::FloatStaticValue>(float(value));
+		}
+		default: {
+			com::Throw("Conversion failed since toType unsupported.", CODEPOS);
+		}
+	}
+}
+
 std::unique_ptr<moeconcept::Cloneable>
 ircode::FloatArrayStaticValue::_cloneToUniquePtr() const {
 	return std::make_unique<FloatArrayStaticValue>(*this);
@@ -300,9 +341,7 @@ ircode::FloatArrayStaticValue::_cloneToUniquePtr() const {
 
 ircode::FloatArrayStaticValue::FloatArrayStaticValue(
 	int len, std::vector<FloatStaticValue> vi
-)
-	: StaticValue(), shape({len}), value(std::move(vi)) {
-	StaticValue::uPtrInfo = std::make_unique<FloatArrayType>(shape);
+) : StaticValue(ircode::FloatArrayType({len})), shape({len}), value(std::move(vi)) {
 }
 
 ircode::FloatArrayStaticValue::FloatArrayStaticValue(
@@ -486,7 +525,7 @@ std::unique_ptr<ircode::StaticValue> ircode::BoolStaticValue::calc(
 	const ircode::StaticValue & oVal, const std::string & op
 ) const {
 	std::unique_ptr<ircode::StaticValue> upSVRes;
-	switch (oVal.uPtrInfo->type) {
+	switch (oVal.getTypeInfo().type) {
 		case TypeInfo::Type::Float_t: {
 			upSVRes = calcOfFloat(
 				float(value),
@@ -515,5 +554,22 @@ std::unique_ptr<ircode::StaticValue> ircode::BoolStaticValue::calc(
 std::unique_ptr<ircode::StaticValue>
 ircode::BoolStaticValue::calc(const std::string & op) const {
 	return calcOfBool(false, value, op);
-	
+}
+
+std::unique_ptr<ircode::StaticValue>
+ircode::BoolStaticValue::convertTo(const ircode::TypeInfo & toType) {
+	switch (toType.type) {
+		case TypeInfo::Type::Bool_t: {
+			return std::make_unique<ircode::BoolStaticValue>(bool(value));
+		}
+		case TypeInfo::Type::Int_t: {
+			return std::make_unique<ircode::IntStaticValue>(int(value));
+		}
+		case TypeInfo::Type::Float_t: {
+			return std::make_unique<ircode::FloatStaticValue>(float(value));
+		}
+		default: {
+			com::Throw("Conversion failed since toType unsupported.", CODEPOS);
+		}
+	}
 }

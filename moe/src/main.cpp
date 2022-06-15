@@ -25,7 +25,9 @@ int Main(int argc, char ** argv) {
 	SysYParser::CompUnitContext * root = parser.compUnit();
 	frontend::ASTVisitor visitor;
 	root->accept(&visitor);
-	visitor.instrPool.printAll(SysY::dest);
+	if(SysY::options.emitLLVM.get()){
+		visitor.instrPool.printAll(SysY::dest);
+	}
 //	try {
 //		IR::CompileUnit ir;
 //		ASTVisitor visitor(ir);

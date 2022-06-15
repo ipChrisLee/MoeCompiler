@@ -1,0 +1,8 @@
+{
+	"TimeoutSettings": {
+		"default": 20.0,
+		"make": 60.0,
+		"cmake": 20.0,
+		"Help": "Settings of timeout. Unit:second"
+	}
+}

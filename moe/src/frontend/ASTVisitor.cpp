@@ -32,7 +32,7 @@ std::any ASTVisitor::visitConstDecl(SysYParser::ConstDeclContext * ctx) {
 	for (auto son : ctx->constDef()) {
 		son->accept(this);
 	}
-	info.isConst=false;
+	info.isConst = false;
 	return nullptr;
 }
 
@@ -53,6 +53,7 @@ std::any ASTVisitor::visitConstDef(SysYParser::ConstDefContext * ctx) {
 		ctx->constInitVal()->accept(this);
 		std::unique_ptr<ircode::TypeInfo> uType = bTypeToTypeInfoUPtr(info.btype);
 		auto constVal = retVal.restore<std::unique_ptr<ircode::StaticValue>>();
+		constVal = constVal->convertTo(*uType);
 		ircode::Addr * pAddr = nullptr;
 		if (info.inGlobal) {
 			pAddr = addrPool.addAddrToScope(

@@ -18,4 +18,9 @@ See `src/third_party/Google_Test` to get more information.
 
 * Run:
 
-    `./compiler testcase.sy -S -o testcase.s`
+    `./compiler testcase.sy -S -o testcase.ms`
+
+# About File Type
+* `.ms`: moe assembly file.
+* `.mll`: moe llvm-ir file.
+* `.mout`: moe output file.

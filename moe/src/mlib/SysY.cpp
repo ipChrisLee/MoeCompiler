@@ -23,9 +23,10 @@ void parseArgs(int argc, char ** argv) {
 	while (true) {
 		int optionIndex = 0;
 		static struct option longOptions[] = {
-			{"verbose", no_argument, nullptr, 0},
-			{"debug",   no_argument, nullptr, 0},
-			{nullptr, 0,             nullptr, 0}
+			{"verbose",   no_argument, nullptr, 0},
+			{"debug",     no_argument, nullptr, 0},
+			{"emit-llvm", no_argument, nullptr, 0},
+			{nullptr, 0,               nullptr, 0}
 		};
 		c = getopt_long(argc, argv, "-o:SO:", longOptions, &optionIndex);
 		if (c == -1) {
@@ -35,11 +36,14 @@ void parseArgs(int argc, char ** argv) {
 			case 0: {
 				com::regSwitch(
 					longOptions[optionIndex].name, {
-						{"debug",   []() {
+						{"debug",     []() {
 							options.debug.set(true);
 						}},
-						{"verbose", []() {
+						{"verbose",   []() {
 							options.verbose.set(true);
+						}},
+						{"emit-llvm", []() {
+							options.emitLLVM.set(true);
 						}},
 					});
 				break;

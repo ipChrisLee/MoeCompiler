@@ -12,6 +12,7 @@
 namespace ircode {
 class StaticValue : public LLVMable, public moeconcept::Cloneable {
   protected:
+	std::unique_ptr<TypeInfo> uPtrInfo; //  For some reason, this is not const, but it should be const.
 	[[nodiscard]] std::unique_ptr<moeconcept::Cloneable>
 	_cloneToUniquePtr() const override = 0;
 	
@@ -20,7 +21,8 @@ class StaticValue : public LLVMable, public moeconcept::Cloneable {
 	explicit StaticValue(const TypeInfo & typeInfo);
   
   public:
-	std::unique_ptr<TypeInfo> uPtrInfo;
+	
+	[[nodiscard]] const TypeInfo & getTypeInfo() const { return *uPtrInfo; }
 	
 	StaticValue(const StaticValue & staticValue);
 	
@@ -34,6 +36,12 @@ class StaticValue : public LLVMable, public moeconcept::Cloneable {
 	
 	[[nodiscard]] virtual std::unique_ptr<StaticValue>
 	calc(const std::string & op) const;
+	
+	/**
+	 * @brief Static value conversion from @c fromStaticValue to type @c toType.
+	 * @note bool->int->float, other type of conversion will cause exception.
+	 */
+	virtual std::unique_ptr<StaticValue> convertTo(const TypeInfo & toType);
 };
 
 class FloatStaticValue : public StaticValue {
@@ -62,6 +70,8 @@ class FloatStaticValue : public StaticValue {
 	
 	[[nodiscard]] std::unique_ptr<StaticValue>
 	calc(const std::string & op) const override;
+	
+	std::unique_ptr<StaticValue> convertTo(const TypeInfo &toType) override;
 };
 
 class IntStaticValue : public StaticValue {
@@ -90,6 +100,8 @@ class IntStaticValue : public StaticValue {
 	
 	[[nodiscard]] std::unique_ptr<StaticValue>
 	calc(const std::string & op) const override;
+	
+	std::unique_ptr<StaticValue> convertTo(const TypeInfo &toType) override;
 };
 
 class BoolStaticValue : public StaticValue {
@@ -118,6 +130,8 @@ class BoolStaticValue : public StaticValue {
 	
 	[[nodiscard]] std::unique_ptr<StaticValue>
 	calc(const std::string & op) const override;
+	
+	std::unique_ptr<StaticValue> convertTo(const TypeInfo &toType) override;
 };
 
 class FloatArrayStaticValue : public StaticValue {
@@ -198,4 +212,6 @@ calcOfInt(int il, int ir, const std::string & op);
 //  If `op` is "!", `fr` is ignored.
 std::unique_ptr<StaticValue>
 calcOfBool(bool bl, bool br, const std::string & op);
+
+
 }

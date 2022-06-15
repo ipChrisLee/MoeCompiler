@@ -29,6 +29,13 @@
         <option name="SMART_TABS" value="true" />
       </indentOptions>
     </codeStyleSettings>
+    <codeStyleSettings language="JSON">
+      <indentOptions>
+        <option name="INDENT_SIZE" value="4" />
+        <option name="USE_TAB_CHARACTER" value="true" />
+        <option name="SMART_TABS" value="true" />
+      </indentOptions>
+    </codeStyleSettings>
     <codeStyleSettings language="ObjectiveC">
       <option name="RIGHT_MARGIN" value="85" />
       <option name="LINE_COMMENT_AT_FIRST_COLUMN" value="false" />
