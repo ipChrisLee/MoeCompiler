@@ -6,7 +6,10 @@ Target: ARMv7
 Compile MoeCompiler (NOT FINISHED):
 ```shell
 cd moe
-make -j4 opti="-O2" compiler # opti is the argument of level of optimization when compiling compiler.
+mkdir build
+cd build
+cmake ..
+make -j4
 ```
 
 Read "moe/README" for more information.
