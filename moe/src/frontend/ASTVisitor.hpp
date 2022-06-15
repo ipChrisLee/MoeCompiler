@@ -23,7 +23,7 @@ namespace frontend {
 class ASTVisitor : public SysYBaseVisitor {
   protected:
 	ircode::AddrPool addrPool;
-	ircode::Scope * pScope;
+	ircode::Scope * pScopeNow;
 	enum class BType {
 		Float, Int, Error
 	};
@@ -62,12 +62,43 @@ class ASTVisitor : public SysYBaseVisitor {
 		}
 	}
 	
+	static std::unique_ptr<ircode::TypeInfo>
+	bTypeToTypeInfoUPtr(const BType btype, const std::vector<int> & shape = { }) {
+		if (shape.empty()) {
+			switch (btype) {
+				case BType::Float: {
+					return std::make_unique<ircode::FloatType>();
+				}
+				case BType::Int: {
+					return std::make_unique<ircode::IntType>();
+				}
+				default: {
+					com::Throw("Error BType!", CODEPOS);
+				}
+			}
+		}else{
+			switch (btype) {
+				case BType::Float:{
+					return std::make_unique<ircode::FloatArrayType>(shape);
+				}
+				case BType::Int:{
+					return std::make_unique<ircode::IntArrayType>(shape);
+				}
+				default:{
+					com::Throw("Error BType!",CODEPOS);
+				}
+			}
+		}
+	}
+	
 	com::UnaryVariant<
 		std::unique_ptr<ircode::StaticValue>,
 		std::string
-		> retVal;
-  
+	> retVal;
+	
+	
   public:
+	ircode::IRInstrPool instrPool;
 	ASTVisitor();
 	
 	/*  Visit children.

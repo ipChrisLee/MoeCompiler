@@ -216,17 +216,17 @@ ircode::AddrVariable::AddrVariable(const AddrVariable & addrVariable)
 				  addrVariable.uPtrTypeInfo->cloneToUniquePtr())) {
 }
 
-std::string ircode::AddrVariable::toLLVMIR() const {
-	if (name.length()) {
-		return "V." + name;
-	} else {
-		return "V." + std::to_string(id);
-	}
-}
-
 std::unique_ptr<moeconcept::Cloneable>
 ircode::AddrVariable::_cloneToUniquePtr() const {
 	return std::make_unique<AddrVariable>(*this);
+}
+
+std::string ircode::AddrVariable::toLLVMIR() const {
+	if (name.length()) {
+		return "@V." + name;
+	} else {
+		return "@V." + std::to_string(id);
+	}
 }
 
 ircode::AddrGlobalVariable::AddrGlobalVariable(
@@ -239,14 +239,14 @@ ircode::AddrGlobalVariable::AddrGlobalVariable(
 				  typeInfo.cloneToUniquePtr())) {
 }
 
-ircode::AddrGlobalVariable::AddrGlobalVariable(
-		const ircode::TypeInfo & typeInfo, std::string name
-)
-		: Addr(), name(std::move(name)), isConst(false),
-		  uPtrStaticValue(nullptr), uPtrTypeInfo(
-				com::dynamic_cast_uPtr<TypeInfo>(
-						typeInfo.cloneToUniquePtr())) {
-}
+// ircode::AddrGlobalVariable::AddrGlobalVariable(
+// 		const ircode::TypeInfo & typeInfo, std::string name
+// )
+// 		: Addr(), name(std::move(name)), isConst(false),
+// 		  uPtrStaticValue(nullptr), uPtrTypeInfo(
+// 				com::dynamic_cast_uPtr<TypeInfo>(
+// 						typeInfo.cloneToUniquePtr())) {
+// }
 
 ircode::AddrGlobalVariable::AddrGlobalVariable(
 		const ircode::AddrGlobalVariable & addr
@@ -257,13 +257,13 @@ ircode::AddrGlobalVariable::AddrGlobalVariable(
 				addr.uPtrTypeInfo->cloneToUniquePtr())) {
 }
 
-std::string ircode::AddrGlobalVariable::toLLVMIR() const {
-	return "G." + name;
-}
-
 std::unique_ptr<moeconcept::Cloneable>
 ircode::AddrGlobalVariable::_cloneToUniquePtr() const {
 	return std::make_unique<AddrGlobalVariable>(*this);
+}
+
+std::string ircode::AddrGlobalVariable::toLLVMIR() const {
+	return "@G."+name;
 }
 
 ircode::AddrStaticValue::AddrStaticValue(

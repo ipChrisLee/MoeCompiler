@@ -81,8 +81,12 @@ struct RegexSwitchCase {
 void regSwitch(const std::string & str, std::initializer_list<RegexSwitchCase>);
 
 //  use this if you want to save `cases` in a variable.
-void
-regSwitch(const std::string & str, const std::vector<RegexSwitchCase> & cases);
+// void
+// regSwitch(const std::string & str, const std::vector<RegexSwitchCase> & cases);
+/*
+ * Do NOT use this type of declaration, it is dangerous for who don't know how lambda expression work!
+ * See Tests/BasicTests/testLambdaWithUPtr to understand why this type of declaration is dangerous.
+ */
 
 /*  bmeBrace = begin-middle-end
  *  Brace which let some execute-when-entering codes and execute-when-leaving
@@ -199,6 +203,17 @@ class UnaryVariant {
 		T ret(std::move(std::get<T>(box)));
 		box = std::monostate();
 		return ret;
+	}
+	
+	template<typename T>
+	T & changeInPlace() {
+		static_assert(isTypeTInTypesTs<T, Types...>(), "Type is not in type pack.");
+		if (!std::holds_alternative<T>(box)) {
+			com::Throw(
+				"Getting reference from UnaryVariant with a type not in type pack ",
+				CODEPOS);
+		}
+		return std::get<T>(box);
 	}
 };
 

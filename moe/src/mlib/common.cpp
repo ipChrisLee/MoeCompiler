@@ -61,18 +61,6 @@ void com::regSwitch(
 	}
 }
 
-void com::regSwitch(
-		const std::string & str,
-		const std::vector<RegexSwitchCase> & cases
-) {
-	for (const auto & kase : cases) {
-		if (std::regex_match(str, std::regex(kase.regex))) {
-			kase.fun();
-			break;
-		}
-	}
-}
-
 
 std::vector<std::pair<std::string, std::string>>com::WarningList::msgAndCodepos;
 

@@ -2,11 +2,12 @@
 #include "stlextension.hpp"
 
 #include "frontend/TypeInfo.hpp"
+#include "frontendHeader.hpp"
 
 std::unique_ptr<ircode::StaticValue>
 ircode::calcOfFloat(float fl, float fr, const std::string & op) {
 	std::unique_ptr<ircode::StaticValue> upSV;
-	static const std::vector<com::RegexSwitchCase> list = {
+	com::regSwitch(op,{
 		{"\\*",    [&upSV, fl, fr]() {
 			upSV = std::make_unique<ircode::FloatStaticValue>(fl * fr);
 		}},
@@ -20,7 +21,7 @@ ircode::calcOfFloat(float fl, float fr, const std::string & op) {
 			upSV = std::make_unique<ircode::FloatStaticValue>(fl / fr);
 		}},
 		{"%",      []() {
-			com::Throw("`float % float` is illegal.", CODEPOS);
+			com::Throw("`float % float` is illegal!", CODEPOS);
 		}},
 		{"&&",     [&upSV, fl, fr]() {
 			upSV = std::make_unique<ircode::BoolStaticValue>(fl && fr);
@@ -49,15 +50,14 @@ ircode::calcOfFloat(float fl, float fr, const std::string & op) {
 		{"!",      [&upSV, fr]() {
 			upSV = std::make_unique<ircode::BoolStaticValue>(!fr);
 		}},
-	};
-	com::regSwitch(op, list);
+	});
 	return upSV;
 }
 
 std::unique_ptr<ircode::StaticValue>
 ircode::calcOfInt(int il, int ir, const std::string & op) {
 	std::unique_ptr<ircode::StaticValue> upSV;
-	static const std::vector<com::RegexSwitchCase> list = {
+	com::regSwitch(op,{
 		{"\\*",    [&upSV, il, ir]() {
 			upSV = std::make_unique<ircode::IntStaticValue>(il * ir);
 		}},
@@ -100,15 +100,14 @@ ircode::calcOfInt(int il, int ir, const std::string & op) {
 		{"!",      [&upSV, ir]() {
 			upSV = std::make_unique<ircode::BoolStaticValue>(!ir);
 		}},
-	};
-	com::regSwitch(op, list);
+	});
 	return upSV;
 }
 
 std::unique_ptr<ircode::StaticValue>
 ircode::calcOfBool(bool bl, bool br, const std::string & op) {
 	std::unique_ptr<ircode::StaticValue> upSV;
-	static const std::vector<com::RegexSwitchCase> list = {
+	com::regSwitch(op, {
 		{"\\*",    [&upSV, bl, br]() {
 			upSV = std::make_unique<ircode::IntStaticValue>(bl * br);
 		}},
@@ -151,8 +150,7 @@ ircode::calcOfBool(bool bl, bool br, const std::string & op) {
 		{"!",      [&upSV, br]() {
 			upSV = std::make_unique<ircode::BoolStaticValue>(!br);
 		}},
-	};
-	com::regSwitch(op, list);
+	});
 	return upSV;
 }
 
@@ -243,7 +241,7 @@ ircode::IntStaticValue::_cloneToUniquePtr() const {
 }
 
 ircode::IntStaticValue::IntStaticValue(const std::string & literal)
-	: StaticValue(IntType()), value(std::stoi(literal)) {
+	: StaticValue(IntType()), value(ircode::literalToInt(literal)) {
 }
 
 std::string ircode::IntStaticValue::toLLVMIR() const {

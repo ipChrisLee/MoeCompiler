@@ -17,7 +17,6 @@ int Main(int argc, char ** argv) {
 		com::Throw("You should specify input file path.");
 	}
 	SysY::parseArgs(argc, argv);
-	
 	antlr4::ANTLRInputStream input(SysY::source);
 	SysYLexer lexer(&input);
 	antlr4::CommonTokenStream tokens(&lexer);
@@ -26,7 +25,7 @@ int Main(int argc, char ** argv) {
 	SysYParser::CompUnitContext * root = parser.compUnit();
 	frontend::ASTVisitor visitor;
 	root->accept(&visitor);
-
+	visitor.instrPool.printAll(SysY::dest);
 //	try {
 //		IR::CompileUnit ir;
 //		ASTVisitor visitor(ir);

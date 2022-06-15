@@ -69,8 +69,8 @@ class AddrPool {
 	findAddrDownToRoot(const Scope * pFrom, const std::string & name);
 	
 	Addr * addAddrToScope(
-			const Addr & addr, Scope * pScope, IdType idType,
-			const std::string & name
+		const Addr & addr, Scope * pScope, IdType idType,
+		const std::string & name
 	);
 	
 	Addr * addAddrWithoutScope(const Addr & addr);
@@ -79,8 +79,7 @@ class AddrPool {
 };
 
 
-
-class Addr : public LLVMable, public moeconcept::Cloneable {
+  class Addr :public LLVMable, public moeconcept::Cloneable {
   protected:
 	[[nodiscard]] std::unique_ptr<Cloneable> _cloneToUniquePtr() const override;
 	
@@ -95,6 +94,8 @@ class Addr : public LLVMable, public moeconcept::Cloneable {
 	Addr & operator =(const Addr &) = delete;
 	
 	~Addr() override = default;
+	
+	[[nodiscard]] std::string toLLVMIR() const override = 0;
 };
 
 /*  For LLVM-IR variable.
@@ -105,18 +106,19 @@ class AddrVariable : public Addr {
   protected:
 	[[nodiscard]] std::unique_ptr<Cloneable> _cloneToUniquePtr() const override;
 	
-	//  For temporary variable, name is empty.
-	std::string name;
-	//  For SysY, if the variable is const, its value is compile-time value.
-	bool isConst;
-	std::unique_ptr<StaticValue> uPtrStaticValue;
-	
-	std::unique_ptr<TypeInfo> uPtrTypeInfo;
   public:
+	//  For temporary variable, name is empty.
+	const std::string name;
+	//  For SysY, if the variable is const, its value is compile-time value.
+	const bool isConst;
+	const std::unique_ptr<const StaticValue> uPtrStaticValue;
+	
+	const std::unique_ptr<const TypeInfo> uPtrTypeInfo;
+	
 	explicit AddrVariable(const TypeInfo &, std::string name = "");
 	
 	AddrVariable(
-			const TypeInfo &, std::string name, const StaticValue &
+		const TypeInfo &, std::string name, const StaticValue &
 	);
 	
 	AddrVariable(const AddrVariable &);
@@ -130,16 +132,14 @@ class AddrGlobalVariable : public Addr {
   protected:
 	[[nodiscard]] std::unique_ptr<Cloneable> _cloneToUniquePtr() const override;
 	
-	//  For temporary variable, name is empty.
-	std::string name;
-	//  For SysY, if the variable is const, its value is compile-time value.
-	bool isConst;
-	std::unique_ptr<StaticValue> uPtrStaticValue;
-	
-	std::unique_ptr<TypeInfo> uPtrTypeInfo;
   public:
+	const std::string name;
+	//  For SysY, if the variable is const, its value is compile-time value.
+	const bool isConst;
+	//  For every global variable, it has its own static init value!
+	const std::unique_ptr<const StaticValue> uPtrStaticValue;   // will NOT be nullptr
 	
-	AddrGlobalVariable(const TypeInfo &, std::string name);
+	const std::unique_ptr<const TypeInfo> uPtrTypeInfo;
 	
 	AddrGlobalVariable(const TypeInfo &, std::string name, const StaticValue &);
 	

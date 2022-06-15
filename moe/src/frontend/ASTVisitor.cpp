@@ -6,7 +6,7 @@
 namespace frontend {
 
 ASTVisitor::ASTVisitor() : addrPool(), info(), retVal() {
-	pScope = addrPool.getRootScope();
+	pScopeNow = addrPool.getRootScope();
 }
 
 std::any ASTVisitor::visitChildren(antlr4::tree::ParseTree * node) {
@@ -32,6 +32,7 @@ std::any ASTVisitor::visitConstDecl(SysYParser::ConstDeclContext * ctx) {
 	for (auto son : ctx->constDef()) {
 		son->accept(this);
 	}
+	info.isConst=false;
 	return nullptr;
 }
 
@@ -45,10 +46,28 @@ std::any ASTVisitor::visitConstDef(SysYParser::ConstDefContext * ctx) {
 			auto len = retVal.restore<std::unique_ptr<ircode::StaticValue>>();
 			shape.push_back(
 				com::dynamic_cast_uPtr<ircode::IntStaticValue>(len)->value);
-			// TODO
 		}
+		ctx->constInitVal()->accept(this);
+		com::TODO("", CODEPOS);
+	} else { // Defining a variable
+		ctx->constInitVal()->accept(this);
+		std::unique_ptr<ircode::TypeInfo> uType = bTypeToTypeInfoUPtr(info.btype);
+		auto constVal = retVal.restore<std::unique_ptr<ircode::StaticValue>>();
+		ircode::Addr * pAddr = nullptr;
+		if (info.inGlobal) {
+			pAddr = addrPool.addAddrToScope(
+				ircode::AddrGlobalVariable(*uType, varname, *constVal),
+				pScopeNow, ircode::IdType::GlobalVarName, varname);
+			instrPool.addInstrToPool(ircode::instr::DeclGlobal(
+				dynamic_cast<ircode::AddrGlobalVariable *>(pAddr)));
+		} else {
+			pAddr = addrPool.addAddrToScope(
+				ircode::AddrVariable(*uType, varname, *constVal),
+				pScopeNow, ircode::IdType::GlobalVarName, varname);
+			com::TODO("", CODEPOS);
+		}
+		return nullptr;
 	}
-	com::TODO("Add to addr pool.", CODEPOS);
 }
 
 std::any ASTVisitor::visitConstExp(SysYParser::ConstExpContext * ctx) {
@@ -106,13 +125,14 @@ std::any ASTVisitor::visitFuncFParams(SysYParser::FuncFParamsContext * ctx) {
 
 std::any
 ASTVisitor::visitListConstInitVal(SysYParser::ListConstInitValContext * ctx) {
-	// constInitVal -> constExp # listConstInitVal
+	// constInitVal -> '{' (constInitVal (',' constInitVal)* )? '}' # listConstInitVal
 	com::TODO("", CODEPOS);
 }
 
 std::any
 ASTVisitor::visitScalarConstInitVal(SysYParser::ScalarConstInitValContext * ctx) {
-	com::TODO("", CODEPOS);
+	// constInitVal -> constExp # scalarConstInitVal
+	return visitChildren(ctx);
 }
 
 std::any ASTVisitor::visitFuncFParam(SysYParser::FuncFParamContext * ctx) {
@@ -174,10 +194,10 @@ std::any ASTVisitor::visitCond(SysYParser::CondContext * ctx) {
 
 std::any ASTVisitor::visitLVal(SysYParser::LValContext * ctx) {
 	// lVal -> Identifier ('[' exp ']')*
-	if(info.visitingConst){
-		com::TODO("To write after addr pool finished.",CODEPOS);
-	}else{
-		com::TODO("",CODEPOS);
+	if (info.visitingConst) {
+		com::TODO("To write after addr pool finished.", CODEPOS);
+	} else {
+		com::TODO("", CODEPOS);
 	}
 }
 
@@ -200,12 +220,12 @@ std::any ASTVisitor::visitNumber(SysYParser::NumberContext * ctx) {
 	// number -> IntLiteral | FloatLiteral
 	if (ctx->FloatLiteral()) {
 		std::unique_ptr<ircode::StaticValue> v =
-			std::make_unique<ircode::IntStaticValue>(ctx->getText());
+			std::make_unique<ircode::FloatStaticValue>(ctx->getText());
 		retVal.save(std::move(v));
 		return nullptr;
 	} else if (ctx->IntLiteral()) {
 		std::unique_ptr<ircode::StaticValue> v =
-			std::make_unique<ircode::FloatStaticValue>(ctx->getText());
+			std::make_unique<ircode::IntStaticValue>(ctx->getText());
 		retVal.save(std::move(v));
 		return nullptr;
 	} else {
@@ -239,6 +259,7 @@ std::any ASTVisitor::visitUnary3(SysYParser::Unary3Context * ctx) {
 	ctx->unaryOp()->accept(this);
 	auto op = retVal.restore<std::string>();
 	if (info.visitingConst) {
+		ctx->unaryExp()->accept(this);
 		auto p = retVal.restore<std::unique_ptr<ircode::StaticValue>>();
 		retVal.save(p->calc(op));
 		return nullptr;
