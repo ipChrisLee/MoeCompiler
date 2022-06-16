@@ -79,7 +79,7 @@ class AddrPool {
 };
 
 
-  class Addr :public LLVMable, public moeconcept::Cloneable {
+class Addr : public LLVMable, public moeconcept::Cloneable {
   protected:
 	[[nodiscard]] std::unique_ptr<Cloneable> _cloneToUniquePtr() const override;
 	
@@ -105,7 +105,7 @@ class AddrPool {
 class AddrVariable : public Addr {
   protected:
 	[[nodiscard]] std::unique_ptr<Cloneable> _cloneToUniquePtr() const override;
-	
+  
   public:
 	//  For temporary variable, name is empty.
 	const std::string name;
@@ -128,25 +128,71 @@ class AddrVariable : public Addr {
 	[[nodiscard]] std::string toLLVMIR() const override;
 };
 
+
+/**
+ * @brief addr of global variable from source code
+ * @var @c name : The name from source code.
+ * @var @c isConst : is the variable in the source code const?
+ * @var @c uPtrStaticValue :
+ * 				The static value of variable.
+ * 				For constant, this is always the value.
+ * 				Otherwise, this is just compile-time init value.
+ * @var @c uPtrTypeInfo : Type of this @b addr
+ * 			(@b NOT the type of variable in source code!)
+ * @note Since global variable is always allocated on memory,
+ * 			@c uPtrTypeInfo is always @c PointerType (point-level=1).
+ * @note @c uPtrStaticValue will not be @c nullptr at any time.
+ */
 class AddrGlobalVariable : public Addr {
   protected:
 	[[nodiscard]] std::unique_ptr<Cloneable> _cloneToUniquePtr() const override;
-	
+  
   public:
 	const std::string name;
 	//  For SysY, if the variable is const, its value is compile-time value.
 	const bool isConst;
 	//  For every global variable, it has its own static init value!
-	const std::unique_ptr<const StaticValue> uPtrStaticValue;   // will NOT be nullptr
+	const std::unique_ptr<const StaticValue> uPtrStaticValue;
 	
 	const std::unique_ptr<const TypeInfo> uPtrTypeInfo;
 	
-	AddrGlobalVariable(const TypeInfo &, std::string name, const StaticValue &);
+	/**
+	 * @brief Create new addr for @b const variable from source code.
+	 * @param typeInfo type from source code.
+	 * @param name name from source code.
+	 * @param staticValue static value from source code.
+	 * @param isConst if the variable in source code const.
+	 * @note The type deduced from @c typeInfo should be same as that from @c staticValue.
+	 * @note For SysY grammar, const decl must have @c staticValue explicit.
+	 * 			(i.e. @code const int x;@endcode is illegal.)
+	 */
+	AddrGlobalVariable(
+		const TypeInfo & typeInfo,
+		std::string name,
+		const StaticValue & staticValue,
+		bool isConst = true
+	);
 	
+	/**
+	 * @brief Create new addr for @b changeable global variable .
+	 * @param typeInfo type from source code.
+	 * @param name name from source code.
+	 */
+	AddrGlobalVariable(
+		const TypeInfo & typeInfo,
+		std::string name
+	);
+	
+	/**
+	 * @brief Copy constructor. The id will increase for new addr.
+	 */
 	AddrGlobalVariable(const AddrGlobalVariable &);
 	
 	~AddrGlobalVariable() override = default;
 	
+	/**
+	 * @brief Return \@G.[name] .
+	 */
 	[[nodiscard]] std::string toLLVMIR() const override;
 	
 };
@@ -156,10 +202,11 @@ class AddrGlobalVariable : public Addr {
 class AddrStaticValue : public Addr {
   protected:
 	[[nodiscard]] std::unique_ptr<Cloneable> _cloneToUniquePtr() const override;
-	
-	std::unique_ptr<TypeInfo> uPtrTypeInfo;
-	std::unique_ptr<StaticValue> uPtrStaticValue;
+  
   public:
+	const std::unique_ptr<const TypeInfo> uPtrTypeInfo;
+	const std::unique_ptr<const StaticValue> uPtrStaticValue;
+	
 	AddrStaticValue(const TypeInfo &, const StaticValue &);
 	
 	AddrStaticValue(const AddrStaticValue &);

@@ -12,7 +12,8 @@
 namespace ircode {
 class StaticValue : public LLVMable, public moeconcept::Cloneable {
   protected:
-	std::unique_ptr<TypeInfo> uPtrInfo; //  For some reason, this is not const, but it should be const.
+	std::unique_ptr<TypeInfo>
+		uPtrInfo; //  For some reason, this is not const, but it should be const.
 	[[nodiscard]] std::unique_ptr<moeconcept::Cloneable>
 	_cloneToUniquePtr() const override = 0;
 	
@@ -71,7 +72,7 @@ class FloatStaticValue : public StaticValue {
 	[[nodiscard]] std::unique_ptr<StaticValue>
 	calc(const std::string & op) const override;
 	
-	std::unique_ptr<StaticValue> convertTo(const TypeInfo &toType) override;
+	std::unique_ptr<StaticValue> convertTo(const TypeInfo & toType) override;
 };
 
 class IntStaticValue : public StaticValue {
@@ -101,7 +102,7 @@ class IntStaticValue : public StaticValue {
 	[[nodiscard]] std::unique_ptr<StaticValue>
 	calc(const std::string & op) const override;
 	
-	std::unique_ptr<StaticValue> convertTo(const TypeInfo &toType) override;
+	std::unique_ptr<StaticValue> convertTo(const TypeInfo & toType) override;
 };
 
 class BoolStaticValue : public StaticValue {
@@ -131,7 +132,7 @@ class BoolStaticValue : public StaticValue {
 	[[nodiscard]] std::unique_ptr<StaticValue>
 	calc(const std::string & op) const override;
 	
-	std::unique_ptr<StaticValue> convertTo(const TypeInfo &toType) override;
+	std::unique_ptr<StaticValue> convertTo(const TypeInfo & toType) override;
 };
 
 class FloatArrayStaticValue : public StaticValue {
@@ -145,6 +146,8 @@ class FloatArrayStaticValue : public StaticValue {
 	
 	FloatArrayStaticValue() = delete;
 	
+	explicit FloatArrayStaticValue(std::vector<int>shape);
+	
 	//  Create new 1-d, `len` long float array.
 	explicit FloatArrayStaticValue(int len, std::vector<FloatStaticValue> vi);
 	
@@ -157,6 +160,13 @@ class FloatArrayStaticValue : public StaticValue {
 		int len,
 		const std::vector<int> & preShape,
 		const std::vector<FloatArrayStaticValue> & vi
+	);
+	
+	explicit FloatArrayStaticValue(
+		int len,
+		const std::vector<int> & preShape,
+		const std::vector<FloatArrayStaticValue> & vi,
+		const std::vector<FloatStaticValue> & rest
 	);
 	
 	FloatArrayStaticValue(const FloatArrayStaticValue &) = default;
@@ -178,6 +188,8 @@ class IntArrayStaticValue : public StaticValue {
 	std::vector<int> shape;
 	std::vector<IntStaticValue> value;
 	
+	explicit IntArrayStaticValue(std::vector<int> shape);
+	
 	//  Create new 1-d, `len` long float array.
 	explicit IntArrayStaticValue(int len, std::vector<IntStaticValue> vi);
 	
@@ -189,6 +201,12 @@ class IntArrayStaticValue : public StaticValue {
 	explicit IntArrayStaticValue(
 		int len, const std::vector<int> & preShape,
 		const std::vector<IntArrayStaticValue> & vi
+	);
+	
+	explicit IntArrayStaticValue(
+		int len, const std::vector<int> & preShape,
+		const std::vector<IntArrayStaticValue> & vi,
+		const std::vector<IntStaticValue> & rest
 	);
 	
 	IntArrayStaticValue(const IntArrayStaticValue &) = default;
@@ -213,5 +231,7 @@ calcOfInt(int il, int ir, const std::string & op);
 std::unique_ptr<StaticValue>
 calcOfBool(bool bl, bool br, const std::string & op);
 
+std::unique_ptr<StaticValue>
+zeroExtensionValueOfType(const TypeInfo & typeInfo);
 
 }

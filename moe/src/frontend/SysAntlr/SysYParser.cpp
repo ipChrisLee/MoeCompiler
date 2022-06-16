@@ -43,7 +43,7 @@ void sysyParserInitialize() {
   assert(sysyParserStaticData == nullptr);
   auto staticData = std::make_unique<SysYParserStaticData>(
     std::vector<std::string>{
-      "compUnit", "decl", "constDecl", "bType", "constDef", "constInitVal", 
+      "compUnit", "decl", "constGlobalDecl", "bType", "constDef", "constInitVal",
       "varDecl", "varDef", "initVal", "funcDef", "funcType", "funcFParams", 
       "funcFParam", "block", "blockItem", "stmt", "exp", "cond", "lVal", 
       "primaryExp", "number", "unaryExp", "unaryOp", "funcRParams", "funcRParam", 

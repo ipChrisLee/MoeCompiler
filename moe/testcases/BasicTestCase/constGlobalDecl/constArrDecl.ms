@@ -1,0 +1,11 @@
+@G.i_2_3_Arr_1 = dso_local constant [2 x [3 x i32]] [[3 x i32] [i32 1, i32 2, i32 3], [3 x i32] [i32 4, i32 5, i32 6]], align 4
+@G.i_2_3_Arr_2 = dso_local constant [2 x [3 x i32]] [[3 x i32] [i32 1, i32 2, i32 0], [3 x i32] [i32 4, i32 5, i32 0]], align 4
+@G.x = dso_local constant i32 42, align 4
+@G.i_2_3_Arr_3 = dso_local constant [2 x [3 x i32]] [[3 x i32] [i32 42, i32 84, i32 21], [3 x i32] [i32 43, i32 0, i32 0]], align 4
+@G.i_2_3_Arr_4 = dso_local constant [2 x [3 x i32]] [[3 x i32] [i32 1, i32 2, i32 0], [3 x i32] [i32 0, i32 0, i32 0]], align 4
+@G.i_2_3_Arr_5 = dso_local constant [2 x [3 x i32]] [[3 x i32] [i32 0, i32 0, i32 0], [3 x i32] [i32 1, i32 2, i32 0]], align 4
+@G.i_2_3_Arr_6 = dso_local constant [2 x [3 x i32]] [[3 x i32] [i32 0, i32 0, i32 0], [3 x i32] [i32 0, i32 0, i32 0]], align 4
+@G.i_2_3_Arr_7 = dso_local constant [2 x [3 x i32]] [[3 x i32] [i32 0, i32 0, i32 0], [3 x i32] [i32 0, i32 0, i32 0]], align 4
+@G.i_3_3_Arr_1 = dso_local constant [3 x [3 x i32]] [[3 x i32] [i32 1, i32 2, i32 0], [3 x i32] [i32 3, i32 4, i32 5], [3 x i32] [i32 6, i32 0, i32 0]], align 4
+@G.i_3_3_3_Arr_1 = dso_local constant [3 x [3 x [3 x i32]]] [[3 x [3 x i32]] [[3 x i32] [i32 1, i32 2, i32 3], [3 x i32] [i32 4, i32 5, i32 6], [3 x i32] [i32 0, i32 0, i32 0]], [3 x [3 x i32]] [[3 x i32] [i32 7, i32 8, i32 9], [3 x i32] [i32 10, i32 0, i32 0], [3 x i32] [i32 0, i32 0, i32 0]], [3 x [3 x i32]] [[3 x i32] [i32 0, i32 0, i32 0], [3 x i32] [i32 0, i32 0, i32 0], [3 x i32] [i32 0, i32 0, i32 0]]], align 4
+@G.i_3_3_3_Arr_2 = dso_local constant [3 x [3 x [3 x i32]]] [[3 x [3 x i32]] [[3 x i32] [i32 1, i32 2, i32 3], [3 x i32] [i32 4, i32 5, i32 0], [3 x i32] [i32 0, i32 0, i32 0]], [3 x [3 x i32]] [[3 x i32] [i32 0, i32 0, i32 0], [3 x i32] [i32 0, i32 0, i32 0], [3 x i32] [i32 0, i32 0, i32 0]], [3 x [3 x i32]] [[3 x i32] [i32 0, i32 0, i32 0], [3 x i32] [i32 0, i32 0, i32 0], [3 x i32] [i32 0, i32 0, i32 0]]], align 4

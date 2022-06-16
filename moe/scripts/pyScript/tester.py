@@ -19,7 +19,7 @@ def just_compile_to_llvmir_on_testcase_sy(testCaseSet: TestCaseSet):
     res = (0, '')
     for testCase in testCaseSet.caseSet:
         res = testCase.just_compile_without_opti(
-            '--emit-llvm', moecompilerPath=moecompilerPath
+            '--emit-llvm', '--float-dec-format', moecompilerPath=moecompilerPath
         )
         if res[0] != 0:
             break

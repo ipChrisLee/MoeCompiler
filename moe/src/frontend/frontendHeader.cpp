@@ -1,7 +1,9 @@
-#include "frontend/frontendHeader.hpp"
-
 #include <sstream>
 #include <cinttypes>
+
+#include "SysY.hpp"
+
+#include "frontend/frontendHeader.hpp"
 
 namespace ircode {
 std::string LLVMable::toLLVMIR() const {
@@ -10,7 +12,11 @@ std::string LLVMable::toLLVMIR() const {
 
 std::string floatToString(float f) {
 	static char buf[50];
-	sprintf(buf, "%a", f);
+	if(SysY::options.floatDecFormat.get()){
+		sprintf(buf,"%f",f);
+	}else{
+		sprintf(buf, "%a", f);
+	}
 	return buf;
 }
 

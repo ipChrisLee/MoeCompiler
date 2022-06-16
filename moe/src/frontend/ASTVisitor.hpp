@@ -43,9 +43,14 @@ class ASTVisitor : public SysYBaseVisitor {
 		 * */
 		bool isConst;
 		/*  visitingConst: is calculating static value.
-		 *  Changed just entering and leaving ConstExp. false in default.
 		 * */
 		bool visitingConst;
+		
+		/*  shape of array declaring.
+		 *  The first index is the length of visiting.
+		 *  You should back up shape by yourself.
+		 * */
+		std::vector<int>shape;
 		
 		Info() : inGlobal(true), btype(BType::Error), isConst(false),
 		         visitingConst(false) {

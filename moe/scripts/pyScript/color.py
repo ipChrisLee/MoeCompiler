@@ -21,6 +21,7 @@ class C(Enum):
     BRED = '\033[1;31m'
     BGREEN = '\033[1;32m'
     BYELLOW = '\033[1;33m'
+    TERMINAL = BYELLOW
     BBLUE = '\033[1;34m'
     BPURPLE = '\033[1;35m'  # use when warning
     WARNING = BPURPLE

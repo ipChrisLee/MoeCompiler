@@ -1,11 +1,17 @@
 import subprocess
-from settings import TimeoutSettings
+from settings import TimeoutSettings, CommandLineSettings
 from pathlib import Path
 from color import C, cprint
 
 
-def run_command(*args, inputStr: str = "",
-                timeout: float = TimeoutSettings.default, cwd='./'):
+def run_command(
+        *args,
+        inputStr: str = "",
+        timeout: float = TimeoutSettings.default,
+        cwd='./'
+):
+    if CommandLineSettings.verbose:
+        cprint(f'[Terminal (timeout={timeout}s) ] :', *args, color=C.TERMINAL)
     p = subprocess.run(args, input=inputStr, stdout=subprocess.PIPE,
                        stderr=subprocess.PIPE, timeout=timeout, cwd=cwd)
     stdout = p.stdout.decode('utf-8')

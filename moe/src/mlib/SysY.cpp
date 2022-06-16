@@ -23,10 +23,11 @@ void parseArgs(int argc, char ** argv) {
 	while (true) {
 		int optionIndex = 0;
 		static struct option longOptions[] = {
-			{"verbose",   no_argument, nullptr, 0},
-			{"debug",     no_argument, nullptr, 0},
-			{"emit-llvm", no_argument, nullptr, 0},
-			{nullptr, 0,               nullptr, 0}
+			{"verbose",          no_argument, nullptr, 0},
+			{"debug",            no_argument, nullptr, 0},
+			{"emit-llvm",        no_argument, nullptr, 0},
+			{"float-dec-format", no_argument, nullptr, 0},
+			{nullptr, 0,                      nullptr, 0}
 		};
 		c = getopt_long(argc, argv, "-o:SO:", longOptions, &optionIndex);
 		if (c == -1) {
@@ -44,6 +45,9 @@ void parseArgs(int argc, char ** argv) {
 						}},
 						{"emit-llvm", []() {
 							options.emitLLVM.set(true);
+						}},
+						{"float-dec-format",[](){
+							options.floatDecFormat.set(true);
 						}},
 					});
 				break;

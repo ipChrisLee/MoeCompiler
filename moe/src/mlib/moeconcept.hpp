@@ -30,21 +30,21 @@ struct Stringable {
  * */
 struct Storable {
 	virtual bool store(
-			const std::string & filePath,
-			std::function<std::string(Storable &)> getContent
+		const std::string & filePath,
+		std::function<std::string(Storable &)> getContent
 	) final {
 		std::ofstream ofs(filePath);
-		if (!ofs.is_open()) return false;
+		if (!ofs.is_open()) { return false; }
 		ofs << getContent(*this);
 		ofs.close();
 		return ofs.good();
 	}
 	
 	virtual bool store(
-			const std::string & filePath
+		const std::string & filePath
 	) final {
 		std::ofstream ofs(filePath);
-		if (!ofs.is_open()) return false;
+		if (!ofs.is_open()) { return false; }
 		ofs << defaultGetContent();
 		ofs.close();
 		return ofs.good();
@@ -79,16 +79,20 @@ class Cloneable {
 	[[nodiscard]] virtual std::unique_ptr<Cloneable>
 	cloneToUniquePtr() const final {
 		std::unique_ptr<Cloneable> clonedUniquePtr = _cloneToUniquePtr();
-		Cloneable * clonedPtr = clonedUniquePtr.get(); /* NOLINT */ // For `-Wpotentially-evaluated-expression`.
+		Cloneable * clonedPtr =
+			clonedUniquePtr.get(); /* NOLINT */ // For `-Wpotentially-evaluated-expression`.
 		if (typeid(*clonedPtr) != typeid(*this)) {
-			com::Throw(com::concatToString({
-					                               "Calling `__cloneToUniquePtr`method from type [",
-					                               typeid(*clonedPtr).name(),
-					                               "], which is different to the type of `this` [",
-					                               typeid(*this).name(),
-					                               "]. Check if you have implemented `__cloneToUniquePtr` method of type",
-					                               typeid(*this).name(),
-					                               " first."}));
+			com::Throw(
+				com::concatToString(
+					{
+						"Calling `__cloneToUniquePtr`method from type [",
+						typeid(*clonedPtr).name(),
+						"], which is different to the type of `this` [",
+						typeid(*this).name(),
+						"]. Check if you have implemented `__cloneToUniquePtr` method of type",
+						typeid(*this).name(),
+						" first."}
+				));
 		}
 		return clonedUniquePtr;
 	}
@@ -112,10 +116,13 @@ cloneable_cast_uPtr(std::unique_ptr<moeconcept::Cloneable> && fromP) {
 	//  return nullptr if source pointer is nullptr.
 	if (!fromP) { return std::unique_ptr<To>(nullptr); }
 	To * p = dynamic_cast<To *>(fromP.release());
-	Assert(p, concatToString({
-			                         "dynamic_cast_uPtr failed. From [moeconcept::Cloneable] to [",
-			                         typeid(To).name(), "*]."
-	                         }));
+	Assert(
+		p, concatToString(
+			{
+				"dynamic_cast_uPtr failed. From [moeconcept::Cloneable] to [",
+				typeid(To).name(), "*]."
+			}
+		));
 	return std::unique_ptr<To>(p);
 }
 

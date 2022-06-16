@@ -5,6 +5,7 @@ project(MoeCompiler)
 #   C++ Standards
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED true)
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_GLIBCXX_DEBUG")
 
 #   Files of project (exclude libraries)
 file(GLOB_RECURSE cppFiles "src/main.cpp" "src/frontend/*.cpp")

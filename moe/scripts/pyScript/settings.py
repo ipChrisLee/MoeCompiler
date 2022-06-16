@@ -11,6 +11,11 @@ class TimeoutSettings:
     cmake: float = settings['cmake']
 
 
+class CommandLineSettings:
+    settings = projSettings['CommandLineSettings']
+    verbose: bool = settings['verbose']
+
+
 nullDev = '/dev/null'
 moecompilerPath = 'build/compiler'
 

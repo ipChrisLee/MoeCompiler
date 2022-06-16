@@ -1,4 +1,3 @@
-from color import cprint, C
 from os import walk
 from pathlib import Path
 from enum import Enum
@@ -24,19 +23,24 @@ class TestCase:
             syFilePath: str, inFilePath: str, outFilePath: str,
             year: int, testType: TestType
     ):
-        self.testName = testName
-        self.syFilePath = syFilePath
-        self.inFilePath = inFilePath
-        self.outFilePath = outFilePath
-        self.year = year
-        self.testType = testType
-        self.msFilePath = Path(syFilePath).with_suffix(".ms")
+        self.testName: str = testName
+        self.syFilePath: str = syFilePath
+        self.inFilePath: str = inFilePath
+        self.outFilePath: str = outFilePath
+        self.year: int = year
+        self.testType: TestType = testType
+        self.msFilePath: str = str(Path(syFilePath).with_suffix(".ms"))
 
     def __str__(self):
         return str(self.year) + "::" + self.testType.name + "::" + self.testName
 
     def __hash__(self):
         return hash(self.syFilePath)
+
+    def __eq__(self, other):
+        if isinstance(other, TestCase):
+            return hash(self) == hash(other)
+        return False
 
     def just_compile_without_opti(self, *args, moecompilerPath):
         return run_command(
@@ -107,4 +111,6 @@ basicTestCaseSet = TestCaseSet(
 )
 
 if __name__ == '__main__':
-    pass
+    for testCase in basicTestCaseSet.caseSet:
+        print(hash(testCase))
+        print(hash(testCase.syFilePath))

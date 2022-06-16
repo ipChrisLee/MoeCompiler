@@ -24,7 +24,7 @@ DeclGlobal::DeclGlobal(AddrGlobalVariable * pAddr) : pAddr(pAddr) {
 std::string DeclGlobal::toLLVMIR() const {
 	return pAddr->toLLVMIR() +
 	       " = dso_local" +
-	       (pAddr->isConst ? " constant " : " ") +
+	       (pAddr->isConst ? " constant " : " global ") +
 	       pAddr->uPtrStaticValue->toLLVMIR() +
 	       ", align 4";
 }

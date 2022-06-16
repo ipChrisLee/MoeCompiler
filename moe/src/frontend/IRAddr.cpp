@@ -86,8 +86,9 @@ ircode::AddrJumpLabel::_cloneToUniquePtr() const {
 ircode::AddrPara::AddrPara(
 	std::string name, const ircode::TypeInfo & typeInfo, int number
 ) : number(number), name(std::move(name)),
-    uPtrTypeInfo(com::dynamic_cast_uPtr<TypeInfo>(
-	    typeInfo.cloneToUniquePtr())) {
+    uPtrTypeInfo(
+	    com::dynamic_cast_uPtr<TypeInfo>(
+		    typeInfo.cloneToUniquePtr())) {
 }
 
 std::string ircode::AddrPara::toLLVMIR() const {
@@ -201,10 +202,13 @@ ircode::AddrVariable::AddrVariable(
 )
 	: Addr(), name(std::move(name)), isConst(true), uPtrStaticValue(
 	com::dynamic_cast_uPtr<StaticValue>(staticValue.cloneToUniquePtr())),
-	  uPtrTypeInfo(com::dynamic_cast_uPtr<TypeInfo>(
-		  typeInfo.cloneToUniquePtr())) {
-	com::Assert(uPtrStaticValue->getTypeInfo() == *(uPtrTypeInfo),
-	            "Type of static value and variable should be same.", CODEPOS);
+	  uPtrTypeInfo(
+		  com::dynamic_cast_uPtr<TypeInfo>(
+			  typeInfo.cloneToUniquePtr())) {
+	com::Assert(
+		uPtrStaticValue->getTypeInfo() == *(uPtrTypeInfo),
+		"Type of static value and variable should be same.", CODEPOS
+	);
 }
 
 
@@ -213,8 +217,9 @@ ircode::AddrVariable::AddrVariable(const AddrVariable & addrVariable)
 	  isConst(addrVariable.isConst), uPtrStaticValue(
 		com::dynamic_cast_uPtr<StaticValue>(
 			addrVariable.uPtrStaticValue->cloneToUniquePtr())),
-	  uPtrTypeInfo(com::dynamic_cast_uPtr<TypeInfo>(
-		  addrVariable.uPtrTypeInfo->cloneToUniquePtr())) {
+	  uPtrTypeInfo(
+		  com::dynamic_cast_uPtr<TypeInfo>(
+			  addrVariable.uPtrTypeInfo->cloneToUniquePtr())) {
 }
 
 std::unique_ptr<moeconcept::Cloneable>
@@ -232,15 +237,34 @@ std::string ircode::AddrVariable::toLLVMIR() const {
 
 ircode::AddrGlobalVariable::AddrGlobalVariable(
 	const ircode::TypeInfo & typeInfo, std::string name,
-	const ircode::StaticValue & staticValue
-) : Addr(), name(std::move(name)), isConst(true),
+	const ircode::StaticValue & staticValue, bool isConst
+) : Addr(), name(std::move(name)), isConst(isConst),
     uPtrStaticValue(
 	    com::dynamic_cast_uPtr<StaticValue>(staticValue.cloneToUniquePtr())
     ),
-    uPtrTypeInfo(com::dynamic_cast_uPtr<TypeInfo>(typeInfo.cloneToUniquePtr())) {
-	com::Assert(uPtrStaticValue->getTypeInfo() == *(uPtrTypeInfo),
-	            "Type of static value and type of variable should be same.",
-	            CODEPOS);
+    uPtrTypeInfo(
+	    com::dynamic_cast_uPtr<TypeInfo>(
+		    std::make_unique<ircode::PointerType>(typeInfo)
+	    )
+    ) {
+	com::Assert(
+		staticValue.getTypeInfo() == typeInfo,
+		"Type of static value and type of variable should be same.",
+		CODEPOS
+	);
+}
+
+ircode::AddrGlobalVariable::AddrGlobalVariable(
+	const ircode::TypeInfo & typeInfo, std::string name
+) : Addr(), name(std::move(name)), isConst(false),
+    uPtrStaticValue(
+	    ircode::zeroExtensionValueOfType(typeInfo)
+    ),
+    uPtrTypeInfo(
+	    com::dynamic_cast_uPtr<TypeInfo>(
+		    std::make_unique<ircode::PointerType>(typeInfo)
+	    )
+    ) {
 }
 
 // ircode::AddrGlobalVariable::AddrGlobalVariable(
@@ -254,11 +278,13 @@ ircode::AddrGlobalVariable::AddrGlobalVariable(
 
 ircode::AddrGlobalVariable::AddrGlobalVariable(
 	const ircode::AddrGlobalVariable & addr
-) : Addr(addr), name(addr.name), isConst(addr.isConst), uPtrStaticValue(
-	com::dynamic_cast_uPtr<StaticValue>(
-		addr.uPtrStaticValue->cloneToUniquePtr())), uPtrTypeInfo(
-	com::dynamic_cast_uPtr<TypeInfo>(
-		addr.uPtrTypeInfo->cloneToUniquePtr())) {
+) : Addr(addr), name(addr.name), isConst(addr.isConst),
+    uPtrStaticValue(
+	    com::dynamic_cast_uPtr<StaticValue>(
+		    addr.uPtrStaticValue->cloneToUniquePtr())),
+    uPtrTypeInfo(
+	    com::dynamic_cast_uPtr<TypeInfo>(
+		    addr.uPtrTypeInfo->cloneToUniquePtr())) {
 }
 
 std::unique_ptr<moeconcept::Cloneable>
@@ -275,15 +301,17 @@ ircode::AddrStaticValue::AddrStaticValue(
 )
 	: uPtrTypeInfo(
 	com::dynamic_cast_uPtr<TypeInfo>(typeInfo.cloneToUniquePtr())),
-	  uPtrStaticValue(com::dynamic_cast_uPtr<StaticValue>(
-		  staticValue.cloneToUniquePtr())) {
-	com::Assert(staticValue.getTypeInfo() == typeInfo,"",CODEPOS);
+	  uPtrStaticValue(
+		  com::dynamic_cast_uPtr<StaticValue>(
+			  staticValue.cloneToUniquePtr())) {
+	com::Assert(staticValue.getTypeInfo() == typeInfo, "", CODEPOS);
 }
 
 ircode::AddrStaticValue::AddrStaticValue(const AddrStaticValue & addr) :
 	Addr(addr),
-	uPtrTypeInfo(com::dynamic_cast_uPtr<TypeInfo>(
-		addr.uPtrTypeInfo->cloneToUniquePtr())),
+	uPtrTypeInfo(
+		com::dynamic_cast_uPtr<TypeInfo>(
+			addr.uPtrTypeInfo->cloneToUniquePtr())),
 	uPtrStaticValue(
 		com::dynamic_cast_uPtr<StaticValue>(
 			addr.uPtrStaticValue->cloneToUniquePtr())) {

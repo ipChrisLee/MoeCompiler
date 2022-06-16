@@ -50,6 +50,9 @@ class Options {
 	
 	struct EmitLLVM : public Option<bool, false> {
 	} emitLLVM;
+	
+	struct FloatDecFormat : public Option<bool,false>{
+	} floatDecFormat;
 };
 
 extern Options options;

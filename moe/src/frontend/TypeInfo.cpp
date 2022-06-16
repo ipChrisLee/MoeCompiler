@@ -31,8 +31,9 @@ bool ircode::TypeInfo::operator ==(const ircode::TypeInfo & typeInfo) const {
 		return true;
 	} else {
 		com::Throw(
-				"You should not invoke this override of ==, check your code!",
-				CODEPOS);
+			"You should not invoke this override of ==, check your code!",
+			CODEPOS
+		);
 	}
 }
 
@@ -70,7 +71,7 @@ ircode::IntArrayType::_cloneToUniquePtr() const {
 }
 
 ircode::IntArrayType::IntArrayType(std::vector<int> shape)
-		: TypeInfo(TypeInfo::Type::IntArray_t), shape(std::move(shape)) {
+	: TypeInfo(TypeInfo::Type::IntArray_t), shape(std::move(shape)) {
 }
 
 std::string ircode::IntArrayType::toLLVMIR() const {
@@ -101,7 +102,7 @@ ircode::FloatArrayType::_cloneToUniquePtr() const {
 }
 
 ircode::FloatArrayType::FloatArrayType(std::vector<int> shape)
-		: TypeInfo(TypeInfo::Type::FloatArray_t), shape(std::move(shape)) {
+	: TypeInfo(TypeInfo::Type::FloatArray_t), shape(std::move(shape)) {
 }
 
 std::string ircode::FloatArrayType::toLLVMIR() const {
@@ -132,20 +133,20 @@ ircode::PointerType::_cloneToUniquePtr() const {
 }
 
 ircode::PointerType::PointerType(const ircode::PointerType & pointerType)
-		: TypeInfo(Type::Pointer_t), pointLevel(pointerType.pointLevel) {
-	pointTo = com::dynamic_cast_uPtr<PointerType>(
+	: TypeInfo(Type::Pointer_t), pointLevel(pointerType.pointLevel) {
+	pointTo = com::dynamic_cast_uPtr<TypeInfo>(
 		pointerType.pointTo->cloneToUniquePtr()
 	);
 }
 
 ircode::PointerType::PointerType(const ircode::TypeInfo & pointToType)
-		: TypeInfo(Type::Pointer_t) {
-	pointTo = com::dynamic_cast_uPtr<PointerType>(
+	: TypeInfo(Type::Pointer_t) {
+	pointTo = com::dynamic_cast_uPtr<TypeInfo>(
 		pointToType.cloneToUniquePtr()
 	);
 	if (pointToType.type == Type::Pointer_t) {
 		pointLevel =
-				dynamic_cast<const PointerType &>(pointToType).pointLevel + 1;
+			dynamic_cast<const PointerType &>(pointToType).pointLevel + 1;
 	} else {
 		pointLevel = 1;
 	}

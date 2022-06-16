@@ -139,7 +139,7 @@ std::unique_ptr<To> dynamic_cast_uPtr(std::unique_ptr<From> && fromP) {
  *      std::unique_ptr<Base>upBase=dynamic_cast_uPtr<Base>(upDerivedB);
  */
 template<typename To, typename From>
-To * dynamic_cast_uPtr(std::unique_ptr<From> & fromP) {
+To * dynamic_cast_uPtr_get(std::unique_ptr<From> & fromP) {
 	return dynamic_cast<To *>(fromP.get());
 }
 

@@ -45,10 +45,28 @@ std::any ASTVisitor::visitConstDef(SysYParser::ConstDefContext * ctx) {
 			son->accept(this);
 			auto len = retVal.restore<std::unique_ptr<ircode::StaticValue>>();
 			shape.push_back(
-				com::dynamic_cast_uPtr<ircode::IntStaticValue>(len)->value);
+				com::dynamic_cast_uPtr_get<ircode::IntStaticValue>(len)->value
+			);
 		}
+		info.shape = shape;
 		ctx->constInitVal()->accept(this);
-		com::TODO("", CODEPOS);
+		auto uType = bTypeToTypeInfoUPtr(info.btype, info.shape);
+		auto constVal = retVal.restore<std::unique_ptr<ircode::StaticValue>>();
+		info.shape = { };
+		ircode::Addr * pAddr = nullptr;
+		if (info.inGlobal) {
+			pAddr = addrPool.addAddrToScope(
+				ircode::AddrGlobalVariable(*uType, varname, *constVal),
+				pScopeNow, ircode::IdType::GlobalVarName, varname
+			);
+			instrPool.addInstrToPool(
+				ircode::instr::DeclGlobal(
+					dynamic_cast<ircode::AddrGlobalVariable *>(pAddr)
+				));
+		} else {
+			com::TODO("", CODEPOS);
+		}
+		return nullptr;
 	} else { // Defining a variable
 		ctx->constInitVal()->accept(this);
 		std::unique_ptr<ircode::TypeInfo> uType = bTypeToTypeInfoUPtr(info.btype);
@@ -58,13 +76,16 @@ std::any ASTVisitor::visitConstDef(SysYParser::ConstDefContext * ctx) {
 		if (info.inGlobal) {
 			pAddr = addrPool.addAddrToScope(
 				ircode::AddrGlobalVariable(*uType, varname, *constVal),
-				pScopeNow, ircode::IdType::GlobalVarName, varname);
-			instrPool.addInstrToPool(ircode::instr::DeclGlobal(
-				dynamic_cast<ircode::AddrGlobalVariable *>(pAddr)));
+				pScopeNow, ircode::IdType::GlobalVarName, varname
+			);
+			instrPool.addInstrToPool(
+				ircode::instr::DeclGlobal(
+					dynamic_cast<ircode::AddrGlobalVariable *>(pAddr)));
 		} else {
 			pAddr = addrPool.addAddrToScope(
 				ircode::AddrVariable(*uType, varname, *constVal),
-				pScopeNow, ircode::IdType::GlobalVarName, varname);
+				pScopeNow, ircode::IdType::GlobalVarName, varname
+			);
 			com::TODO("", CODEPOS);
 		}
 		return nullptr;
@@ -73,10 +94,11 @@ std::any ASTVisitor::visitConstDef(SysYParser::ConstDefContext * ctx) {
 
 std::any ASTVisitor::visitConstExp(SysYParser::ConstExpContext * ctx) {
 	//  ConstExp -> AddExp
+	bool _visitingConst = info.visitingConst;
 	info.visitingConst = true;
 	ctx->addExp()->accept(this);
 	auto ret = retVal.restore<std::unique_ptr<ircode::StaticValue>>();
-	info.visitingConst = false;
+	info.visitingConst = _visitingConst;
 	retVal.save(std::move(ret));
 	return nullptr;
 }
@@ -89,8 +111,12 @@ std::any ASTVisitor::visitFuncDef(SysYParser::FuncDefContext * ctx) {
 }
 
 std::any ASTVisitor::visitVarDecl(SysYParser::VarDeclContext * ctx) {
+	// varDecl -> bType varDef (',' varDef)* ';'
 	info.isConst = false;
-	com::TODO("", CODEPOS);
+	ctx->bType()->accept(this);
+	for (auto son : ctx->varDef()) {
+		son->accept(this);
+	}
 	return nullptr;
 }
 
@@ -105,7 +131,147 @@ std::any ASTVisitor::visitScalarInitVal(SysYParser::ScalarInitValContext * ctx) 
 }
 
 std::any ASTVisitor::visitListInitval(SysYParser::ListInitvalContext * ctx) {
-	com::TODO("", CODEPOS);
+	if (info.inGlobal) { //  Just same as visitListConstInitVal...
+		//  Copy from visitListConstInitVal.
+		bool _visitingConst = info.visitingConst;
+		info.visitingConst = true;
+		auto nowShape = info.shape;
+		com::Assert(
+			!nowShape.empty(),
+			"When visitListInitVal in global, shape should not be empty", CODEPOS
+		);
+		int len = nowShape[0];
+		info.shape = std::vector(info.shape.begin() + 1, info.shape.end());
+		if (nowShape.size() == 1) {
+			switch (info.btype) {
+				case BType::Float: {
+					std::vector<ircode::FloatStaticValue> arr;
+					for (auto p : ctx->initVal()) {
+						p->accept(this);
+						auto psv = com::dynamic_cast_uPtr<ircode::FloatStaticValue>(
+							retVal.restore<std::unique_ptr<ircode::StaticValue>>()
+								->convertTo(ircode::FloatType())
+						);
+						arr.emplace_back(*psv);
+					}
+					retVal.save(
+						com::dynamic_cast_uPtr<ircode::StaticValue>(
+							std::make_unique<ircode::FloatArrayStaticValue>(len, arr)
+						));
+					break;
+				}
+				case BType::Int: {
+					std::vector<ircode::IntStaticValue> arr;
+					for (auto p : ctx->initVal()) {
+						p->accept(this);
+						auto psv = com::dynamic_cast_uPtr<ircode::IntStaticValue>(
+							retVal.restore<std::unique_ptr<ircode::StaticValue>>()
+								->convertTo(ircode::IntType())
+						);
+						arr.emplace_back(*psv);
+					}
+					retVal.save(
+						com::dynamic_cast_uPtr<ircode::StaticValue>(
+							std::make_unique<ircode::IntArrayStaticValue>(len, arr)
+						));
+					break;
+				}
+				default: {
+					com::Throw("Error BType.", CODEPOS);
+				}
+			}
+		} else {
+			switch (info.btype) {
+				case BType::Float: {
+					std::vector<ircode::FloatArrayStaticValue> arrOfArr;
+					auto sons = ctx->initVal();
+					auto itP = sons.begin();
+					//  Generate {...} arrays first.
+					for (; itP != sons.end(); ++itP) {
+						auto p = *itP;
+						if (dynamic_cast<SysYParser::ScalarInitValContext *>(p)) {
+							break;
+						}
+						p->accept(this);
+						auto psv =
+							com::dynamic_cast_uPtr<ircode::FloatArrayStaticValue>(
+								retVal.restore<
+									std::unique_ptr<ircode::StaticValue>>());
+						arrOfArr.emplace_back(*psv);
+					}
+					//  Generate blank value.
+					std::vector<ircode::FloatStaticValue> rest;
+					for (; itP != sons.end(); ++itP) {
+						auto p = *itP;
+						com::Assert(
+							dynamic_cast<SysYParser::ScalarInitValContext *>(p),
+							"p should be scalar initval at this time.", CODEPOS
+						);
+						p->accept(this);
+						auto psv = com::dynamic_cast_uPtr<ircode::FloatStaticValue>(
+							retVal.restore<std::unique_ptr<ircode::StaticValue>>()
+						);
+						rest.emplace_back(*psv);
+					}
+					retVal.save(
+						com::dynamic_cast_uPtr<ircode::StaticValue>(
+							std::make_unique<ircode::FloatArrayStaticValue>(
+								len, info.shape, arrOfArr, rest
+							)
+						));
+					break;
+				}
+				case BType::Int: {
+					std::vector<ircode::IntArrayStaticValue> arrOfArr;
+					auto sons = ctx->initVal();
+					auto itP = sons.begin();
+					//  Generate {...} arrays first.
+					for (; itP != sons.end(); ++itP) {
+						auto p = *itP;
+						if (dynamic_cast<SysYParser::ScalarInitValContext *>(p)) {
+							//  p is scalarConstInitVal
+							break;
+						}
+						p->accept(this);
+						auto psv =
+							com::dynamic_cast_uPtr<ircode::IntArrayStaticValue>(
+								retVal.restore<
+									std::unique_ptr<ircode::StaticValue>>());
+						arrOfArr.emplace_back(*psv);
+					}
+					//  Generate blank value.
+					std::vector<ircode::IntStaticValue> rest;
+					for (; itP != sons.end(); ++itP) {
+						auto p = *itP;
+						com::Assert(
+							dynamic_cast<SysYParser::ScalarInitValContext *>(p),
+							"p should be scalar const initval at this time.", CODEPOS
+						);
+						p->accept(this);
+						auto psv = com::dynamic_cast_uPtr<ircode::IntStaticValue>(
+							retVal.restore<std::unique_ptr<ircode::StaticValue>>()
+						);
+						rest.emplace_back(*psv);
+					}
+					retVal.save(
+						com::dynamic_cast_uPtr<ircode::StaticValue>(
+							std::make_unique<ircode::IntArrayStaticValue>(
+								len, info.shape, arrOfArr, rest
+							)
+						));
+					break;
+				}
+				default: {
+					com::Throw("Error BType!", CODEPOS);
+				}
+			}
+		}
+		info.shape = nowShape;
+		info.visitingConst = _visitingConst;
+		return nullptr;
+	} else {
+		com::TODO("", CODEPOS);
+	}
 }
 
 std::any ASTVisitor::visitFuncType(SysYParser::FuncTypeContext * ctx) {
@@ -113,11 +279,67 @@ std::any ASTVisitor::visitFuncType(SysYParser::FuncTypeContext * ctx) {
 }
 
 std::any ASTVisitor::visitInitVarDef(SysYParser::InitVarDefContext * ctx) {
-	com::TODO("", CODEPOS);
+	// varDef -> Identifier ('[' constExp ']')* '=' initVal # initVarDef
+	std::string varname = ctx->Identifier()->getText();
+	if (info.inGlobal) {
+		std::vector<int> shape;
+		for (auto p : ctx->constExp()) {
+			p->accept(this);
+			auto pSV = retVal.restore<std::unique_ptr<ircode::StaticValue>>();
+			shape.push_back(
+				com::dynamic_cast_uPtr_get<ircode::IntStaticValue>(pSV)->value
+			);
+		}
+		info.shape = shape;
+		bool _visitingConst = info.visitingConst;
+		info.visitingConst = true;    //  may have bugs!
+		ctx->initVal()->accept(this);
+		info.visitingConst = _visitingConst;    //  may have bugs!
+		auto uType = bTypeToTypeInfoUPtr(info.btype, info.shape);
+		auto constVal = retVal.restore<std::unique_ptr<ircode::StaticValue>>();
+		auto pAddr = addrPool.addAddrToScope(
+			ircode::AddrGlobalVariable(*uType, varname, *constVal, false),
+			pScopeNow, ircode::IdType::GlobalVarName, varname
+		);
+		instrPool.addInstrToPool(
+			ircode::instr::DeclGlobal(
+				dynamic_cast<ircode::AddrGlobalVariable *>(pAddr)
+			));
+		info.shape = { };
+		return nullptr;
+	} else {
+		com::TODO("", CODEPOS);
+	}
 }
 
 std::any ASTVisitor::visitUninitVarDef(SysYParser::UninitVarDefContext * ctx) {
-	com::TODO("", CODEPOS);
+	//  varDef -> Identifier ('[' constExp ']')* # uninitVarDef
+	std::string varname = ctx->Identifier()->getText();
+	std::vector<int> shape;
+	for (auto p : ctx->constExp()) {
+		p->accept(this);
+		auto psv = retVal.restore<std::unique_ptr<ircode::StaticValue>>();
+		shape.push_back(
+			com::dynamic_cast_uPtr_get<ircode::IntStaticValue>(psv)->value
+		);
+	}
+	if (info.inGlobal) {
+		auto uType = bTypeToTypeInfoUPtr(info.btype, info.shape);
+		auto pAddr = addrPool.addAddrToScope(
+			ircode::AddrGlobalVariable(
+				*uType,
+				varname
+			),
+			pScopeNow, ircode::IdType::GlobalVarName, varname
+		);
+		instrPool.addInstrToPool(
+			ircode::instr::DeclGlobal(
+				dynamic_cast<ircode::AddrGlobalVariable *>(pAddr)
+			));
+	} else {
+		com::TODO("", CODEPOS);
+	}
+	return nullptr;
 }
 
 std::any ASTVisitor::visitFuncFParams(SysYParser::FuncFParamsContext * ctx) {
@@ -127,7 +349,137 @@ std::any ASTVisitor::visitFuncFParams(SysYParser::FuncFParamsContext * ctx) {
 std::any
 ASTVisitor::visitListConstInitVal(SysYParser::ListConstInitValContext * ctx) {
 	// constInitVal -> '{' (constInitVal (',' constInitVal)* )? '}' # listConstInitVal
-	com::TODO("", CODEPOS);
+	//  Copy to visitListInitVal. If you change code here, you should change code there.
+	auto nowShape = info.shape;
+	com::Assert(
+		!nowShape.empty(),
+		"When visitListConstInitVal, shape should not be empty", CODEPOS
+	);
+	int len = nowShape[0];
+	info.shape = std::vector(info.shape.begin() + 1, info.shape.end());
+	if (nowShape.size() == 1) {
+		switch (info.btype) {
+			case BType::Float: {
+				std::vector<ircode::FloatStaticValue> arr;
+				for (auto p : ctx->constInitVal()) {
+					p->accept(this);
+					auto psv = com::dynamic_cast_uPtr<ircode::FloatStaticValue>(
+						retVal.restore<std::unique_ptr<ircode::StaticValue>>()
+							->convertTo(ircode::FloatType())
+					);
+					arr.emplace_back(*psv);
+				}
+				retVal.save(
+					com::dynamic_cast_uPtr<ircode::StaticValue>(
+						std::make_unique<ircode::FloatArrayStaticValue>(len, arr)
+					));
+				break;
+			}
+			case BType::Int: {
+				std::vector<ircode::IntStaticValue> arr;
+				for (auto p : ctx->constInitVal()) {
+					p->accept(this);
+					auto psv = com::dynamic_cast_uPtr<ircode::IntStaticValue>(
+						retVal.restore<std::unique_ptr<ircode::StaticValue>>()
+							->convertTo(ircode::IntType())
+					);
+					arr.emplace_back(*psv);
+				}
+				retVal.save(
+					com::dynamic_cast_uPtr<ircode::StaticValue>(
+						std::make_unique<ircode::IntArrayStaticValue>(len, arr)
+					));
+				break;
+			}
+			default: {
+				com::Throw("Error BType.", CODEPOS);
+			}
+		}
+	} else {
+		switch (info.btype) {
+			case BType::Float: {
+				std::vector<ircode::FloatArrayStaticValue> arrOfArr;
+				auto sons = ctx->constInitVal();
+				auto itP = sons.begin();
+				//  Generate {...} arrays first.
+				for (; itP != sons.end(); ++itP) {
+					auto p = *itP;
+					if (dynamic_cast<SysYParser::ScalarConstInitValContext *>(p)) {
+						//  p is scalarConstInitVal
+						break;
+					}
+					p->accept(this);
+					auto psv = com::dynamic_cast_uPtr<ircode::FloatArrayStaticValue>(
+						retVal.restore<std::unique_ptr<ircode::StaticValue>>());
+					arrOfArr.emplace_back(*psv);
+				}
+				//  Generate blank value.
+				std::vector<ircode::FloatStaticValue> rest;
+				for (; itP != sons.end(); ++itP) {
+					auto p = *itP;
+					com::Assert(
+						dynamic_cast<SysYParser::ScalarConstInitValContext *>(p),
+						"p should be scalar const initval at this time.", CODEPOS
+					);
+					p->accept(this);
+					auto psv = com::dynamic_cast_uPtr<ircode::FloatStaticValue>(
+						retVal.restore<std::unique_ptr<ircode::StaticValue>>()
+					);
+					rest.emplace_back(*psv);
+				}
+				retVal.save(
+					com::dynamic_cast_uPtr<ircode::StaticValue>(
+						std::make_unique<ircode::FloatArrayStaticValue>(
+							len, info.shape, arrOfArr, rest
+						)
+					));
+				break;
+			}
+			case BType::Int: {
+				std::vector<ircode::IntArrayStaticValue> arrOfArr;
+				auto sons = ctx->constInitVal();
+				auto itP = sons.begin();
+				//  Generate {...} arrays first.
+				for (; itP != sons.end(); ++itP) {
+					auto p = *itP;
+					if (dynamic_cast<SysYParser::ScalarConstInitValContext *>(p)) {
+						//  p is scalarConstInitVal
+						break;
+					}
+					p->accept(this);
+					auto psv = com::dynamic_cast_uPtr<ircode::IntArrayStaticValue>(
+						retVal.restore<std::unique_ptr<ircode::StaticValue>>());
+					arrOfArr.emplace_back(*psv);
+				}
+				//  Generate blank value.
+				std::vector<ircode::IntStaticValue> rest;
+				for (; itP != sons.end(); ++itP) {
+					auto p = *itP;
+					com::Assert(
+						dynamic_cast<SysYParser::ScalarConstInitValContext *>(p),
+						"p should be scalar const initval at this time.", CODEPOS
+					);
+					p->accept(this);
+					auto psv = com::dynamic_cast_uPtr<ircode::IntStaticValue>(
+						retVal.restore<std::unique_ptr<ircode::StaticValue>>()
+					);
+					rest.emplace_back(*psv);
+				}
+				retVal.save(
+					com::dynamic_cast_uPtr<ircode::StaticValue>(
+						std::make_unique<ircode::IntArrayStaticValue>(
+							len, info.shape, arrOfArr, rest
+						)
+					));
+				break;
+			}
+			default: {
+				com::Throw("Error BType!", CODEPOS);
+			}
+		}
+	}
+	info.shape = nowShape;
+	return nullptr;
 }
 
 std::any
@@ -195,8 +547,56 @@ std::any ASTVisitor::visitCond(SysYParser::CondContext * ctx) {
 
 std::any ASTVisitor::visitLVal(SysYParser::LValContext * ctx) {
 	// lVal -> Identifier ('[' exp ']')*
+	std::string varname = ctx->Identifier()->getText();
 	if (info.visitingConst) {
-		com::TODO("To write after addr pool finished.", CODEPOS);
+		std::vector<int> idxs;
+		for (auto p : ctx->exp()) {
+			p->accept(this);
+			auto idx = retVal.restore<std::unique_ptr<ircode::StaticValue>>();
+			switch (idx->getTypeInfo().type) {
+				case ircode::TypeInfo::Type::Int_t: {
+					idxs.push_back(
+						com::dynamic_cast_uPtr_get<ircode::IntStaticValue>(
+							idx
+						)->value
+					);
+					break;
+				}
+				case ircode::TypeInfo::Type::Bool_t: {
+					idxs.push_back(
+						com::dynamic_cast_uPtr_get<ircode::BoolStaticValue>(
+							idx
+						)->value
+					);
+					break;
+				}
+				default: {
+					com::Throw("Const value of index should be int/bool.", CODEPOS);
+				}
+			}
+		}
+		auto [idType, pAddr] = pScopeNow->findIdInThisScope(varname);
+		com::Assert(
+			pAddr, "Get nullptr from scope. varname=[" + varname + "].",
+			CODEPOS
+		);
+		switch (idType) {
+			case ircode::IdType::GlobalVarName: {
+				auto globalVarAddr =
+					dynamic_cast<ircode::AddrGlobalVariable *>(pAddr);
+				retVal.save(globalVarAddr->uPtrStaticValue->getValue(idxs));
+				break;
+			}
+			case ircode::IdType::LocalVarName: {
+				auto localVarAddr = dynamic_cast<ircode::AddrVariable *>(pAddr);
+				retVal.save(localVarAddr->uPtrStaticValue->getValue(idxs));
+				break;
+			}
+			default: {
+				com::Throw("Error idType!", CODEPOS);
+			}
+		}
+		return nullptr;
 	} else {
 		com::TODO("", CODEPOS);
 	}
@@ -248,7 +648,8 @@ std::any ASTVisitor::visitUnary2(SysYParser::Unary2Context * ctx) {
 					"Const variable should be initialized with compile-time value, ",
 					"but value calculated by function call is not compile time value ",
 					"according to SysY semantic definition."
-				}), CODEPOS
+				}
+			), CODEPOS
 		);
 	} else {
 		com::TODO("", CODEPOS);
