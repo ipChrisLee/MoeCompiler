@@ -148,6 +148,7 @@ class FloatArrayStaticValue : public StaticValue {
 	
 	explicit FloatArrayStaticValue(std::vector<int>shape);
 	
+	
 	//  Create new 1-d, `len` long float array.
 	explicit FloatArrayStaticValue(int len, std::vector<FloatStaticValue> vi);
 	
