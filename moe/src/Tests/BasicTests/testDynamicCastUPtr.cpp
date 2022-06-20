@@ -26,7 +26,7 @@ TEST(DynamicCastUPtrTest, test1) {
 		}, com::MException);
 	
 	up = std::make_unique<ircode::IntStaticValue>(4);
-	EXPECT_EQ(com::dynamic_cast_uPtr<ircode::IntStaticValue>(up)->value,4);
+	EXPECT_EQ(com::dynamic_cast_uPtr_get<ircode::IntStaticValue>(up)->value,4);
 	EXPECT_NE(up.get(),nullptr);
 	EXPECT_EQ(com::dynamic_cast_uPtr<ircode::IntStaticValue>(std::move(up))->value,
 	          4);

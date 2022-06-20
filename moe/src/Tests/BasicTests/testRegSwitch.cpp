@@ -9,33 +9,6 @@
 
 #include "common.hpp"
 
-TEST(RegSwitch, VecCases) {
-	std::vector<std::string> ans;
-	std::vector<com::RegexSwitchCase> list = {
-			{"\\*",    [&ans]() { ans.emplace_back("*"); }},
-			{"\\-",    [&ans]() { ans.emplace_back("-"); }},
-			{"\\+",    [&ans]() { ans.emplace_back("+"); }},
-			{"\\/",    [&ans]() { ans.emplace_back("/"); }},
-			{"&&",     [&ans]() { ans.emplace_back("&&"); }},
-			{"\\|\\|", [&ans]() { ans.emplace_back("||"); }},
-			{"%",      [&ans]() { ans.emplace_back("%"); }},
-			{"<",      [&ans]() { ans.emplace_back("<"); }},
-			{">",      [&ans]() { ans.emplace_back(">"); }},
-			{"<=",     [&ans]() { ans.emplace_back("<="); }},
-			{">=",     [&ans]() { ans.emplace_back(">="); }},
-			{"==",     [&ans]() { ans.emplace_back("=="); }},
-			{"!=",     [&ans]() { ans.emplace_back("!="); }},
-			{"!",      [&ans]() { ans.emplace_back("!"); }},
-	};
-	std::vector<std::string> vec = {
-			"*", "-", "+", "/", "&&", "||", "%", "<", ">", "<=", ">=", "==", "!=",
-			"!"
-	};
-	for (const auto & s : vec) {
-		com::regSwitch(s, list);
-	}
-	EXPECT_EQ(vec, ans);
-}
 
 TEST(RegSwitch, InitListCases) {
 	std::vector<std::string> ans;

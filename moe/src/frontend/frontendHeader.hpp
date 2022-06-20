@@ -18,4 +18,5 @@ std::string intToString(int i);
 int literalToInt(const std::string &);
 
 float literalToFloat(const std::string &);
+
 }

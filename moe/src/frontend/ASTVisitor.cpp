@@ -27,12 +27,12 @@ std::any ASTVisitor::visitDecl(SysYParser::DeclContext * ctx) {
 
 std::any ASTVisitor::visitConstDecl(SysYParser::ConstDeclContext * ctx) {
 	//  ConstDecl -> "const" BType ConstDef {"," ConstDef};
-	info.isConst = true;
+	setWithAutoRestorer(info.isConst, true);
 	ctx->bType()->accept(this);
+	setWithAutoRestorer(info.btype, retVal.restore<BType>());
 	for (auto son : ctx->constDef()) {
 		son->accept(this);
 	}
-	info.isConst = false;
 	return nullptr;
 }
 
@@ -48,11 +48,10 @@ std::any ASTVisitor::visitConstDef(SysYParser::ConstDefContext * ctx) {
 				com::dynamic_cast_uPtr_get<ircode::IntStaticValue>(len)->value
 			);
 		}
-		info.shape = shape;
+		setWithAutoRestorer(info.shape, shape);
 		ctx->constInitVal()->accept(this);
 		auto uType = bTypeToTypeInfoUPtr(info.btype, info.shape);
 		auto constVal = retVal.restore<std::unique_ptr<ircode::StaticValue>>();
-		info.shape = { };
 		ircode::Addr * pAddr = nullptr;
 		if (info.inGlobal) {
 			pAddr = addrPool.addAddrToScope(
@@ -94,26 +93,30 @@ std::any ASTVisitor::visitConstDef(SysYParser::ConstDefContext * ctx) {
 
 std::any ASTVisitor::visitConstExp(SysYParser::ConstExpContext * ctx) {
 	//  ConstExp -> AddExp
-	bool _visitingConst = info.visitingConst;
-	info.visitingConst = true;
+	setWithAutoRestorer(info.visitingConst, true);
 	ctx->addExp()->accept(this);
 	auto ret = retVal.restore<std::unique_ptr<ircode::StaticValue>>();
-	info.visitingConst = _visitingConst;
 	retVal.save(std::move(ret));
 	return nullptr;
 }
 
 std::any ASTVisitor::visitFuncDef(SysYParser::FuncDefContext * ctx) {
-	info.inGlobal = false;
-	com::TODO("", CODEPOS);
-	info.inGlobal = true;
+	setWithAutoRestorer(info.inGlobal, false);
+	setWithAutoRestorer(info.funcType, strToFuncType(ctx->funcType()->getText()));
+	auto varname = ctx->Identifier()->getText();
+	auto pScopeSon = pScopeNow->addSonScope();
+	setWithAutoRestorer(pScopeNow, pScopeSon);
+	ctx->funcFParams()->accept(this);
+	com::TODO("Get the funcFParams.", CODEPOS);
+	ctx->block()->accept(this);
 	return nullptr;
 }
 
 std::any ASTVisitor::visitVarDecl(SysYParser::VarDeclContext * ctx) {
 	// varDecl -> bType varDef (',' varDef)* ';'
-	info.isConst = false;
+	setWithAutoRestorer(info.isConst, false);
 	ctx->bType()->accept(this);
+	setWithAutoRestorer(info.btype, retVal.restore<BType>());
 	for (auto son : ctx->varDef()) {
 		son->accept(this);
 	}
@@ -121,7 +124,7 @@ std::any ASTVisitor::visitVarDecl(SysYParser::VarDeclContext * ctx) {
 }
 
 std::any ASTVisitor::visitBType(SysYParser::BTypeContext * ctx) {
-	info.btype = strToBType(ctx->getText());
+	retVal.save<BType>(strToBType(ctx->getText()));
 	return nullptr;
 }
 
@@ -133,15 +136,15 @@ std::any ASTVisitor::visitScalarInitVal(SysYParser::ScalarInitValContext * ctx) 
 std::any ASTVisitor::visitListInitval(SysYParser::ListInitvalContext * ctx) {
 	if (info.inGlobal) { //  Just same as visitListConstInitVal...
 		//  Copy from visitListConstInitVal.
-		bool _visitingConst = info.visitingConst;
-		info.visitingConst = true;
-		auto nowShape = info.shape;
+		setWithAutoRestorer(info.visitingConst, true);
 		com::Assert(
-			!nowShape.empty(),
+			!info.shape.empty(),
 			"When visitListInitVal in global, shape should not be empty", CODEPOS
 		);
+		auto nowShape = info.shape;
 		int len = nowShape[0];
-		info.shape = std::vector(info.shape.begin() + 1, info.shape.end());
+		setWithAutoRestorer(info.shape,
+			std::vector(info.shape.begin() + 1, info.shape.end()));
 		if (nowShape.size() == 1) {
 			switch (info.btype) {
 				case BType::Float: {
@@ -266,8 +269,6 @@ std::any ASTVisitor::visitListInitval(SysYParser::ListInitvalContext * ctx) {
 				}
 			}
 		}
-		info.shape = nowShape;
-		info.visitingConst = _visitingConst;
 		return nullptr;
 	} else {
 		com::TODO("", CODEPOS);
@@ -290,11 +291,9 @@ std::any ASTVisitor::visitInitVarDef(SysYParser::InitVarDefContext * ctx) {
 				com::dynamic_cast_uPtr_get<ircode::IntStaticValue>(pSV)->value
 			);
 		}
-		info.shape = shape;
-		bool _visitingConst = info.visitingConst;
-		info.visitingConst = true;    //  may have bugs!
+		setWithAutoRestorer(info.shape, shape);
+		setWithAutoRestorer(info.visitingConst, true);
 		ctx->initVal()->accept(this);
-		info.visitingConst = _visitingConst;    //  may have bugs!
 		auto uType = bTypeToTypeInfoUPtr(info.btype, info.shape);
 		auto constVal = retVal.restore<std::unique_ptr<ircode::StaticValue>>();
 		auto pAddr = addrPool.addAddrToScope(
@@ -305,7 +304,6 @@ std::any ASTVisitor::visitInitVarDef(SysYParser::InitVarDefContext * ctx) {
 			ircode::instr::DeclGlobal(
 				dynamic_cast<ircode::AddrGlobalVariable *>(pAddr)
 			));
-		info.shape = { };
 		return nullptr;
 	} else {
 		com::TODO("", CODEPOS);
@@ -343,20 +341,32 @@ std::any ASTVisitor::visitUninitVarDef(SysYParser::UninitVarDefContext * ctx) {
 }
 
 std::any ASTVisitor::visitFuncFParams(SysYParser::FuncFParamsContext * ctx) {
-	com::TODO("", CODEPOS);
+	// funcFParams -> funcFParam (',' funcFParam)*;
+	/**
+	 * @brief The move constructor of std::vector will just move pointer to memory.
+	 * @ref https://stackoverflow.com/a/53879096/17924585
+	 */
+	std::vector<ircode::AddrPara> vecPara;
+	for (auto p : ctx->funcFParam()) {
+		p->accept(this);
+		vecPara.emplace_back(retVal.restore<ircode::AddrPara>());
+	}
+	retVal.save(std::move(vecPara));
+	return nullptr;
 }
 
 std::any
 ASTVisitor::visitListConstInitVal(SysYParser::ListConstInitValContext * ctx) {
 	// constInitVal -> '{' (constInitVal (',' constInitVal)* )? '}' # listConstInitVal
 	//  Copy to visitListInitVal. If you change code here, you should change code there.
-	auto nowShape = info.shape;
 	com::Assert(
-		!nowShape.empty(),
+		!info.shape.empty(),
 		"When visitListConstInitVal, shape should not be empty", CODEPOS
 	);
+	auto nowShape = info.shape;
 	int len = nowShape[0];
-	info.shape = std::vector(info.shape.begin() + 1, info.shape.end());
+	setWithAutoRestorer(info.shape,
+		std::vector(info.shape.begin() + 1, info.shape.end()));
 	if (nowShape.size() == 1) {
 		switch (info.btype) {
 			case BType::Float: {
@@ -478,7 +488,6 @@ ASTVisitor::visitListConstInitVal(SysYParser::ListConstInitValContext * ctx) {
 			}
 		}
 	}
-	info.shape = nowShape;
 	return nullptr;
 }
 
@@ -489,7 +498,19 @@ ASTVisitor::visitScalarConstInitVal(SysYParser::ScalarConstInitValContext * ctx)
 }
 
 std::any ASTVisitor::visitFuncFParam(SysYParser::FuncFParamContext * ctx) {
-	com::TODO("", CODEPOS);
+	ctx->bType()->accept(this);
+	setWithAutoRestorer(info.btype, retVal.restore<BType>());
+	auto varname = ctx->Identifier()->getText();
+	bool isPointer = !ctx->Lbrkt().empty();
+	std::vector<int> shape;
+	for (auto p : ctx->constExp()) {
+		p->accept(this);
+		auto len = retVal.restore<std::unique_ptr<ircode::StaticValue>>();
+		shape.emplace_back(
+			com::dynamic_cast_uPtr_get<ircode::IntStaticValue>(len)->value
+		);
+	}
+	com::TODO("Decide the type of function, create AddrPara.", CODEPOS);
 }
 
 std::any ASTVisitor::visitBlock(SysYParser::BlockContext * ctx) {

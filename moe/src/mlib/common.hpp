@@ -46,7 +46,7 @@ class MException : public std::exception {
 
 namespace WarningList {
 extern std::vector<std::pair<std::string, std::string>> msgAndCodepos;
-};
+}
 
 void addWarning(const std::string & msg, std::string_view codepos);
 
@@ -117,11 +117,14 @@ std::unique_ptr<To> dynamic_cast_uPtr(std::unique_ptr<From> && fromP) {
 	//  return nullptr if source pointer is nullptr.
 	if (!fromP) { return std::unique_ptr<To>(nullptr); }
 	To * p = dynamic_cast<To *>(fromP.release());
-	Assert(p, concatToString({
-		                         "dynamic_cast_uPtr failed. From [",
-		                         typeid(From).name(), "*] to [",
-		                         typeid(To).name(), "*]."
-	                         }));
+	Assert(
+		p, concatToString(
+			{
+				"dynamic_cast_uPtr failed. From [",
+				typeid(From).name(), "*] to [",
+				typeid(To).name(), "*]."
+			}
+		));
 	return std::unique_ptr<To>(p);
 }
 
@@ -175,16 +178,20 @@ class UnaryVariant {
 	
 	template<typename T>
 	void save(T && t) {
-		static_assert(isTypeTInTypesTs<T, Types...>(),
-		              "Type is not in type pack. Notice to use `std::move`.");
+		static_assert(
+			isTypeTInTypesTs<T, Types...>(),
+			"Type is not in type pack. Notice to use `std::move`."
+		);
 		/*  For example:
 		 *      `Int i(1);UnaryVariant uv;uv.save(i);`
 		 *      `i` is lvalue! And `int& &&` is deduced to `int &`!
 		 *  Ref: https://stackoverflow.com/a/3582313/17924585
 		 * */
 		if (box.index()) {
-			com::Throw("Saving to `UnaryVariant` where has saved variable.",
-			           CODEPOS);
+			com::Throw(
+				"Saving to `UnaryVariant` where has saved variable.",
+				CODEPOS
+			);
 		}
 		box = std::forward<T>(t);
 	}
@@ -197,8 +204,10 @@ class UnaryVariant {
 	T restore() {
 		static_assert(isTypeTInTypesTs<T, Types...>(), "Type is not in type pack.");
 		if (!std::holds_alternative<T>(box)) {
-			com::Throw("Restoring from UnaryVariant with a type not in type pack ",
-			           CODEPOS);
+			com::Throw(
+				"Restoring from UnaryVariant with a type not in type pack ",
+				CODEPOS
+			);
 		}
 		T ret(std::move(std::get<T>(box)));
 		box = std::monostate();
@@ -211,11 +220,49 @@ class UnaryVariant {
 		if (!std::holds_alternative<T>(box)) {
 			com::Throw(
 				"Getting reference from UnaryVariant with a type not in type pack ",
-				CODEPOS);
+				CODEPOS
+			);
 		}
 		return std::get<T>(box);
 	}
 };
 
+template<typename T>
+class ComRestorer {
+	T savedVal;
+	T & ref;
+  public:
+	
+	ComRestorer(T & _ref, T newVal) : savedVal(std::move(_ref)), ref(_ref) {
+		_ref = std::move(newVal);
+	}
+	
+	~ComRestorer() {
+		ref = std::move(savedVal);
+	}
+};
+
 }
+
+#ifndef __CONCAT
+#define __CONCAT(x, y) x ## y
+#endif
+
+#ifndef CONCAT
+#define CONCAT(x, y) __CONCAT(x,y)
+#endif
+
+#ifndef setWithAutoRestorer
+/**
+ * @brief A macro for auto-restore set.
+ * @details The value of @c var will be restored automatically when leaving the scope of this macro used.
+ * @ref https://stackoverflow.com/questions/207965/general-way-to-reset-a-member-variable-to-its-original-value-using-the-stack
+ * @note The type of @c var should have copy-constructor, move-assignment.
+ * @note One line can only contain exact one macro.
+ * @note Multiple usage of this macro in one scope will @b NOT cause fault.
+ */
+#define setWithAutoRestorer(var, newVal) com::ComRestorer<decltype(var)> \
+                CONCAT(__restorer,__LINE__) (var,newVal)
+#endif
+
 

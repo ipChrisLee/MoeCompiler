@@ -7,6 +7,7 @@
 #include <any>
 
 #include <cprt.hpp>
+#include <common.hpp>
 #include <third_party/antlr4/antlr4-runtime.h>
 
 #include "frontend/IRAddr.hpp"
@@ -28,6 +29,10 @@ class ASTVisitor : public SysYBaseVisitor {
 		Float, Int, Error
 	};
 	
+	enum class FuncType {
+		Void, Float, Int, Error
+	};
+	
 	struct Info {
 		/*  inGlobal: is visitor processing statements on global field.
 		 *  isGlobal is true at first, and becomes false when enter `FuncDef`, and
@@ -42,7 +47,7 @@ class ASTVisitor : public SysYBaseVisitor {
 		 *  Changed just after visiting ConstDecl/VarDecl.
 		 * */
 		bool isConst;
-		/*  visitingConst: is calculating static value.
+		/*  visitingConst: is calculating static value from exp.
 		 * */
 		bool visitingConst;
 		
@@ -50,10 +55,14 @@ class ASTVisitor : public SysYBaseVisitor {
 		 *  The first index is the length of visiting.
 		 *  You should back up shape by yourself.
 		 * */
-		std::vector<int>shape;
+		std::vector<int> shape;
+		
+		/*  Function type.
+		 * */
+		FuncType funcType;
 		
 		Info() : inGlobal(true), btype(BType::Error), isConst(false),
-		         visitingConst(false) {
+		         visitingConst(false), shape(), funcType(FuncType::Error) {
 		}
 	} info;
 	
@@ -65,6 +74,19 @@ class ASTVisitor : public SysYBaseVisitor {
 		} else {
 			com::Throw("Unknown BType[" + str + "]!", CODEPOS);
 		}
+	}
+	
+	static FuncType strToFuncType(const std::string & str) {
+		if (str == "float") {
+			return FuncType::Float;
+		} else if (str == "int") {
+			return FuncType::Int;
+		} else if (str == "void") {
+			return FuncType::Void;
+		} else {
+			com::Throw("Unknown BType[" + str + "]!", CODEPOS);
+		}
+		
 	}
 	
 	static std::unique_ptr<ircode::TypeInfo>
@@ -81,16 +103,16 @@ class ASTVisitor : public SysYBaseVisitor {
 					com::Throw("Error BType!", CODEPOS);
 				}
 			}
-		}else{
+		} else {
 			switch (btype) {
-				case BType::Float:{
+				case BType::Float: {
 					return std::make_unique<ircode::FloatArrayType>(shape);
 				}
-				case BType::Int:{
+				case BType::Int: {
 					return std::make_unique<ircode::IntArrayType>(shape);
 				}
-				default:{
-					com::Throw("Error BType!",CODEPOS);
+				default: {
+					com::Throw("Error BType!", CODEPOS);
 				}
 			}
 		}
@@ -98,12 +120,16 @@ class ASTVisitor : public SysYBaseVisitor {
 	
 	com::UnaryVariant<
 		std::unique_ptr<ircode::StaticValue>,
-		std::string
+		std::string,
+		BType,
+		std::vector<ircode::AddrPara>,
+		ircode::AddrPara
 	> retVal;
-	
-	
+  
+  
   public:
 	ircode::IRInstrPool instrPool;
+	
 	ASTVisitor();
 	
 	/*  Visit children.
