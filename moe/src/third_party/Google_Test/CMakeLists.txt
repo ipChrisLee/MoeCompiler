@@ -27,5 +27,5 @@ file(GLOB_RECURSE cppFiles "${srcRoot}/frontend/*.cpp")
 # 'GTest_run' is the target name
 add_executable(GTest_run ${testFiles} ${cppFiles})
 target_link_libraries(GTest_run mlib)
-target_link_libraries(GTest_run antlr4Lib)
 target_link_libraries(GTest_run gtest gtest_main)
+target_link_libraries(GTest_run /usr/local/lib/libantlr4-runtime.a)

@@ -2,3 +2,4 @@
 # This will not cause compilation failure on OJ.
 # On OJ, no source file includes header of `Google_Test`.
 Google_Test/lib
+antlr4-runtime/

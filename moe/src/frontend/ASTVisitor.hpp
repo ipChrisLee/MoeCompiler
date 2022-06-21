@@ -8,7 +8,7 @@
 
 #include <cprt.hpp>
 #include <common.hpp>
-#include <third_party/antlr4/antlr4-runtime.h>
+#include <antlr4-runtime.h>
 
 #include "frontend/IRAddr.hpp"
 #include "frontend/IRInstr.hpp"
@@ -136,101 +136,101 @@ class ASTVisitor : public SysYBaseVisitor {
 	 *  return:
 	 *      `nullptr`
 	 * */
-	std::any visitChildren(antlr4::tree::ParseTree * node) override;
+	antlrcpp::Any visitChildren(antlr4::tree::ParseTree * node) override;
 	
 	/*  Just visit children.
 	 *  return:
 	 *      `nullptr`
 	 * */
-	std::any visitCompUnit(SysYParser::CompUnitContext * ctx) override;
+	antlrcpp::Any visitCompUnit(SysYParser::CompUnitContext * ctx) override;
 	
 	/*  Just visit children
 	 *  return:
 	 *      `nullptr`
 	 * */
-	std::any visitDecl(SysYParser::DeclContext * ctx) override;
+	antlrcpp::Any visitDecl(SysYParser::DeclContext * ctx) override;
 	
-	std::any visitConstDecl(SysYParser::ConstDeclContext * ctx) override;
+	antlrcpp::Any visitConstDecl(SysYParser::ConstDeclContext * ctx) override;
 	
 	/*  Visit BType.
 	 *  Change `info.btype` according to `ctx->getText()`.
 	 * */
-	std::any visitBType(SysYParser::BTypeContext * ctx) override;
+	antlrcpp::Any visitBType(SysYParser::BTypeContext * ctx) override;
 	
-	std::any visitConstDef(SysYParser::ConstDefContext * ctx) override;
+	antlrcpp::Any visitConstDef(SysYParser::ConstDefContext * ctx) override;
 	
-	std::any visitScalarConstInitVal(
+	antlrcpp::Any visitScalarConstInitVal(
 		SysYParser::ScalarConstInitValContext * ctx
 	) override;
 	
-	std::any
+	antlrcpp::Any
 	visitListConstInitVal(SysYParser::ListConstInitValContext * ctx) override;
 	
-	std::any visitVarDecl(SysYParser::VarDeclContext * ctx) override;
+	antlrcpp::Any visitVarDecl(SysYParser::VarDeclContext * ctx) override;
 	
-	std::any visitUninitVarDef(SysYParser::UninitVarDefContext * ctx) override;
+	antlrcpp::Any visitUninitVarDef(SysYParser::UninitVarDefContext * ctx) override;
 	
-	std::any visitInitVarDef(SysYParser::InitVarDefContext * ctx) override;
+	antlrcpp::Any visitInitVarDef(SysYParser::InitVarDefContext * ctx) override;
 	
-	std::any visitScalarInitVal(SysYParser::ScalarInitValContext * ctx) override;
+	antlrcpp::Any visitScalarInitVal(SysYParser::ScalarInitValContext * ctx) override;
 	
-	std::any visitListInitval(SysYParser::ListInitvalContext * ctx) override;
+	antlrcpp::Any visitListInitval(SysYParser::ListInitvalContext * ctx) override;
 	
-	std::any visitFuncDef(SysYParser::FuncDefContext * ctx) override;
+	antlrcpp::Any visitFuncDef(SysYParser::FuncDefContext * ctx) override;
 	
-	std::any visitFuncType(SysYParser::FuncTypeContext * ctx) override;
+	antlrcpp::Any visitFuncType(SysYParser::FuncTypeContext * ctx) override;
 	
-	std::any visitFuncFParams(SysYParser::FuncFParamsContext * ctx) override;
+	antlrcpp::Any visitFuncFParams(SysYParser::FuncFParamsContext * ctx) override;
 	
-	std::any visitFuncFParam(SysYParser::FuncFParamContext * ctx) override;
+	antlrcpp::Any visitFuncFParam(SysYParser::FuncFParamContext * ctx) override;
 	
-	std::any visitBlock(SysYParser::BlockContext * ctx) override;
+	antlrcpp::Any visitBlock(SysYParser::BlockContext * ctx) override;
 	
-	std::any visitBlockItem(SysYParser::BlockItemContext * ctx) override;
+	antlrcpp::Any visitBlockItem(SysYParser::BlockItemContext * ctx) override;
 	
-	std::any visitAssignment(SysYParser::AssignmentContext * ctx) override;
+	antlrcpp::Any visitAssignment(SysYParser::AssignmentContext * ctx) override;
 	
-	std::any visitExpStmt(SysYParser::ExpStmtContext * ctx) override;
+	antlrcpp::Any visitExpStmt(SysYParser::ExpStmtContext * ctx) override;
 	
-	std::any visitBlockStmt(SysYParser::BlockStmtContext * ctx) override;
+	antlrcpp::Any visitBlockStmt(SysYParser::BlockStmtContext * ctx) override;
 	
-	std::any visitIfStmt1(SysYParser::IfStmt1Context * ctx) override;
+	antlrcpp::Any visitIfStmt1(SysYParser::IfStmt1Context * ctx) override;
 	
-	std::any visitIfStmt2(SysYParser::IfStmt2Context * ctx) override;
+	antlrcpp::Any visitIfStmt2(SysYParser::IfStmt2Context * ctx) override;
 	
-	std::any visitWhileStmt(SysYParser::WhileStmtContext * ctx) override;
+	antlrcpp::Any visitWhileStmt(SysYParser::WhileStmtContext * ctx) override;
 	
-	std::any visitBreakStmt(SysYParser::BreakStmtContext * ctx) override;
+	antlrcpp::Any visitBreakStmt(SysYParser::BreakStmtContext * ctx) override;
 	
-	std::any visitContinueStmt(SysYParser::ContinueStmtContext * ctx) override;
+	antlrcpp::Any visitContinueStmt(SysYParser::ContinueStmtContext * ctx) override;
 	
-	std::any visitReturnStmt(SysYParser::ReturnStmtContext * ctx) override;
+	antlrcpp::Any visitReturnStmt(SysYParser::ReturnStmtContext * ctx) override;
 	
-	std::any visitExp(SysYParser::ExpContext * ctx) override;
+	antlrcpp::Any visitExp(SysYParser::ExpContext * ctx) override;
 	
-	std::any visitCond(SysYParser::CondContext * ctx) override;
+	antlrcpp::Any visitCond(SysYParser::CondContext * ctx) override;
 	
-	std::any visitLVal(SysYParser::LValContext * ctx) override;
+	antlrcpp::Any visitLVal(SysYParser::LValContext * ctx) override;
 	
 	/**
 	 * @returns Return instance is stored in @c this.retVal , the type of return instance:
 	 * @returns <tt>std::unique_ptr\<ircode::StaticValue\></tt> .
 	 */
-	std::any visitNumber(SysYParser::NumberContext * ctx) override;
+	antlrcpp::Any visitNumber(SysYParser::NumberContext * ctx) override;
 	
-	std::any visitUnary1(SysYParser::Unary1Context * ctx) override;
+	antlrcpp::Any visitUnary1(SysYParser::Unary1Context * ctx) override;
 	
-	std::any visitUnary2(SysYParser::Unary2Context * ctx) override;
+	antlrcpp::Any visitUnary2(SysYParser::Unary2Context * ctx) override;
 	
-	std::any visitUnary3(SysYParser::Unary3Context * ctx) override;
+	antlrcpp::Any visitUnary3(SysYParser::Unary3Context * ctx) override;
 	
-	std::any visitUnaryOp(SysYParser::UnaryOpContext * ctx) override;
+	antlrcpp::Any visitUnaryOp(SysYParser::UnaryOpContext * ctx) override;
 	
-	std::any visitFuncRParams(SysYParser::FuncRParamsContext * ctx) override;
+	antlrcpp::Any visitFuncRParams(SysYParser::FuncRParamsContext * ctx) override;
 	
-	std::any visitExpAsRParam(SysYParser::ExpAsRParamContext * ctx) override;
+	antlrcpp::Any visitExpAsRParam(SysYParser::ExpAsRParamContext * ctx) override;
 	
-	std::any visitStringAsRParam(SysYParser::StringAsRParamContext * ctx) override;
+	antlrcpp::Any visitStringAsRParam(SysYParser::StringAsRParamContext * ctx) override;
 	
 	/**
 	 * @For
@@ -239,40 +239,40 @@ class ASTVisitor : public SysYBaseVisitor {
 	 * @returns Return instance is stored in @c this.retVal , the type of return instance:
 	 * @returns <tt>std::unique_ptr\<ircode::StaticValue\></tt> if @c info.visitingConst is @c true .
 	 */
-	std::any visitPrimaryExp1(SysYParser::PrimaryExp1Context * ctx) override;
+	antlrcpp::Any visitPrimaryExp1(SysYParser::PrimaryExp1Context * ctx) override;
 	
-	std::any visitPrimaryExp2(SysYParser::PrimaryExp2Context * ctx) override;
+	antlrcpp::Any visitPrimaryExp2(SysYParser::PrimaryExp2Context * ctx) override;
 	
-	std::any visitPrimaryExp3(SysYParser::PrimaryExp3Context * ctx) override;
+	antlrcpp::Any visitPrimaryExp3(SysYParser::PrimaryExp3Context * ctx) override;
 	
-	std::any visitMul2(SysYParser::Mul2Context * ctx) override;
+	antlrcpp::Any visitMul2(SysYParser::Mul2Context * ctx) override;
 	
-	std::any visitMul1(SysYParser::Mul1Context * ctx) override;
+	antlrcpp::Any visitMul1(SysYParser::Mul1Context * ctx) override;
 	
-	std::any visitAdd2(SysYParser::Add2Context * ctx) override;
+	antlrcpp::Any visitAdd2(SysYParser::Add2Context * ctx) override;
 	
-	std::any visitAdd1(SysYParser::Add1Context * ctx) override;
+	antlrcpp::Any visitAdd1(SysYParser::Add1Context * ctx) override;
 	
 	/*
 	 * */
-	std::any visitRel2(SysYParser::Rel2Context * ctx) override;
+	antlrcpp::Any visitRel2(SysYParser::Rel2Context * ctx) override;
 	
-	std::any visitRel1(SysYParser::Rel1Context * ctx) override;
+	antlrcpp::Any visitRel1(SysYParser::Rel1Context * ctx) override;
 	
-	std::any visitEq1(SysYParser::Eq1Context * ctx) override;
+	antlrcpp::Any visitEq1(SysYParser::Eq1Context * ctx) override;
 	
-	std::any visitEq2(SysYParser::Eq2Context * ctx) override;
+	antlrcpp::Any visitEq2(SysYParser::Eq2Context * ctx) override;
 	
-	std::any visitLAnd2(SysYParser::LAnd2Context * ctx) override;
+	antlrcpp::Any visitLAnd2(SysYParser::LAnd2Context * ctx) override;
 	
-	std::any visitLAnd1(SysYParser::LAnd1Context * ctx) override;
+	antlrcpp::Any visitLAnd1(SysYParser::LAnd1Context * ctx) override;
 	
-	std::any visitLOr1(SysYParser::LOr1Context * ctx) override;
+	antlrcpp::Any visitLOr1(SysYParser::LOr1Context * ctx) override;
 	
-	std::any visitLOr2(SysYParser::LOr2Context * ctx) override;
+	antlrcpp::Any visitLOr2(SysYParser::LOr2Context * ctx) override;
 	
 	//  Just visit AddExp.
-	std::any visitConstExp(SysYParser::ConstExpContext * ctx) override;
+	antlrcpp::Any visitConstExp(SysYParser::ConstExpContext * ctx) override;
 };
 
 }
