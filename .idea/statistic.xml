@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Statistic">
+    <option name="excludedDirectories">
+      <list>
+        <option value="$PROJECT_DIR$/notebooks" />
+        <option value="$PROJECT_DIR$/cmake-build-release" />
+        <option value="$PROJECT_DIR$/referenceImplementation" />
+        <option value="$PROJECT_DIR$/cmake-build-debug" />
+        <option value="$PROJECT_DIR$/support" />
+        <option value="$PROJECT_DIR$/src/frontend/SysAntlr" />
+        <option value="$PROJECT_DIR$/testcases" />
+        <option value="$PROJECT_DIR$/testDir" />
+        <option value="$PROJECT_DIR$/src/third_party" />
+      </list>
+    </option>
+  </component>
+</project>

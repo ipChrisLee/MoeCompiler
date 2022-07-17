@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # directory for test
 testDir/
 
@@ -6,3 +7,15 @@ testDir/
 
 # ignore java files
 *.java
+=======
+# build files
+build/
+cmake-build-debug/
+cmake-build-release/
+
+# test files
+testDir/**
+
+# log files
+*.log
+>>>>>>> d09887b (FRONTEND FINISHED!)

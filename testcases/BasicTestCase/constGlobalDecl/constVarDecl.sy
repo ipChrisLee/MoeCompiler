@@ -1,0 +1,5 @@
+const int len=2;
+const int len2=len*len;
+const float pi=3.14;
+const float pi2=+(-(pi*2+len2-(pi+pi*len)));
+const float pim2=-pi*2+pi;

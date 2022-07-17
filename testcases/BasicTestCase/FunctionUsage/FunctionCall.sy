@@ -1,0 +1,14 @@
+int fun(int ar[]){
+    return ar[0]+ar[1]+ar[2];
+}
+int fun2(int ar[][3]){
+    return ar[0][0]+ar[1][1]+ar[2][2];
+}
+int main(){
+    int ar[3]={1,2,3};
+    int v=fun(ar),u;
+    int arr[2][3][3]={{{1,2,3},{4,5,6},{7,8,9}},1,2,3,4,5,6,7,8,9};
+    u=fun2(arr[1]);
+    fun2(arr[0]);
+    return 0;
+}

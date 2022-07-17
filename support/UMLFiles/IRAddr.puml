@@ -1,0 +1,190 @@
+@startuml
+namespace ircode #DDDDDD {
+
+interface LLVMable{
+    +{abstract}std::string toLLVMIR() const
+}
+
+abstract class IRAddr <<LLVMable>> <<moeconcept::Cloneable>>{
+	-- Constructor --
+    +IRAddr()
+	+IRAddr(const IRAddr &)
+	-- id and cnt --
+    +id : const int
+    #{static}cnt : int
+	.. deleted ..
+	+<s>IRAddr & operator=(const IRAddr &)
+}
+
+class AddrVariable{
+	-- Constructor --
+	+AddrVariable(const TypeInfo &, std::string name = "")
+	+AddrVariable(const TypeInfo &, std::string name, const StaticValue &)
+	+AddrVariable(const AddrVariable &)
+	-- public const data --
+	+name : const std::string
+	+isConst : const bool
+	+uPtrStaticValue : const std::unique_ptr<const StaticValue>
+	+uPtrTypeInfo : const std::unique_ptr<const TypeInfo>
+}
+class AddrGlobalVariable {
+	-- Constructor --
+	+AddrGlobalVariable(const TypeInfo &, std::string, const StaticValue &, bool isConst = true )
+	+AddrGlobalVariable(const TypeInfo & typeInfo, std::string name)
+	+AddrGlobalVariable(const AddrGlobalVariable &)
+	-- public const data --
+	+name : const std::string
+	+isConst : const bool
+	+uPtrStaticValue : const std::unique_ptr<const StaticValue>
+	+uPtrTypeInfo : const std::unique_ptr<const TypeInfo>
+	-- inherited --
+	+{abstract}std::string toLLVMIR() const
+	+{abstract}_cloneToUniquePtr() const : std::unique_ptr<Cloneable>
+	----
+	+std::string toDeclIR() const;
+}
+
+class AddrStaticValue {
+	-- Constructor --
+	+AddrStaticValue(const TypeInfo &, const StaticValue &)
+	+AddrStaticValue(const AddrStaticValue &)
+	-- public const data --
+	+uPtrTypeInfo : const std::unique_ptr<const TypeInfo>
+	+uPtrStaticValue : const std::unique_ptr<const StaticValue>
+	-- inherited --
+	+{abstract}std::string toLLVMIR() const
+	+{abstract}_cloneToUniquePtr() const : std::unique_ptr<Cloneable>
+}
+class AddrJumpLabel {
+	-- Constructor --
+	+AddrJumpLabel(std::string labelName = "")
+	+AddrJumpLabel(const AddrJumpLabel &)
+	-- public const data --
+	+labelName : const std::string
+	-- inherited --
+	+{abstract}std::string toLLVMIR() const
+	+{abstract}_cloneToUniquePtr() const : std::unique_ptr<Cloneable>
+}
+
+class AddrPara {
+	-- Constructor --
+	+AddrPara(std::string name, const TypeInfo &, int number)
+	+AddrPara(const AddrPara &)
+	-- public const data --
+	+number : const int
+	+name : const std::string
+	+uPtrTypeInfo : const std::unique_ptr<const TypeInfo>
+	-- inherited --
+	+{abstract}std::string toLLVMIR() const
+	+{abstract}_cloneToUniquePtr() const : std::unique_ptr<Cloneable>
+}
+
+class AddrFunction {
+	-- Constructor --
+	+AddrFunction(std::string name)
+	+AddrFunction(std::string name, std::vector<AddrPara *> vecPara);
+	+AddrFunction(std::string name, std::vector<AddrPara *>vecPara, const TypeInfo & retType);
+	+AddrFunction(std::string name, const TypeInfo & retType);
+	+AddrFunction(const AddrFunction &)
+	-- data --
+	#uPtrReturnTypeInfo : std::unique_ptr<const TypeInfo>
+	#vecPtrAddrPara : std::vector<AddrPara *>
+	+name : const std::string
+	-- setter and getter --
+	+TypeInfo * setReturnTypeInfo(const TypeInfo &)
+	+const TypeInfo * getReturnTypeInfo() const
+	+void pushParameter(AddrPara *)
+	+AddrPara * getNumberThParameterTypeInfo(int) const
+	-- inherited --
+	+{abstract}std::string toLLVMIR() const
+	+{abstract}_cloneToUniquePtr() const : std::unique_ptr<Cloneable>
+}
+
+IRAddr <|-- AddrVariable
+IRAddr <|-- AddrGlobalVariable
+IRAddr <|-- AddrStaticValue
+IRAddr <|-- AddrJumpLabel
+IRAddr <|-- AddrPara
+IRAddr <|-- AddrFunction
+
+class IRAddrPool{
+    This is an instance pool for IRAddr.
+    ====
+    #pool : std::vector<std::unique_ptr<IRAddr>>
+	+IRAddr * addAddr(const IRAddr & addr)
+    .. deleted ..
+	+<s>IRAddrPool(const IRAddrPool &)
+}
+
+class IRInstrPool{
+    This is an instance pool for IRInstr.
+    ====
+    #pool : std::vector<std::unique_ptr<IRInstr>>
+	+IRInstr * addInstrToPool(const IRInstr &)
+    .. deleted ..
+	+<s>IRAddrPool(const IRAddrPool &)
+}
+
+class IRGlobalDeclField <<LLVMable>> {
+	-- Protected Data --
+	#std::vector<AddrGlobalVariable *> gAddrs
+	-- Constructor --
+	+IRGlobalDeclField()
+	-- Adder --
+	+void addAddr(AddrGlobalVariable * pAddr)
+	-- inherited --
+	+std::string toLLVMIR() const override
+}
+class IRFuncBlock <<LLVMable>>{
+	-- Protected Data --
+	#thisIsBasicBlock : bool
+	#instrs : std::list<IRInstr *>
+	-- Constructor --
+	+IRFuncBlock()
+	-- Methods --
+	+std::list<IRFuncBlock> toBasicBlocks() const
+	+bool isBasicBlock() const
+	-- inherited --
+	+std::string toLLVMIR() const override
+}
+
+class IRFunctionDef <<LLVMable>>{
+	-- protected data --
+	#pAddrFun : AddrFunction *
+	#allBasicBlocks : bool
+	#blocks : std::list<IRFuncBlock>
+	-- Public Data --
+	+params : std::vector<AddrPara *>
+	-- Constructor --
+	+IRFunctionDef(AddrFunction * pAddrFun)
+	-- Adder --
+	+void expandToBasicBlocks()
+	+void addIRFuncBlock(const IRFuncBlock &);
+	-- inherited --
+	+std::string toLLVMIR() const override
+}
+
+class IRModule <<LLVMable>> {
+	-- Protected Data --
+	#IRGlobalDeclField globalVarDeclField
+	#std::vector<IRFunctionDef> functionField
+	-- Public Pools --
+	+IRInstrPool instrPool
+	+IRAddrPool addrPool
+	-- Constructor --
+	+IRModule()
+	-- Adder --
+	+void addIRGlobalVarDecl(AddrGlobalVariable * pAddr)
+	+void addIRFunctionDef(const IRFunctionDef &)
+	-- inherited --
+	+std::string toLLVMIR() const override
+}
+
+IRModule *-- IRAddrPool
+IRModule *-- IRInstrPool
+IRModule *-left- IRGlobalDeclField
+IRModule *-right- IRFunctionDef
+IRFunctionDef *-right- IRFuncBlock
+}
+
+@enduml

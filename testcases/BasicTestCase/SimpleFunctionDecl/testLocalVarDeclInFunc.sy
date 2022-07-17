@@ -1,0 +1,48 @@
+int ret0i(){
+	return 0;
+}
+
+int funi(int a,int b){
+	return a+b;
+}
+
+int testi(){
+	int a=-10;
+	int b=1*4+a;
+	int c=ret0i();
+	int d=funi(a,b);
+	int e=funi(ret0i(),d+c*a);
+	int g=funi(funi(funi(a,c),a),a);
+	int f=funi(a,c)%d;
+	int h=ret0i()%funi(f,g);
+	return 0;
+}
+
+float ret0f(){
+	return 0;
+}
+
+float funf(float a,float b){
+	return a+b;
+}
+
+float testf(){
+	float a=-10;
+	float b=1*4+a;
+	float c=ret0f();
+	float d=funf(a,b);
+	float e=funf(ret0f(),d+c*a);
+	float g=funf(funf(funf(a,c),a),a);
+	return 0;
+}
+
+int main(){
+	int a=10;
+	float b=0.5;
+	int c=a*b;
+	int d=a+b;
+	float e=a-b;
+	float f=a/b;
+	return 0;
+}
+

@@ -1,0 +1,65 @@
+@startuml
+class IRAddr{
+    +id : const int
+    #{static}cnt : int
+    +{abstract}toLLVMIR() const -> string
+    +{abstract}getType() const -> const TypeInfo &
+}
+class AddrOperand{
+    #uPtrTypeInfo : unique_ptr<TypeInfo>
+    +{abstract}getType() const -> const TypeInfo &
+}
+class AddrStaticValue{
+    #uPtrStaticValue : unique_ptr<StaticValue>
+    +{abstract}toLLVMIR() const -> string
+}
+class AddrVariable{
+    #name : string
+    +{abstract}getName() const -> const string &
+    +{abstract}isConstVar() const -> bool
+    +{abstract}toLLVMIR() const -> string
+}
+class AddrPara{
+    +{abstract}toLLVMIR() const -> string
+    +{abstract}isConstVar() const -> bool
+}
+class AddrGlobalVariable{
+    #uPtrStaticValue : unique_ptr<StaticValue>
+    #isConst : bool
+    +toDeclIR() const -> string
+    +{abstract}toLLVMIR() const -> string
+    +{abstract}isConstAddr() const -> bool
+}
+class AddrLocalVariable{
+    #uPtrStaticValue : unique_ptr<StaticValue>
+    +{abstract}toLLVMIR() const -> string
+    +{abstract}isConstVar() const -> bool
+}
+class AddrJumpLabel{
+    #labelName : string
+    +toLLVMLabelName() const -> string
+    +{abstract}toLLVMIR const -> string
+}
+class AddrFunction{
+    #uPtrReturnTypeInfo : unique_ptr<TypeInfo>
+    #vecPtrAddrPara : vector<AddrPara *>
+    #name : string
+    +getName() const -> const string &
+    +getReturnTypeInfo() const -> const TypeInfo &
+    +getNumberThParameterTypeInfo(int) const -> const TypeInfo &
+    +getNumberOfParameter() const -> int
+    +pushParameter(AddrPara *) -> void
+    +declLLVMIR() const -> string
+    +{abstract}toLLVMIR() const -> string
+}
+
+AddrOperand -Up-> IRAddr
+AddrJumpLabel -Up-> IRAddr
+AddrFunction -Up-> IRAddr
+AddrVariable -Up-> AddrOperand
+AddrStaticValue -Up-> AddrOperand
+AddrPara -Up-> AddrVariable
+AddrGlobalVariable -Up-> AddrVariable
+AddrLocalVariable -Up-> AddrVariable
+
+@enduml

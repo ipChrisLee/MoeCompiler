@@ -1,0 +1,84 @@
+@startuml
+class IRInstr{
+    #{static}cnt : int
+    +id : const int
+    +{abstract}toLLVMIR() const -> string
+}
+
+class InstrAlloca{
+    #AddrVariable * allocaTo
+    #uPtrTypeToAlloca : unique_ptr<TypeInfo>
+    +{abstract}toLLVMIR() const -> string
+}
+InstrAlloca -Up-> IRInstr
+
+class InstrStore{
+    #from : AddrOperand *
+    #to : AddrVariable *
+    +{abstract}toLLVMIR() const -> string
+}
+InstrStore -Up-> IRInstr
+
+class InstrLabel{
+    #pAddrLabel : AddrJumpLabel *
+    +{abstract}toLLVMIR() const -> string
+}
+InstrLabel -Up-> IRInstr
+
+class InstrBr{
+    #pCond : AddrOperand *
+    #pLabelTrue, pLabelFalse : AddrJumpLabel *
+    +{abstract}toLLVMIR() const -> string
+}
+InstrBr -Up-> IRInstr
+
+class InstrRet{
+    #retAddr : AddrOperand *
+    +{abstract}toLLVMIR() const -> string
+}
+InstrRet -Up-> IRInstr
+
+class InstrBinaryOp{
+    #left, right, res : AddrOperand *
+    +{abstract}toLLVMIR() const -> string
+}
+InstrBinaryOp -Up-> IRInstr
+
+class InstrConversionOp{
+    #from, to : AddrVariable *
+    +{abstract}toLLVMIR() const -> string
+}
+InstrConversionOp -Up-> IRInstr
+
+"\
+InstrSitofp\n\
+InstrFptosi\n\
+" -Up-> InstrConversionOp
+
+"\
+InstrAdd\n\
+InstrFAdd\n\
+InstrSub\n\
+InstrFSub\n\
+InstrMul\n\
+InstrFMul\n\
+InstrDiv\n\
+InstrFDiv\n\
+InstrSrem\n\
+" -Up-> InstrBinaryOp
+
+class InstrCall {
+    #func : AddrFunction *
+    #paramsPassing : vector<AddrVariable *>
+    #retAddr : AddrVariable *
+    +{abstract}toLLVMIR() const -> string
+}
+InstrCall -Up-> IRInstr
+
+class InstrGetelementptr{
+    #to, from : AddrVariable
+    #idxs : vector<AddrOperand *>
+    +{abstract}toLLVMIR() const -> string
+}
+InstrGetelementptr -Up-> IRInstr
+@enduml

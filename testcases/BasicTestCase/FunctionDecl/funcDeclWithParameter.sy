@@ -1,0 +1,9 @@
+int gun(int ar[][3]){
+    return ar[0][1]*ar[0][2];
+}
+int fun(int y,int cnt,int arr[]){
+    return -y+cnt+arr[1];
+}
+int main(){
+    return 0;
+}

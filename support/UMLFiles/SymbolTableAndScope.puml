@@ -1,0 +1,43 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+set namespaceSeparator ::
+namespace frontend #DDDDDD {
+
+enum IdType {
+	GlobalVarName
+	FunctionName
+	ParameterName
+	LocalVarName
+	ReservedWord
+	BuildInFunction
+	Error
+}
+
+class Scope{
+	-- data --
+    #addrMap : std::map<std::string,std::tuple<IdType,Addr *>>
+	#father : Scope * const
+	#sons : std::vector<std::unique_ptr<Scope>>
+	#{static}cnt : int
+	+id : const int
+	-- For navigation in scopes --
+    +Scope * addSonScope()
+    +Scope * getFather()
+	-- map of varname and addr --
+	+void bindDominateVar(const std::string & str, IdType idType, IRAddr * addrVar)
+	+std::tuple<IdType, IRAddr *> findIdDownToRoot(const std::string & varname) const
+}
+
+class SymbolTable{
+    #root : std::unique_ptr<Scope>
+    +pScopeNow : Scope *
+}
+
+SymbolTable *-- Scope
+Scope *-- Scope
+IdType ..> Scope : "Only used in"
+
+}
+
+@enduml

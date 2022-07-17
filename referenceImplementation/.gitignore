@@ -1,0 +1,6 @@
+# ignore reference projects
+**
+!README
+!load.sh
+!.gitignore
+
