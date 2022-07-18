@@ -10,6 +10,7 @@
 #include "frontend/SysAntlr/SysYParser.h"
 #include "frontend/SysAntlr/SysYLexer.h"
 #include "frontend/ASTVisitor.hpp"
+#include "pass/pass-common.hpp"
 
 
 int Main(int argc, char ** argv) {
@@ -26,7 +27,9 @@ int Main(int argc, char ** argv) {
 	ircode::IRModule ir;
 	frontend::ASTVisitor visitor(ir);
 	root->accept(&visitor);
-	ir.allFuncToBasicBlockFunc();
+	if (SysY::options.optimizationLevel.get()) {
+		pass::passMain(ir);
+	}
 	SysY::dest << ir.toLLVMIR() << std::endl;
 	return 0;
 }

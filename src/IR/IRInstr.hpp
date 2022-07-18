@@ -63,9 +63,10 @@ class InstrAlloca : public IRInstr {
 
 	std::unique_ptr<Cutable> _cutToUniquePtr() override;
 
+  public:
 	AddrVariable * allocaTo;
 	std::unique_ptr<sup::TypeInfo> uPtrTypeToAlloca;
-  public:
+
 	InstrAlloca(AddrVariable * allocaTo, const sup::TypeInfo & typeToAlloca);
 
 	/**
@@ -87,9 +88,9 @@ class InstrStore : public IRInstr {
 
 	std::unique_ptr<Cutable> _cutToUniquePtr() override;
 
+  public:
 	AddrOperand * from;
 	AddrVariable * to;
-  public:
 
 	InstrStore(AddrOperand * from, AddrVariable * to);
 
@@ -106,8 +107,8 @@ class InstrLoad : public IRInstr {
 
 	std::unique_ptr<Cutable> _cutToUniquePtr() override;
 
-	AddrVariable * from, * to;
   public:
+	AddrVariable * from, * to;
 
 	InstrLoad(AddrVariable * from, AddrVariable * to);
 
@@ -124,8 +125,8 @@ class InstrLabel : public IRInstr {
 
 	std::unique_ptr<Cutable> _cutToUniquePtr() override;
 
-	AddrJumpLabel * pAddrLabel;
   public:
+	AddrJumpLabel * pAddrLabel;
 
 	explicit InstrLabel(AddrJumpLabel * pAddrLabel);
 
@@ -140,9 +141,10 @@ class InstrBr : public IRInstr {
   protected:
 	std::unique_ptr<Cutable> _cutToUniquePtr() override CUTABLE_DEFAULT_IMPLEMENT;
 
+  public:
 	AddrOperand * pCond;
 	AddrJumpLabel * pLabelTrue, * pLabelFalse;
-  public:
+
 	//  unconditional jump
 	explicit InstrBr(AddrJumpLabel * pLabel);
 
@@ -163,8 +165,9 @@ class InstrRet : public IRInstr {
 
 	std::unique_ptr<Cutable> _cutToUniquePtr() override;
 
-	AddrOperand * retAddr;
   public:
+	AddrOperand * retAddr;
+
 	explicit InstrRet(AddrOperand * pAddr);
 
 	InstrRet(const InstrRet &) = default;
@@ -398,10 +401,11 @@ class InstrCall : public IRInstr {
 
 	std::unique_ptr<Cutable> _cutToUniquePtr() override CUTABLE_DEFAULT_IMPLEMENT;
 
+  public:
 	AddrFunction * func;
 	std::vector<AddrOperand *> paramsPassing;
 	AddrVariable * retAddr;
-  public:
+
 	InstrCall(
 		AddrFunction * func, std::vector<AddrOperand *> paramsToPass,
 		AddrVariable * retAddr
@@ -417,10 +421,11 @@ class InstrGetelementptr : public IRInstr {
   protected:
 	std::unique_ptr<Cutable> _cutToUniquePtr() override CUTABLE_DEFAULT_IMPLEMENT;
 
+  public:
 	AddrVariable * to;
 	AddrVariable * from;
 	std::vector<AddrOperand *> idxs;
-  public:
+
 	InstrGetelementptr(
 		AddrVariable * to, AddrVariable * from, std::vector<AddrOperand *> idxs
 	);
@@ -434,15 +439,15 @@ class InstrCompare : public IRInstr {
   protected:
 	std::unique_ptr<Cutable> _cutToUniquePtr() override CUTABLE_DEFAULT_IMPLEMENT;
 
-	AddrVariable * dest;
-	AddrOperand * leftOp, * rightOp;
-
 	InstrCompare(
 		AddrVariable * dest, AddrOperand * leftOp, AddrOperand * rightOp,
 		InstrType instrType
 	);
 
   public:
+	AddrVariable * dest;
+	AddrOperand * leftOp, * rightOp;
+
 
 	InstrCompare(InstrCompare &&) = default;
 

@@ -18,6 +18,10 @@ std::string IRAddrPool::toLLVMIR() const {
 	return res + "\n";
 }
 
+const std::vector<AddrGlobalVariable *> & IRAddrPool::getGlobalVars() const {
+	return globalVars;
+}
+
 std::string IRModule::toLLVMIR() const {
 	std::string res = addrPool.toLLVMIR();
 	for (auto & funcDecl: funcPool) {
@@ -50,8 +54,7 @@ std::string IRFuncBlock::toLLVMIR() const {
 
 
 IRFuncDef::IRFuncDef(AddrFunction * pAddrFun)
-	: pAddrFun(pAddrFun),
-	  blocks(), instrs() {
+	: pAddrFun(pAddrFun) {
 }
 
 std::string IRFuncDef::toLLVMIR() const {
@@ -69,7 +72,7 @@ std::string IRFuncDef::toLLVMIR() const {
 				res += pInstr->toLLVMIR() + "\n";
 			}
 		} else {
-			for (const auto & block: blocks) { res += block.toLLVMIR() + "\n"; }
+			for (const auto * block: blocks) { res += block->toLLVMIR() + "\n"; }
 		}
 	}
 	res += "}\n";
@@ -116,9 +119,14 @@ void IRFuncDef::emplace_back(std::list<IRInstr *> && appendList) {
 	instrs.splice(instrs.end(), std::move(appendList));
 }
 
-IRFuncDef * IRFuncDeclPool::emplace_back(IRFuncDef && funcDef) {
+IRFuncBlock * IRFuncDef::emplace_back(IRFuncBlock && irFuncBlock) {
+	pool.emplace_back(std::make_unique<IRFuncBlock>(std::move(irFuncBlock)));
+	return pool.rbegin()->get();
+}
+
+IRFuncDef * IRFuncDefPool::emplace_back(IRFuncDef && funcDef) {
 	pool.emplace_back(std::make_unique<IRFuncDef>(std::move(funcDef)));
-	vec.emplace_back(pool.rbegin()->get());
+	funcDefs.emplace_back(pool.rbegin()->get());
 	return pool.rbegin()->get();
 }
 

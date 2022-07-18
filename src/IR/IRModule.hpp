@@ -18,6 +18,7 @@ class IRAddrPool : public sup::LLVMable {
 	std::vector<std::unique_ptr<IRAddr>> pool;
 	std::vector<AddrGlobalVariable *> globalVars;
   public:
+
 	IRAddrPool();
 
 	IRAddrPool(const IRAddrPool &) = delete;
@@ -41,6 +42,8 @@ class IRAddrPool : public sup::LLVMable {
 	}
 
 	std::string toLLVMIR() const override;
+
+	const std::vector<AddrGlobalVariable *> & getGlobalVars() const;
 };
 
 class IRInstrPool {
@@ -83,20 +86,21 @@ class IRInstrPool {
 
 class IRFuncDef;
 
-class IRFuncDeclPool {
+class IRFuncDefPool {
   protected:
 	std::vector<std::unique_ptr<IRFuncDef>> pool;
-	std::vector<IRFuncDef *> vec;
   public:
+	std::vector<IRFuncDef *> funcDefs;
+
 	IRFuncDef * emplace_back(IRFuncDef &&);
 
-	auto begin() { return vec.begin(); }
+	auto begin() { return funcDefs.begin(); }
 
-	auto begin() const { return vec.begin(); }
+	auto begin() const { return funcDefs.begin(); }
 
-	auto end() { return vec.end(); }
+	auto end() { return funcDefs.end(); }
 
-	auto end() const { return vec.end(); }
+	auto end() const { return funcDefs.end(); }
 };
 
 /**
@@ -104,11 +108,12 @@ class IRFuncDeclPool {
  * @note If @c instrs form a basic block, @c thisIsBasicBlock will be @c true .
  */
 class IRFuncBlock : public sup::LLVMable {
-  protected:
+  public:
 	std::list<IRInstr *> instrs;
 
-  public:
 	IRFuncBlock();
+
+	IRFuncBlock(IRFuncBlock &&) = default;
 
 	std::string toLLVMIR() const override;
 };
@@ -118,21 +123,25 @@ class IRFuncBlock : public sup::LLVMable {
  */
 class IRFuncDef : public sup::LLVMable {
   protected:
-	bool loadFinished = false;
-	AddrFunction * pAddrFun;
-	std::list<IRFuncBlock> blocks;
-
 	void rearrangeAlloca();
 
 	void toBasicBlocks();
 
 	AddrJumpLabel * addEntryLabelInstr(IRModule & ir);
 
-	std::list<IRInstr *> instrs;
+	std::vector<std::unique_ptr<IRFuncBlock>> pool;
+
+	bool loadFinished = false;
   public:
+	AddrFunction * pAddrFun;
+	std::list<IRInstr *> instrs;
+	std::list<IRFuncBlock *> blocks;
+
 	IRInstr * emplace_back(IRInstr *);
 
 	void emplace_back(std::list<IRInstr *> &&);
+
+	IRFuncBlock * emplace_back(IRFuncBlock &&);
 
 	explicit IRFuncDef(AddrFunction * pAddrFun);
 
@@ -149,7 +158,7 @@ class IRModule : public sup::LLVMable {
   public:
 	IRInstrPool instrPool;
 	IRAddrPool addrPool;
-	IRFuncDeclPool funcPool;
+	IRFuncDefPool funcPool;
 
 	IRModule() = default;
 
