@@ -1,13 +1,6 @@
-<<<<<<< HEAD
-# directory for test
-testDir/
-
-# backup folder
-.bku/
-
 # ignore java files
 *.java
-=======
+
 # build files
 build/
 cmake-build-debug/
@@ -18,4 +11,3 @@ testDir/**
 
 # log files
 *.log
->>>>>>> d09887b (FRONTEND FINISHED!)
