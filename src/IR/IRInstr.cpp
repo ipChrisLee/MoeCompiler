@@ -17,12 +17,6 @@ IRInstr::IRInstr(const IRInstr & irInstr) :
 	);
 }
 
-// std::unique_ptr<moeconcept::Cloneable> InstrAlloca::_cloneToUniquePtr() const {
-// 	return com::dynamic_cast_uPtr<moeconcept::Cloneable>(
-// 		std::make_unique<InstrAlloca>(*this)
-// 	);
-// }
-
 std::string InstrAlloca::toLLVMIR() const {
 	std::string res = "\t";
 	res += allocaTo->toLLVMIR() +

@@ -1,8 +1,2 @@
 # ignore directory of download files
-*
-!README
-!load.sh
-!projNotebooks
-!projNotebooks/**
-!docsFromCSC
-!.gitignore
+docsFromCSC/**

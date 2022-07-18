@@ -182,15 +182,6 @@ std::list<ircode::IRInstr *> genUnaryOperationInstrs(
 );
 
 /**
- * @brief Instructions generator for `!x` and `x`
- * @param op empty for `x` and "!" for `!x`
- */
-std::list<ircode::IRInstr *> genCondInstrs(
-	ircode::IRModule & ir, const std::string & op, ircode::AddrOperand * opR,
-	ircode::AddrVariable * opD
-);
-
-/**
  * @brief Instructions generator for runtime type conversion.
  * @return new left operand
  * @return new right operand

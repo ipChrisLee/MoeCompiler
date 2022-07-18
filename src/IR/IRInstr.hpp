@@ -44,7 +44,7 @@ class IRInstr
 	const int id;
 	InstrType instrType;
 
-	IRInstr(InstrType instrType) : id(++cnt), instrType(instrType) {};
+	explicit IRInstr(InstrType instrType) : id(++cnt), instrType(instrType) {};
 
 	IRInstr(const IRInstr &);
 
