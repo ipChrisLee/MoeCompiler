@@ -17,7 +17,7 @@ class RunningInfo:
 		self.stdout = stdout
 		self.stderr = stderr
 		self.timeCost = timeCost
-
+	
 	def failed(self) -> bool:
 		return self.exitCode != 0
 
@@ -64,6 +64,7 @@ def use_moe_compile_sy(
 		msFilePath: str,
 		emit_llvm: bool,
 		float_dec_format: bool,
+		without_any_pass: bool = False,
 		optiLevel: int = 0,
 		terminalVerbose: bool = CommandLineSettings.verbose
 ) -> RunningInfo:
@@ -75,6 +76,7 @@ def use_moe_compile_sy(
 		'-o', msFilePath,
 		'--emit-llvm' if emit_llvm else '',
 		'--float-dec-format' if float_dec_format else '',
+		'--without-any-pass' if without_any_pass else '',
 		verbose=terminalVerbose,
 	)
 

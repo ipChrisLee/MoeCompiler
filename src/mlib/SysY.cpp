@@ -30,6 +30,7 @@ void parseArgs(int argc, char ** argv) {
 			{"emit-llvm",            no_argument, nullptr, 0},
 			{"float-dec-format",     no_argument, nullptr, 0},
 			{"show-runtime-warning", no_argument, nullptr, 0},
+			{"without-any-pass",     no_argument, nullptr, 0},
 			{nullptr, 0,                          nullptr, 0}
 		};
 		c = getopt_long(argc, argv, "-o:SO:", longOptions, &optionIndex);
@@ -59,6 +60,10 @@ void parseArgs(int argc, char ** argv) {
 						{
 							"show-runtime-warning", []() {
 							options.showRuntimeWarnings.set(true);
+						}},
+						{
+							"without-any-pass",     []() {
+							options.withoutAnyPass.set(true);
 						}}
 					}
 				);
@@ -102,5 +107,4 @@ void parseArgs(int argc, char ** argv) {
 const char * llvmHeader =
 	"target datalayout = \"e-m:e-p:32:32-Fi8-i64:64-v128:64:128-a:0:32-n32-S64\"\n"\
     "target triple = \"thumbv7m-unknown-unknown-unknown\"\n";
-
 }

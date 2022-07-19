@@ -5,7 +5,7 @@
 	.type	F.fun,@function
 F.fun:                                  # @F.fun
 	.cfi_startproc
-# %bb.0:                                # %L144.Entry
+# %bb.0:                                # %L166.Entry
 	movq	%rdi, -8(%rsp)
 	movl	(%rdi), %eax
 	addl	4(%rdi), %eax
@@ -21,7 +21,7 @@ F.fun:                                  # @F.fun
 	.type	F.fun2,@function
 F.fun2:                                 # @F.fun2
 	.cfi_startproc
-# %bb.0:                                # %L145.Entry
+# %bb.0:                                # %L167.Entry
 	movq	%rdi, -8(%rsp)
 	movl	(%rdi), %eax
 	addl	16(%rdi), %eax
@@ -37,7 +37,7 @@ F.fun2:                                 # @F.fun2
 	.type	F.main,@function
 F.main:                                 # @F.main
 	.cfi_startproc
-# %bb.0:                                # %L146.Entry
+# %bb.0:                                # %L168.Entry
 	pushq	%rbx
 	.cfi_def_cfa_offset 16
 	subq	$96, %rsp

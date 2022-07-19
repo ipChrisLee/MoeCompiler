@@ -5,7 +5,7 @@
 	.type	F.ret0i,@function
 F.ret0i:                                # @F.ret0i
 	.cfi_startproc
-# %bb.0:                                # %L154.Entry
+# %bb.0:                                # %L163.Entry
 	movl	$0, -4(%rsp)
 	movl	-4(%rsp), %eax
 	retq
@@ -18,7 +18,7 @@ F.ret0i:                                # @F.ret0i
 	.type	F.funi,@function
 F.funi:                                 # @F.funi
 	.cfi_startproc
-# %bb.0:                                # %L155.Entry
+# %bb.0:                                # %L164.Entry
 	movl	%edi, -4(%rsp)
 	movl	%esi, -8(%rsp)
 	addl	%esi, %edi
@@ -34,7 +34,7 @@ F.funi:                                 # @F.funi
 	.type	F.testi,@function
 F.testi:                                # @F.testi
 	.cfi_startproc
-# %bb.0:                                # %L156.Entry
+# %bb.0:                                # %L165.Entry
 	pushq	%rbx
 	.cfi_def_cfa_offset 16
 	subq	$48, %rsp
@@ -97,7 +97,7 @@ F.testi:                                # @F.testi
 	.type	F.ret0f,@function
 F.ret0f:                                # @F.ret0f
 	.cfi_startproc
-# %bb.0:                                # %L157.Entry
+# %bb.0:                                # %L166.Entry
 	movl	$0, -4(%rsp)
 	movss	-4(%rsp), %xmm0                 # xmm0 = mem[0],zero,zero,zero
 	retq
@@ -110,7 +110,7 @@ F.ret0f:                                # @F.ret0f
 	.type	F.funf,@function
 F.funf:                                 # @F.funf
 	.cfi_startproc
-# %bb.0:                                # %L158.Entry
+# %bb.0:                                # %L167.Entry
 	movss	%xmm0, -4(%rsp)
 	movss	%xmm1, -8(%rsp)
 	addss	%xmm1, %xmm0
@@ -126,7 +126,7 @@ F.funf:                                 # @F.funf
 	.type	F.testf,@function
 F.testf:                                # @F.testf
 	.cfi_startproc
-# %bb.0:                                # %L159.Entry
+# %bb.0:                                # %L168.Entry
 	subq	$40, %rsp
 	.cfi_def_cfa_offset 48
 	movl	$-1054867456, 12(%rsp)          # imm = 0xC1200000
@@ -165,7 +165,7 @@ F.testf:                                # @F.testf
 	.type	F.main,@function
 F.main:                                 # @F.main
 	.cfi_startproc
-# %bb.0:                                # %L160.Entry
+# %bb.0:                                # %L169.Entry
 	movl	$10, -4(%rsp)
 	movl	$1056964608, -8(%rsp)           # imm = 0x3F000000
 	movl	$5, -12(%rsp)

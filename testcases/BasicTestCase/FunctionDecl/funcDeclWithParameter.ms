@@ -5,7 +5,7 @@
 	.type	F.gun,@function
 F.gun:                                  # @F.gun
 	.cfi_startproc
-# %bb.0:                                # %L43.Entry
+# %bb.0:                                # %L44.Entry
 	movq	%rdi, -8(%rsp)
 	movl	4(%rdi), %eax
 	imull	8(%rdi), %eax
@@ -21,7 +21,7 @@ F.gun:                                  # @F.gun
 	.type	F.fun,@function
 F.fun:                                  # @F.fun
 	.cfi_startproc
-# %bb.0:                                # %L44.Entry
+# %bb.0:                                # %L45.Entry
 	movl	%edi, -12(%rsp)
 	movl	%esi, -16(%rsp)
 	movq	%rdx, -8(%rsp)
@@ -39,7 +39,7 @@ F.fun:                                  # @F.fun
 	.type	F.main,@function
 F.main:                                 # @F.main
 	.cfi_startproc
-# %bb.0:                                # %L45.Entry
+# %bb.0:                                # %L46.Entry
 	movl	$0, -4(%rsp)
 	movl	-4(%rsp), %eax
 	retq

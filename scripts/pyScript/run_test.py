@@ -2,7 +2,7 @@ from compiler_tester import TestUnit, ActionBasic, list_all_tests
 from command_line_tool import RunningInfo, use_moe_compile_sy, run_command
 import typing as typ
 from case_and_case_set import emptyTestCaseSet, basicTestCaseSet, \
-	function2020TestCaseSet
+	function2020TestCaseSet, allFunctionTestsCaseSet
 import argparse
 from settings import TestUnitSettings, bufferTextFilePath
 from color import cprint, C
@@ -12,10 +12,10 @@ class ActionJustCompileToLLVMIR(ActionBasic):
 	def get_config(self) -> str:
 		return f'Just compile sy file to llvm-ir, with optiLevel=' \
 		       f'{self.optiLevel}.'
-
+	
 	def __init__(self, optiLevel: int):
 		self.optiLevel = optiLevel
-
+	
 	def __call__(self, testUnit, testCase, **kwargs) -> RunningInfo:
 		if testUnit is None or testCase is None:
 			exit(-1)
@@ -34,10 +34,10 @@ class ActionCompileToLLVMIRAndUseLLVM(ActionBasic):
 		return f'Compile sy file to llvm-ir use moe-compiler ' \
 		       f'with optiLevel={self.optiLevel}. Use clang compile llvm-ir ' \
 		       f'then.'
-
+	
 	def __init__(self, optiLevel: int):
 		self.optiLevel = optiLevel
-
+	
 	def __call__(self, testUnit, testCase, **kwargs) -> RunningInfo:
 		if testUnit is None or testCase is None:
 			exit(-1)
@@ -89,6 +89,15 @@ allTestUnits: typ.Dict[str, TestUnit] = {
 		testCaseSet=function2020TestCaseSet,
 		terminalVerbose=True,
 		helpInfo='Test frontend with llc and on std_test 2020.',
+		actions={
+			'toLLVMIRAndLLC': ActionCompileToLLVMIRAndUseLLVM(optiLevel=0)
+		}
+	),
+	'test_frontend_with_llc_on_all_function_test_set': TestUnit(
+		name='test_frontend_with_llc_on_all_function_test_set',
+		testCaseSet=allFunctionTestsCaseSet,
+		terminalVerbose=True,
+		helpInfo='Test frontend with llc and on functional tests.',
 		actions={
 			'toLLVMIRAndLLC': ActionCompileToLLVMIRAndUseLLVM(optiLevel=0)
 		}

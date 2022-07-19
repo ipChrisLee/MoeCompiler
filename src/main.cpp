@@ -27,7 +27,8 @@ int Main(int argc, char ** argv) {
 	ircode::IRModule ir;
 	frontend::ASTVisitor visitor(ir);
 	root->accept(&visitor);
-	if (SysY::options.optimizationLevel.get()) {
+	ir.finishLoading();
+	if (!SysY::options.withoutAnyPass.get()) {
 		pass::passMain(ir);
 	}
 	SysY::dest << ir.toLLVMIR() << std::endl;

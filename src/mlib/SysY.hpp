@@ -65,6 +65,9 @@ class Options {
 
 	struct ShowRuntimeWarning : public Option<bool, false> {
 	} showRuntimeWarnings;
+
+	struct WithoutAnyPass : public Option<bool, false> {
+	} withoutAnyPass;
 };
 
 extern Options options;

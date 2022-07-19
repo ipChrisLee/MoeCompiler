@@ -5,7 +5,7 @@
 	.type	F.main,@function
 F.main:                                 # @F.main
 	.cfi_startproc
-# %bb.0:                                # %L6.Entry
+# %bb.0:                                # %L7.Entry
 	movl	$0, -4(%rsp)
 	movl	-4(%rsp), %eax
 	retq
