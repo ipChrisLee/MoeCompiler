@@ -19,6 +19,7 @@ antlrcpp::Any ASTVisitor::visitUninitVarDef(SysYParser::UninitVarDefContext * ct
 		}
 		return ret;
 	}();
+	setWithAutoRestorer(info.var.shapeOfDefiningVar, std::move(shape));
 	auto varTypInfo =
 		bTypeToTypeInfoUPtr(info.var.btype, info.var.shapeOfDefiningVar);
 	if (info.stat.inGlobal) {

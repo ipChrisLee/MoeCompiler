@@ -125,7 +125,7 @@ std::string InstrRet::toLLVMIR() const {
 }
 
 InstrBinaryOp::InstrBinaryOp(
-	AddrOperand * left, AddrOperand * right, AddrOperand * res
+	AddrOperand * left, AddrOperand * right, AddrVariable * res
 ) :
 	IRInstr(InstrType::BinaryOp), left(left), right(right), res(res) {
 	com::Assert(
@@ -135,7 +135,7 @@ InstrBinaryOp::InstrBinaryOp(
 	);
 }
 
-InstrAdd::InstrAdd(AddrOperand * left, AddrOperand * right, AddrOperand * res) :
+InstrAdd::InstrAdd(AddrOperand * left, AddrOperand * right, AddrVariable * res) :
 	InstrBinaryOp(left, right, res) {
 	com::Assert(
 		left->getType() == IntType(),
@@ -165,7 +165,7 @@ std::unique_ptr<moeconcept::Cutable> InstrFAdd::_cutToUniquePtr() {
 	return std::make_unique<InstrFAdd>(std::move(*this));
 }
 
-InstrFAdd::InstrFAdd(AddrOperand * left, AddrOperand * right, AddrOperand * res) :
+InstrFAdd::InstrFAdd(AddrOperand * left, AddrOperand * right, AddrVariable * res) :
 	InstrBinaryOp(left, right, res) {
 	com::Assert(
 		left->getType() == FloatType(),
@@ -260,7 +260,7 @@ InstrBr::InstrBr(
 	);
 }
 
-InstrMul::InstrMul(AddrOperand * left, AddrOperand * right, AddrOperand * res) :
+InstrMul::InstrMul(AddrOperand * left, AddrOperand * right, AddrVariable * res) :
 	InstrBinaryOp(left, right, res) {
 	com::Assert(
 		left->getType() == IntType(),
@@ -274,7 +274,7 @@ std::string InstrMul::toLLVMIR() const {
 		left->toLLVMIR() + ", " + right->toLLVMIR();
 }
 
-InstrFMul::InstrFMul(AddrOperand * left, AddrOperand * right, AddrOperand * res)
+InstrFMul::InstrFMul(AddrOperand * left, AddrOperand * right, AddrVariable * res)
 	:
 	InstrBinaryOp(left, right, res) {
 	com::Assert(
@@ -288,7 +288,7 @@ std::string InstrFMul::toLLVMIR() const {
 		" = fmul float " + left->toLLVMIR() + ", " + right->toLLVMIR();
 }
 
-InstrSub::InstrSub(AddrOperand * left, AddrOperand * right, AddrOperand * res) :
+InstrSub::InstrSub(AddrOperand * left, AddrOperand * right, AddrVariable * res) :
 	InstrBinaryOp(left, right, res) {
 	com::Assert(
 		left->getType() == IntType(),
@@ -302,7 +302,7 @@ std::string InstrSub::toLLVMIR() const {
 		left->toLLVMIR() + ", " + right->toLLVMIR();
 }
 
-InstrFSub::InstrFSub(AddrOperand * left, AddrOperand * right, AddrOperand * res) :
+InstrFSub::InstrFSub(AddrOperand * left, AddrOperand * right, AddrVariable * res) :
 	InstrBinaryOp(left, right, res) {
 	com::Assert(
 		left->getType() == FloatType(),
@@ -318,18 +318,13 @@ std::string InstrFSub::toLLVMIR() const {
 
 std::string InstrCall::toLLVMIR() const {
 	//  int f(x,y) -> %call = call arm_aapcscc i32 %f(i32 %V1.x, i32 %V2.y), align 4
-	auto res = std::string();
+	//  int putint() -> %call = call arm_aapcscc i32 bitcase (i32 (...)* @getint to i32 ()*)()
+	auto res = std::string("\t");
 	if (retAddr) {
-		res = "\t" +
-			retAddr->toLLVMIR() + " = call arm_aapcscc " +
-			// %call = call arm_aapcscc
-				func->getReturnTypeInfo().toLLVMIR() + func->toLLVMIR() +
-			"("; // i32 @f(
-	} else {
-		res = "\tcall arm_aapcscc " + // call arm_aapcscc
-			func->getReturnTypeInfo().toLLVMIR() + func->toLLVMIR() +
-			"("; // i32 @f(
+		res += retAddr->toLLVMIR() + " = "; // %call = call arm_aapcscc
 	}
+	res += "call arm_aapcscc ";
+	res += func->getReturnTypeInfo().toLLVMIR() + " " + func->toLLVMIR() + "(";
 	for (auto pParaAddrToPass: paramsPassing) {
 		res += pParaAddrToPass->getType().toLLVMIR() + " " +
 			pParaAddrToPass->toLLVMIR() + ", "; // i32 %V1.x,
@@ -354,12 +349,14 @@ InstrCall::InstrCall(
 	);
 	for (int i = 0; i < func->getNumberOfParameter(); ++i) {
 		com::Assert(
-			func->getNumberThParameterTypeInfo(i) == paramsPassing[i]->getType(),
+			func->getNumberThParameterTypeInfo(i) ==
+				*typeDeduce(paramsPassing[i]->getType(), 0),
 			"Same Type!", CODEPOS
 		);
 	}
 	com::Assert(
-		func->getReturnTypeInfo() == retAddr->getType(), "Same Return Type!", CODEPOS
+		!retAddr || func->getReturnTypeInfo() == retAddr->getType(),
+		"Same Return Type!", CODEPOS
 	);
 }
 
@@ -381,7 +378,7 @@ std::string InstrFptosi::toLLVMIR() const {
 			from->toLLVMIR() + " to " + to->getType().toLLVMIR();
 }
 
-InstrDiv::InstrDiv(AddrOperand * left, AddrOperand * right, AddrOperand * res)
+InstrSDiv::InstrSDiv(AddrOperand * left, AddrOperand * right, AddrVariable * res)
 	:
 	InstrBinaryOp(left, right, res) {
 	com::Assert(
@@ -390,14 +387,13 @@ InstrDiv::InstrDiv(AddrOperand * left, AddrOperand * right, AddrOperand * res)
 	);
 }
 
-std::string InstrDiv::toLLVMIR() const {
+std::string InstrSDiv::toLLVMIR() const {
 	return "\t" +
-		res->toLLVMIR() + " = div i32 " +
+		res->toLLVMIR() + " = sdiv i32 " +
 		left->toLLVMIR() + ", " + right->toLLVMIR();
 }
 
-InstrFDiv::InstrFDiv(AddrOperand * left, AddrOperand * right, AddrOperand * res)
-	:
+InstrFDiv::InstrFDiv(AddrOperand * left, AddrOperand * right, AddrVariable * res) :
 	InstrBinaryOp(left, right, res) {
 	com::Assert(
 		left->getType() == FloatType(),
@@ -410,7 +406,7 @@ std::string InstrFDiv::toLLVMIR() const {
 		" = fdiv float " + left->toLLVMIR() + ", " + right->toLLVMIR();
 }
 
-InstrSrem::InstrSrem(AddrOperand * left, AddrOperand * right, AddrOperand * res)
+InstrSrem::InstrSrem(AddrOperand * left, AddrOperand * right, AddrVariable * res)
 	:
 	InstrBinaryOp(left, right, res) {
 	com::Assert(
@@ -569,6 +565,12 @@ FCMP strToFCMP(const std::string & str) {
 		fcmp = FCMP::UNE;
 	}
 	return fcmp;
+}
+
+bool isTerminalInstr(InstrType instrType) {
+	return com::enum_fun::in(
+		instrType, {InstrType::Br, InstrType::Ret}
+	);
 }
 
 InstrSExt::InstrSExt(AddrOperand * from, AddrVariable * to) :

@@ -92,18 +92,51 @@ void AddrFunction::pushParameter(AddrPara * addrPara) {
 }
 
 std::string AddrFunction::toLLVMIR() const {
-	std::string res = "@F." + name;
+	auto res = std::string();
+	if (vecPtrAddrPara.empty()) {
+		if (justDeclare) {
+			res = "bitcast (" + uPtrReturnTypeInfo->toLLVMIR() + " (...)* @" + name +
+				" to " + uPtrReturnTypeInfo->toLLVMIR() + " ()*)";
+		} else {
+			res = "@F." + name;
+		}
+	} else {
+		if (justDeclare) {
+			res = "@" + name;
+		} else {
+			res = "@F." + name;
+		}
+	}
 	return res;
 }
 
 std::string AddrFunction::declLLVMIR() const {
-	std::string res =
-		uPtrReturnTypeInfo->toLLVMIR() +
-			" @F." + name + "(";
-	for (auto p: vecPtrAddrPara) {
-		res += p->getType().toLLVMIR() + " " + p->toLLVMIR() + " ,";
+	auto res = std::string();
+	if (justDeclare) {
+		res += "declare ";
+	} else {
+		res += "define ";
 	}
-	if (*res.rbegin() == ',') {
+	res += "dso_local " + uPtrReturnTypeInfo->toLLVMIR();
+	if (justDeclare) {
+		res += " @" + name + "(";
+	} else {
+		res += " @F." + name + "(";
+	}
+	if (justDeclare) {
+		if (!vecPtrAddrPara.empty()) {
+			for (auto * p: vecPtrAddrPara) {
+				res += p->getType().toLLVMIR() + ", ";
+			}
+		} else {
+			res += "...";
+		}
+	} else {
+		for (auto p: vecPtrAddrPara) {
+			res += p->getType().toLLVMIR() + " " + p->toLLVMIR() + ", ";
+		}
+	}
+	if (!vecPtrAddrPara.empty()) {
 		res.pop_back();
 		res.pop_back();
 	}
@@ -253,9 +286,7 @@ std::string AddrGlobalVariable::toDeclIR() const {
 	return toLLVMIR() +
 		" = dso_local " +
 		std::string(isConstVar() ? "constant " : "global ") +
-		(com::enum_fun::in(
-			uPtrStaticValue->getType().type, {Type::FloatArray_t, Type::IntArray_t}
-		) ? "" : uPtrStaticValue->getType().toLLVMIR()) + " " +
+		uPtrStaticValue->getType().toLLVMIR() + " " +
 		uPtrStaticValue->toLLVMIR() +
 		", align 4";
 }

@@ -24,16 +24,154 @@ const std::vector<AddrGlobalVariable *> & IRAddrPool::getGlobalVars() const {
 
 std::string IRModule::toLLVMIR() const {
 	std::string res = addrPool.toLLVMIR();
-	for (auto & funcDecl: funcPool) {
+	for (auto * funcDecl: funcPool) {
 		res += funcDecl->toLLVMIR();
 	}
 	return res;
 }
 
-void IRModule::allFuncToBasicBlockFunc() {
+void IRModule::finishLoading() {
 	for (auto & func: funcPool) {
 		func->finishLoading(*this);
 	}
+}
+
+std::vector<AddrFunction *> IRModule::generateSysYDecl() {
+	auto sysyFuncs = std::vector<AddrFunction *>();
+	if (!sysyFuncAdded) {
+		//  int getint()
+		sysyFuncs.emplace_back(
+			addrPool.emplace_back(
+				AddrFunction("getint", sup::IntType())
+			)
+		);
+		//  int getch()
+		sysyFuncs.emplace_back(
+			addrPool.emplace_back(
+				AddrFunction("getch", sup::IntType())
+			)
+		);
+		//  int getarray(int [])
+		{
+			auto arg = std::vector<AddrPara *>();
+			arg.emplace_back(
+				addrPool.emplace_back(
+					AddrPara(sup::PointerType(sup::IntType()), "a")
+				)
+			);
+			sysyFuncs.emplace_back(
+				addrPool.emplace_back(
+					AddrFunction("getarray", std::move(arg), sup::IntType())
+				)
+			);
+		}
+		//  float getfloat()
+		sysyFuncs.emplace_back(
+			addrPool.emplace_back(
+				AddrFunction("getfloat", sup::FloatType())
+			)
+		);
+		//  int getfarray(int [])
+		{
+			auto arg = std::vector<AddrPara *>();
+			arg.emplace_back(
+				addrPool.emplace_back(
+					AddrPara(sup::PointerType(sup::FloatType()), "a")
+				)
+			);
+			sysyFuncs.emplace_back(
+				addrPool.emplace_back(
+					AddrFunction("getfarray", std::move(arg), sup::FloatType())
+				)
+			);
+		}
+		//  void putint(int a)
+		{
+			auto arg = std::vector<AddrPara *>();
+			arg.emplace_back(
+				addrPool.emplace_back(
+					AddrPara(sup::IntType(), "a")
+				)
+			);
+			sysyFuncs.emplace_back(
+				addrPool.emplace_back(
+					AddrFunction("putint", std::move(arg))
+				)
+			);
+		}
+		//  void putch(int a)
+		{
+			auto arg = std::vector<AddrPara *>();
+			arg.emplace_back(
+				addrPool.emplace_back(
+					AddrPara(sup::IntType(), "a")
+				)
+			);
+			sysyFuncs.emplace_back(
+				addrPool.emplace_back(
+					AddrFunction("putch", std::move(arg))
+				)
+			);
+		}
+		//  void putarray(int n,int a[])
+		{
+			auto arg = std::vector<AddrPara *>();
+			arg.emplace_back(
+				addrPool.emplace_back(
+					AddrPara(sup::IntType(), "n")
+				)
+			);
+			arg.emplace_back(
+				addrPool.emplace_back(
+					AddrPara(sup::PointerType(sup::IntType()), "a")
+				)
+			);
+			sysyFuncs.emplace_back(
+				addrPool.emplace_back(
+					AddrFunction("putarray", std::move(arg))
+				)
+			);
+		}
+		//  void putfloat(float a)
+		{
+			auto arg = std::vector<AddrPara *>();
+			arg.emplace_back(
+				addrPool.emplace_back(
+					AddrPara(sup::FloatType(), "a")
+				)
+			);
+			sysyFuncs.emplace_back(
+				addrPool.emplace_back(
+					AddrFunction("putfloat", std::move(arg))
+				)
+			);
+		}
+		//  void putfarray(int n,float a[])
+		{
+			auto arg = std::vector<AddrPara *>();
+			arg.emplace_back(
+				addrPool.emplace_back(
+					AddrPara(sup::IntType(), "n")
+				)
+			);
+			arg.emplace_back(
+				addrPool.emplace_back(
+					AddrPara(sup::PointerType(sup::FloatType()), "a")
+				)
+			);
+			sysyFuncs.emplace_back(
+				addrPool.emplace_back(
+					AddrFunction("putfarray", std::move(arg))
+				)
+			);
+		}
+		for (auto * p: sysyFuncs) {
+			p->justDeclare = true;
+			funcPool.emplace_back(IRFuncDef(p));
+		}
+		sysyFuncAdded = true;
+	}
+	return sysyFuncs;
 }
 
 void IRInstrPool::printAll(std::ostream & os) const {
@@ -58,9 +196,11 @@ IRFuncDef::IRFuncDef(AddrFunction * pAddrFun)
 }
 
 std::string IRFuncDef::toLLVMIR() const {
+	if (pAddrFun->justDeclare) {
+		return pAddrFun->declLLVMIR() + "\n\n";
+	}
 	std::string res =
-		"define dso_local " +
-			pAddrFun->declLLVMIR() +
+		pAddrFun->declLLVMIR() +
 			"{\n";
 	if (!loadFinished) {
 		com::Throw(
@@ -75,7 +215,7 @@ std::string IRFuncDef::toLLVMIR() const {
 			for (const auto * block: blocks) { res += block->toLLVMIR() + "\n"; }
 		}
 	}
-	res += "}\n";
+	res += "}\n\n";
 	return res;
 }
 
@@ -85,7 +225,6 @@ void IRFuncDef::finishLoading(IRModule & ir) {
 	}
 	rearrangeAlloca();
 	addEntryLabelInstr(ir);
-	toBasicBlocks();
 	loadFinished = true;
 }
 
@@ -95,10 +234,6 @@ void IRFuncDef::rearrangeAlloca() {
 			return dynamic_cast<ircode::InstrAlloca *>(p) != nullptr;
 		}
 	);
-}
-
-void IRFuncDef::toBasicBlocks() {
-	com::addRuntimeWarning("to basic blocks func not finished.", CODEPOS);
 }
 
 IRInstr * IRFuncDef::emplace_back(IRInstr * irInstr) {
@@ -181,7 +316,7 @@ std::list<ircode::IRInstr *> genBinaryOperationInstrs(
 			} else if (op == "/") {
 				instrsRes.emplace_back(
 					ir.instrPool.emplace_back(
-						ircode::InstrDiv(opL, opR, opD)
+						ircode::InstrSDiv(opL, opR, opD)
 					)
 				);
 			} else if (op == "%") {
@@ -266,78 +401,90 @@ std::list<ircode::IRInstr *> genUnaryOperationInstrs(
 	IRModule & ir, const std::string & op,
 	AddrOperand * opR, ircode::AddrVariable * opD
 ) {
-	if (opD->getType().type == Type::Bool_t) {
-		auto instrsRes = std::list<ircode::IRInstr *>();
-		if (op == "!") {
-			com::Assert(
-				opD->getType().type == Type::Bool_t,
-				"Result of `!X` should be bool type.", CODEPOS
-			);
-			auto * pZero = ir.addrPool.emplace_back(
-				ircode::AddrStaticValue(opR->getType())
-			);
-			switch (opR->getType().type) {
-				case Type::Bool_t:
-				case Type::Int_t: {
-					instrsRes.emplace_back(
-						ir.instrPool.emplace_back(
-							ircode::InstrICmp(opD, opR, ICMP::NE, pZero)
-						)
-					);
-					break;
+	auto typeD = opD->getType().type;
+	auto typeR = opR->getType().type;
+	switch (typeD) {
+		case Type::Bool_t: {
+			auto instrsRes = std::list<ircode::IRInstr *>();
+			if (op == "!") {
+				auto * pZero = ir.addrPool.emplace_back(
+					ircode::AddrStaticValue(opR->getType())
+				);
+				switch (opR->getType().type) {
+					case Type::Bool_t:
+					case Type::Int_t: {
+						instrsRes.emplace_back(
+							ir.instrPool.emplace_back(
+								ircode::InstrICmp(opD, opR, ICMP::NE, pZero)
+							)
+						);
+						break;
+					}
+					case Type::Float_t: {
+						instrsRes.emplace_back(
+							ir.instrPool.emplace_back(
+								ircode::InstrFCmp(opD, opR, FCMP::UNE, pZero)
+							)
+						);
+						break;
+					}
+					default: com::Throw("", CODEPOS);
 				}
-				case Type::Float_t: {
-					instrsRes.emplace_back(
-						ir.instrPool.emplace_back(
-							ircode::InstrFCmp(opD, opR, FCMP::UNE, pZero)
-						)
-					);
-					break;
-				}
-				default: com::Throw("", CODEPOS);
+			} else {
+				com::Throw("Unsupported OP", CODEPOS);
 			}
+			return instrsRes;
 		}
-		return instrsRes;
-	}
-
-	com::Assert(
-		opR->getType() == opD->getType(), "opR and opD should have same type!",
-		CODEPOS
-	);
-	auto type = opR->getType().type;
-	auto uPtrInstr = std::unique_ptr<IRInstr>();
-	switch (type) {
 		case Type::Int_t: {
-			auto op0 = ir.addrPool.emplace_back(
-				AddrStaticValue(IntStaticValue(0))
+			com::Assert(com::enum_fun::in(typeR, {Type::Int_t, Type::Bool_t}));
+			auto [newOpR, _, instrs] = genAddrConversion(ir, opR, IntType());
+			auto * pZeroAddr = ir.addrPool.emplace_back(
+				ircode::AddrStaticValue(IntStaticValue(0))
 			);
 			if (op == "+") {
-				uPtrInstr = std::make_unique<InstrAdd>(op0, opR, opD);
+				instrs.emplace_back(
+					ir.instrPool.emplace_back(
+						ircode::InstrAdd(pZeroAddr, newOpR, opD)
+					)
+				);
 			} else if (op == "-") {
-				uPtrInstr = std::make_unique<InstrSub>(op0, opR, opD);
+				instrs.emplace_back(
+					ir.instrPool.emplace_back(
+						ircode::InstrSub(pZeroAddr, newOpR, opD)
+					)
+				);
 			} else {
-				com::Throw("", CODEPOS);
+				com::Throw("Unsupported op.", CODEPOS);
 			}
-			break;
+			return instrs;
 		}
 		case Type::Float_t: {
-			auto op0 = ir.addrPool.emplace_back(
-				AddrStaticValue(FloatStaticValue(0))
+			com::Assert(typeR == Type::Float_t, "", CODEPOS);
+			auto * pZeroAddr = ir.addrPool.emplace_back(
+				ircode::AddrStaticValue(IntStaticValue(0))
 			);
+			auto instrs = std::list<ircode::IRInstr *>();
 			if (op == "+") {
-				uPtrInstr = std::make_unique<InstrFAdd>(op0, opR, opD);
+				instrs.emplace_back(
+					ir.instrPool.emplace_back(
+						ircode::InstrFAdd(pZeroAddr, opR, opD)
+					)
+				);
 			} else if (op == "-") {
-				uPtrInstr = std::make_unique<InstrFSub>(op0, opR, opD);
+				instrs.emplace_back(
+					ir.instrPool.emplace_back(
+						ircode::InstrFSub(pZeroAddr, opR, opD)
+					)
+				);
 			} else {
-				com::Throw("", CODEPOS);
+				com::Throw("Unsupported op.", CODEPOS);
 			}
-			break;
+			return instrs;
 		}
 		default: {
-			com::Throw("Unsupported type!", CODEPOS);
+			com::Throw("Unsupported Type!", CODEPOS);
 		}
 	}
-	return {ir.instrPool.emplace_back(std::move(uPtrInstr))};
 }
 
 std::tuple<
@@ -687,4 +834,28 @@ std::list<ircode::IRInstr *> genStoreInstrInFunction(
 	return instrs;
 }
 
+ircode::AddrVariable * genSuitableAddr(
+	ircode::IRModule & ir, const std::string & op, ircode::AddrOperand * preOp
+) {
+	auto upTypeInfo = std::unique_ptr<sup::TypeInfo>();
+	auto preType = preOp->getType().type;
+	if (op == "!") {
+		upTypeInfo = std::make_unique<sup::BoolType>();
+	} else if (op == "+" || op == "-") {
+		switch (preType) {
+			case Type::Bool_t:
+			case Type::Int_t: {
+				upTypeInfo = std::make_unique<sup::IntType>();
+				break;
+			}
+			case Type::Float_t: {
+				upTypeInfo = std::make_unique<sup::FloatType>();
+				break;
+			}
+			default: com::Throw("Unsupported Type.", CODEPOS);
+		}
+	}
+	auto * destOp = ir.addrPool.emplace_back(ircode::AddrVariable(*upTypeInfo));
+	return destOp;
+}
 }

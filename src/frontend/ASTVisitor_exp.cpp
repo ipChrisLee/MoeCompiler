@@ -137,14 +137,18 @@ antlrcpp::Any ASTVisitor::visitUnary2(SysYParser::Unary2Context * ctx) {
 		auto paramsList = std::vector<ircode::AddrOperand *>();
 		if (ctx->funcRParams()) {
 			ctx->funcRParams()->accept(this);
-			paramsList = retVal.restore<std::vector<ircode::AddrOperand *>>();
+			paramsList = retVal.restore<std::vector<ircode::AddrOperand * >>();
 			instrsRes.splice(
-				instrsRes.end(), retInstrs.restore<std::list<ircode::IRInstr *>>()
+				instrsRes.end(),
+				retInstrs.restore<std::list<ircode::IRInstr * >>()
 			);
 		}
-		auto pRetValAddr = ir.addrPool.emplace_back(
-			ircode::AddrVariable(info.var.pUsingFunc->getReturnTypeInfo())
-		);
+		auto * pRetValAddr = static_cast<ircode::AddrVariable *>(nullptr);
+		if (info.var.pUsingFunc->getReturnTypeInfo().type != Type::Void_t) {
+			pRetValAddr = ir.addrPool.emplace_back(
+				ircode::AddrVariable(info.var.pUsingFunc->getReturnTypeInfo())
+			);
+		}
 		instrsRes.emplace_back(
 			ir.instrPool.emplace_back(
 				ircode::InstrCall(info.var.pUsingFunc, paramsList, pRetValAddr)
@@ -180,25 +184,14 @@ antlrcpp::Any ASTVisitor::visitUnary3(SysYParser::Unary3Context * ctx) {
 		retVal.save(calcOnSV(op, *p));
 		return nullptr;
 	} else {
-		auto opR = retVal.restore<ircode::AddrOperand *>();
+		auto * opR = retVal.restore<ircode::AddrOperand *>();
 		auto instrsR = retInstrs.restore<std::list<ircode::IRInstr *>>();
-		if (op == "!") {
-			auto * pCondAddr
-				= ir.addrPool.emplace_back(ircode::AddrVariable(BoolType()));
-			instrsR.splice(
-				instrsR.end(), genUnaryOperationInstrs(ir, "!", opR, pCondAddr)
-			);
-			retVal.save(static_cast<ircode::AddrOperand *>(pCondAddr));
-			retInstrs.save(std::move(instrsR));
-			return nullptr;
-		} else {
-			auto opD = ir.addrPool.emplace_back(
-				ircode::AddrVariable(opR->getType())
-			);
-			instrsR.splice(instrsR.end(), genUnaryOperationInstrs(ir, op, opR, opD));
-			retVal.save(static_cast<ircode::AddrOperand *>(opD));
-			retInstrs.save(std::move(instrsR));
-		}
+		auto * opD = genSuitableAddr(ir, op, opR);
+		instrsR.splice(
+			instrsR.end(), genUnaryOperationInstrs(ir, op, opR, opD)
+		);
+		retVal.save(static_cast<ircode::AddrOperand *>(opD));//NOLINT
+		retInstrs.save(std::move(instrsR));
 		return nullptr;
 	}
 }
@@ -278,7 +271,7 @@ antlrcpp::Any ASTVisitor::visitLVal(SysYParser::LValContext * ctx) {
 
 	auto instrsRes = std::list<ircode::IRInstr *>();
 	if (com::enum_fun::in(idPointToTypeInfo.type, {Type::Float_t, Type::Int_t})) {
-		if (info.stat.visitingAssignment) { // as left side of assignment
+		if (info.stat.visitingAssignmentLeft) { // as left side of assignment
 			retVal.save(dynamic_cast<ircode::AddrVariable *>(pIDVarAddr));
 			retInstrs.save(std::move(instrsRes));
 			return nullptr;
@@ -304,6 +297,7 @@ antlrcpp::Any ASTVisitor::visitLVal(SysYParser::LValContext * ctx) {
 	]() -> std::vector<ircode::AddrOperand *> {
 		auto idxs = std::vector<ircode::AddrOperand *>();
 		for (auto i = size_t(0); i < nExp; ++i) {
+			setWithAutoRestorer(info.stat.visitingAssignmentLeft, false);
 			ctx->exp(i)->accept(this);
 			auto * pIdxAddr = retVal.restore<ircode::AddrOperand *>();
 			auto instrsIdx = retInstrs.restore<std::list<ircode::IRInstr *>>();
@@ -348,7 +342,7 @@ antlrcpp::Any ASTVisitor::visitLVal(SysYParser::LValContext * ctx) {
 		return pDerefOnceAddr;
 	}();
 
-	if (info.stat.visitingAssignment) { // as left side of assignment
+	if (info.stat.visitingAssignmentLeft) { // as left side of assignment
 		//  get val mem addr
 		auto * pLValMemAddr = ir.addrPool.emplace_back(
 			ircode::AddrVariable(

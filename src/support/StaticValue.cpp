@@ -397,8 +397,7 @@ std::string FloatArrayStaticValue::toLLVMIR() const {
 	) -> std::string {
 		if (dim == int(shape.size())) {
 			std::string buf;
-			for (int i = from; i < to; ++i
-				) {
+			for (int i = from; i < to; ++i) {
 				buf +=
 					value[i].getType().toLLVMIR() + " " + value[i].toLLVMIR() + ", ";
 			}
@@ -407,12 +406,15 @@ std::string FloatArrayStaticValue::toLLVMIR() const {
 			return buf;
 		}
 		std::vector<int> nowShape;
-		for (int i = dim; i < int(shape.size()); ++i
-			) {
+		for (int i = dim; i < int(shape.size()); ++i) {
 			nowShape.push_back(shape[i]);
 		}
-		FloatArrayType fat(nowShape);
-		std::string buf = fat.toLLVMIR() + " [";
+		auto buf = std::string();
+		if (dim) {
+			FloatArrayType fat(nowShape);
+			buf += fat.toLLVMIR();
+		}
+		buf += "[";
 		int sz = 1;
 		for (int i = dim + 1; i < int(shape.size()); ++i) { sz *= shape[i]; }
 		for (int i = 0; i < shape[dim]; ++i
@@ -421,7 +423,8 @@ std::string FloatArrayStaticValue::toLLVMIR() const {
 		}
 		buf.pop_back();
 		buf.pop_back();
-		return buf + "]";
+		buf += "]";
+		return buf;
 	};
 	int sz = 1;
 	for (int x: shape) { sz *= x; }
@@ -484,31 +487,33 @@ std::string IntArrayStaticValue::toLLVMIR() const {
 	) -> std::string {
 		if (dim == int(shape.size())) {
 			std::string buf;
-			for (int i = from; i < to; ++i
-				) {
-				buf +=
-					value[i].getType().toLLVMIR() + " " + value[i].toLLVMIR() + ", ";
+			for (int i = from; i < to; ++i) {
+				buf += value[i].getType().toLLVMIR() +
+					" " + value[i].toLLVMIR() + ", ";
 			}
 			buf.pop_back();
 			buf.pop_back();
 			return buf;
 		}
 		std::vector<int> nowShape;
-		for (int i = dim; i < int(shape.size()); ++i
-			) {
+		for (int i = dim; i < int(shape.size()); ++i) {
 			nowShape.push_back(shape[i]);
 		}
-		IntArrayType fat(nowShape);
-		std::string buf = fat.toLLVMIR() + " [";
+		auto buf = std::string();
+		if (dim) {
+			IntArrayType fat(nowShape);
+			buf += fat.toLLVMIR();
+		}
+		buf += "[";
 		int sz = 1;
 		for (int i = dim + 1; i < int(shape.size()); ++i) { sz *= shape[i]; }
-		for (int i = 0; i < shape[dim]; ++i
-			) {
+		for (int i = 0; i < shape[dim]; ++i) {
 			buf += fun(from + sz * i, from + sz * (i + 1), dim + 1) + ", ";
 		}
 		buf.pop_back();
 		buf.pop_back();
-		return buf + "]";
+		buf += "]";
+		return buf;
 	};
 	int sz = 1;
 	for (int x: shape) { sz *= x; }

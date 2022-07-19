@@ -125,8 +125,6 @@ class IRFuncDef : public sup::LLVMable {
   protected:
 	void rearrangeAlloca();
 
-	void toBasicBlocks();
-
 	AddrJumpLabel * addEntryLabelInstr(IRModule & ir);
 
 	std::vector<std::unique_ptr<IRFuncBlock>> pool;
@@ -155,6 +153,7 @@ class IRFuncDef : public sup::LLVMable {
 };
 
 class IRModule : public sup::LLVMable {
+	bool sysyFuncAdded = false;
   public:
 	IRInstrPool instrPool;
 	IRAddrPool addrPool;
@@ -162,7 +161,9 @@ class IRModule : public sup::LLVMable {
 
 	IRModule() = default;
 
-	void allFuncToBasicBlockFunc();
+	void finishLoading();
+
+	std::vector<AddrFunction *> generateSysYDecl();
 
 	std::string toLLVMIR() const override;
 };
@@ -182,8 +183,10 @@ std::list<ircode::IRInstr *> genBinaryOperationInstrs(
 
 /**
  * @brief Instructions generator for unary operate instruction.
- * @note If type of @c opD is bool, type of @c opR can be bool/int/float.
- * @note If type of @c opD is @b NOT bool, type of @c opR and @c opD should both be int/float.
+ * @note If type of @c opD is bool, type of @c opR can be bool/int/float and op should be "!"
+ * @note If type of @c opD is int, type of @c opR can be bool/int, this function will help you do conversion. At this case, @c op should @b NOT be "!".
+ * @note If type of @c opD is float, type of @c opR should be float. At this case, @c op should @b NOT be "!".
+ * @note You can use @c genSuitableAddr to deduce type from @c opR .
  */
 std::list<ircode::IRInstr *> genUnaryOperationInstrs(
 	ircode::IRModule & ir, const std::string & op, ircode::AddrOperand * opR,
@@ -215,6 +218,14 @@ std::tuple<
 	ircode::AddrOperand *, std::unique_ptr<sup::TypeInfo>, std::list<ircode::IRInstr *>
 > genAddrConversion(
 	ircode::IRModule & ir, ircode::AddrOperand * preOp, sup::Type type
+);
+
+/**
+ * @brief This is used with @c genUnaryOperationInstrs , to generate addr with proper type.
+ * @example <tt>int x=+-!!!a;</tt>
+ */
+ircode::AddrVariable * genSuitableAddr(
+	ircode::IRModule & ir, const std::string & op, ircode::AddrOperand * preOp
 );
 
 /**

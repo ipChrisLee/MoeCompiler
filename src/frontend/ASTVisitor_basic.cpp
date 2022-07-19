@@ -17,6 +17,12 @@ antlrcpp::Any ASTVisitor::visitChildren(antlr4::tree::ParseTree * node) {
 
 antlrcpp::Any ASTVisitor::visitCompUnit(SysYParser::CompUnitContext * ctx) {
 	// compUnit -> (decl | funcDef)* EOF
+	auto sysyFuncs = ir.generateSysYDecl();
+	for (auto * pFuncAddr: sysyFuncs) {
+		symbolTable.pScopeNow->bindDominateVar(
+			pFuncAddr->getName(), IdType::FunctionName, pFuncAddr
+		);
+	}
 	return visitChildren(ctx);
 }
 
@@ -78,14 +84,20 @@ antlrcpp::Any ASTVisitor::visitAssignment(SysYParser::AssignmentContext * ctx) {
 	auto pExpAddr = retVal.restore<ircode::AddrOperand *>();
 	auto instrsExp = retInstrs.restore<std::list<ircode::IRInstr *>>();
 	instrsRes.splice(instrsRes.end(), std::move(instrsExp));
-	setWithAutoRestorer(info.stat.visitingAssignment, true);
+	setWithAutoRestorer(info.stat.visitingAssignmentLeft, true);
 	ctx->lVal()->accept(this);
 	auto * pLValMemAddr = retVal.restore<ircode::AddrVariable *>();
 	auto instrsLVal = retInstrs.restore<std::list<ircode::IRInstr *>>();
 	instrsRes.splice(instrsRes.end(), std::move(instrsLVal));
+	const auto & lValTypeInfo
+		= *(dynamic_cast<const PointerType &>(pLValMemAddr->getType()).pointTo);
+	auto [pExpConvertedAddr, _, convertInstrs] = genAddrConversion(
+		ir, pExpAddr, lValTypeInfo
+	);
+	instrsRes.splice(instrsRes.end(), std::move(convertInstrs));
 	instrsRes.emplace_back(
 		ir.instrPool.emplace_back(
-			ircode::InstrStore(pExpAddr, pLValMemAddr)
+			ircode::InstrStore(pExpConvertedAddr, pLValMemAddr)
 		)
 	);
 	retInstrs.save(std::move(instrsRes));

@@ -51,9 +51,9 @@ class ASTVisitor : public SysYBaseVisitor {
 			 * */
 			bool calculatingStaticValue = false;
 
-			/*  visitingAssignment : for lVal
+			/*  visitingAssignmentLeft : for lVal
 			 * */
-			bool visitingAssignment = false;
+			bool visitingAssignmentLeft = false;
 		};
 
 		struct Var {
@@ -228,7 +228,7 @@ class ASTVisitor : public SysYBaseVisitor {
 
 	/**
 	 * @return_in_retVal <tt>unique_ptr<StaticValue></tt> if @c info.stat.calculatingStaticValue
-	 * @return_in_retVal <tt>AddrVariable *</tt> (Pointer of lVal) if @c info.stat.visitingAssignment
+	 * @return_in_retVal <tt>AddrVariable *</tt> (Pointer of lVal) if @c info.stat.visitingAssignmentLeft
 	 * @return_in_retVal <tt>AddrOperand *</tt> (Value of lVal) otherwise
 	 * @return_in_retInstrs NOTHING if @c info.stat.calculatingStaticValue
 	 * @return_in_retInstrs Instrs generated for getting this lVal.

@@ -288,6 +288,8 @@ class AddrFunction :
 	std::vector<AddrPara *> vecPtrAddrPara;
 	std::string name;
   public:
+	bool justDeclare = false;
+
 	[[nodiscard]] const std::string & getName() const { return name; }
 
 	/**
@@ -326,9 +328,18 @@ class AddrFunction :
 	void pushParameter(AddrPara *);
 
 	// @F.{name}
+	/**
+	 * @brief
+	 * @return \@F.{name}
+	 * @return bitcast ({retType} (...)* @{name} to {retType} ()*)
+	 */
 	[[nodiscard]] std::string toLLVMIR() const override;
 
-	// {retType} @F.{name}({para.type} {para.toLLVMIR})
+	/**
+	 * @brief To decl/def ir statements
+	 * @return define dso_local {retType} \@F.{name}({para.type} {para.toLLVMIR})
+	 * @return declare dso_local void \@{name}({para.type})
+	 */
 	std::string declLLVMIR() const;
 };
 }

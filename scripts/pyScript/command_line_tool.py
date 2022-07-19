@@ -66,7 +66,8 @@ def use_moe_compile_sy(
 		float_dec_format: bool,
 		without_any_pass: bool = False,
 		optiLevel: int = 0,
-		terminalVerbose: bool = CommandLineSettings.verbose
+		terminalVerbose: bool = CommandLineSettings.verbose,
+		timeout: float = 90
 ) -> RunningInfo:
 	return run_command(
 		MoeCompilerSettings.moePath,
@@ -78,6 +79,7 @@ def use_moe_compile_sy(
 		'--float-dec-format' if float_dec_format else '',
 		'--without-any-pass' if without_any_pass else '',
 		verbose=terminalVerbose,
+		timeout=timeout
 	)
 
 

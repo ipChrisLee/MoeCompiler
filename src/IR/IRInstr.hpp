@@ -15,16 +15,16 @@
 namespace ircode {
 
 enum class InstrType {
-	Err,
+	Err,                //
 	Alloca,
 	Label,
 	Store,
-	Ret,
+	Ret,                //  Terminal Instruction
 	BinaryOp,
 	ConversionOp,
 	Load,
-	Br,
-	Call,
+	Br,                 //  Terminal Instruction
+	Call,               //  Terminal Instruction
 	Getelementptr,
 	ICmp,
 	FCmp,
@@ -32,7 +32,11 @@ enum class InstrType {
 	Fptosi,
 	SExt,
 	ZExt,
+	SDiv,
+	FDiv,
 };
+
+bool isTerminalInstr(InstrType instrType);
 
 class IRInstr
 	: public sup::LLVMable, public moeconcept::Cutable {
@@ -184,10 +188,11 @@ class InstrBinaryOp : public IRInstr {
 	std::unique_ptr<Cutable> _cutToUniquePtr() override = 0;
 
   public:
-	AddrOperand * left, * right, * res;
+	AddrOperand * left, * right;
+	AddrVariable * res;
 
 	//  Will check if three addrs have same types.
-	InstrBinaryOp(AddrOperand * left, AddrOperand * right, AddrOperand * res);
+	InstrBinaryOp(AddrOperand * left, AddrOperand * right, AddrVariable * res);
 
 	InstrBinaryOp(const InstrBinaryOp &) = default;
 
@@ -255,7 +260,7 @@ class InstrAdd : public InstrBinaryOp {
   public:
 
 	//  Will check if the type of these addr is Int.
-	InstrAdd(AddrOperand * left, AddrOperand * right, AddrOperand * res);
+	InstrAdd(AddrOperand * left, AddrOperand * right, AddrVariable * res);
 
 	InstrAdd(const InstrAdd &) = default;
 
@@ -273,7 +278,7 @@ class InstrFAdd : public InstrBinaryOp {
   public:
 
 	//  Will check if the type of these addr is Float.
-	InstrFAdd(AddrOperand * left, AddrOperand * right, AddrOperand * res);
+	InstrFAdd(AddrOperand * left, AddrOperand * right, AddrVariable * res);
 
 	InstrFAdd(const InstrFAdd &) = default;
 
@@ -291,7 +296,7 @@ class InstrSub : public InstrBinaryOp {
   public:
 
 	//  Will check if the type of these addr is Int.
-	InstrSub(AddrOperand * left, AddrOperand * right, AddrOperand * res);
+	InstrSub(AddrOperand * left, AddrOperand * right, AddrVariable * res);
 
 	InstrSub(const InstrSub &) = default;
 
@@ -309,7 +314,7 @@ class InstrFSub : public InstrBinaryOp {
   public:
 
 	//  Will check if the type of these addr is Float.
-	InstrFSub(AddrOperand * left, AddrOperand * right, AddrOperand * res);
+	InstrFSub(AddrOperand * left, AddrOperand * right, AddrVariable * res);
 
 	InstrFSub(const InstrFSub &) = default;
 
@@ -327,7 +332,7 @@ class InstrMul : public InstrBinaryOp {
   public:
 
 	//  Will check if the type of these addr is Int.
-	InstrMul(AddrOperand * left, AddrOperand * right, AddrOperand * res);
+	InstrMul(AddrOperand * left, AddrOperand * right, AddrVariable * res);
 
 	InstrMul(InstrMul &&) = default;
 
@@ -341,14 +346,14 @@ class InstrFMul : public InstrBinaryOp {
 	std::unique_ptr<Cutable> _cutToUniquePtr() override CUTABLE_DEFAULT_IMPLEMENT;
   public:
 	//  Will check if the type of these addr is Float.
-	InstrFMul(AddrOperand * left, AddrOperand * right, AddrOperand * res);
+	InstrFMul(AddrOperand * left, AddrOperand * right, AddrVariable * res);
 
 	InstrFMul(InstrFMul &&) = default;
 
 	[[nodiscard]] std::string toLLVMIR() const override;
 };
 
-class InstrDiv : public InstrBinaryOp {
+class InstrSDiv : public InstrBinaryOp {
   protected:
 	// [[nodiscard]] std::unique_ptr<Cloneable> _cloneToUniquePtr() const override;
 
@@ -357,9 +362,9 @@ class InstrDiv : public InstrBinaryOp {
   public:
 
 	//  Will check if the type of these addr is Int.
-	InstrDiv(AddrOperand * left, AddrOperand * right, AddrOperand * res);
+	InstrSDiv(AddrOperand * left, AddrOperand * right, AddrVariable * res);
 
-	InstrDiv(InstrDiv &&) = default;
+	InstrSDiv(InstrSDiv &&) = default;
 
 	[[nodiscard]] std::string toLLVMIR() const override;
 };
@@ -371,7 +376,7 @@ class InstrFDiv : public InstrBinaryOp {
 	std::unique_ptr<Cutable> _cutToUniquePtr() override CUTABLE_DEFAULT_IMPLEMENT;
   public:
 	//  Will check if the type of these addr is Float.
-	InstrFDiv(AddrOperand * left, AddrOperand * right, AddrOperand * res);
+	InstrFDiv(AddrOperand * left, AddrOperand * right, AddrVariable * res);
 
 	InstrFDiv(InstrFDiv &&) = default;
 
@@ -387,7 +392,7 @@ class InstrSrem : public InstrBinaryOp {
   public:
 
 	//  Will check if the type of these addr is Int.
-	InstrSrem(AddrOperand * left, AddrOperand * right, AddrOperand * res);
+	InstrSrem(AddrOperand * left, AddrOperand * right, AddrVariable * res);
 
 	InstrSrem(InstrSrem &&) = default;
 
