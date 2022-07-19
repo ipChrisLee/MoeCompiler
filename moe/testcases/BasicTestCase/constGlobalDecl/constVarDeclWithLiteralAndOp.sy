@@ -1,8 +1,0 @@
-const int len=2;
-const int minV=-2147483648;
-const int maxV=2147483647;
-const int x=10/3+4-1*2;
-const float fa=10*4.9+1.0-3.0;
-const float fb=10+1;
-const float fc=1+1;
-const float fd=1.0-1.0*(1+1);
