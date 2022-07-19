@@ -30,7 +30,7 @@ const TypeInfo & IRAddr::getType() const {
 }
 
 AddrJumpLabel::AddrJumpLabel(std::string name) :
-	labelName(std::move(name)) {
+	labelName(convertLongName(std::move(name))) {
 }
 
 std::string AddrJumpLabel::toLLVMIR() const {
@@ -54,11 +54,11 @@ std::string AddrJumpLabel::toLLVMLabelName() const {
 AddrPara::AddrPara(
 	const TypeInfo & typeInfo, std::string name
 ) :
-	AddrVariable(typeInfo, std::move(name)) {
+	AddrVariable(typeInfo, convertLongName(std::move(name))) {
 }
 
 std::string AddrPara::toLLVMIR() const {
-	return "%P" + to_string(id) + "." + name;
+	return "%P" + to_string(id) + (name.empty() ? "" : "." + name);
 }
 
 std::unique_ptr<moeconcept::Cloneable>
@@ -72,7 +72,8 @@ std::unique_ptr<moeconcept::Cutable> AddrPara::_cutToUniquePtr() {
 
 AddrFunction::AddrFunction(std::string name)
 	:
-	uPtrReturnTypeInfo(std::make_unique<VoidType>()), name(std::move(name)) {
+	uPtrReturnTypeInfo(std::make_unique<VoidType>()),
+	name(convertLongName(std::move(name))) {
 }
 
 AddrFunction::AddrFunction(
@@ -80,7 +81,7 @@ AddrFunction::AddrFunction(
 ) :
 	uPtrReturnTypeInfo(std::make_unique<VoidType>()),
 	vecPtrAddrPara(std::move(vecPara)),
-	name(std::move(name)) {
+	name(convertLongName(std::move(name))) {
 }
 
 const TypeInfo & AddrFunction::getReturnTypeInfo() const {
@@ -166,7 +167,7 @@ AddrFunction::AddrFunction(
 	uPtrReturnTypeInfo(
 		com::dynamic_cast_uPtr<TypeInfo>(retType.cloneToUniquePtr())),
 	vecPtrAddrPara(std::move(vecPara)),
-	name(std::move(name)) {
+	name(convertLongName(std::move(name))) {
 }
 
 AddrFunction::AddrFunction(
@@ -174,7 +175,7 @@ AddrFunction::AddrFunction(
 ) :
 	uPtrReturnTypeInfo(
 		com::dynamic_cast_uPtr<TypeInfo>(retType.cloneToUniquePtr())),
-	name(std::move(name)) {
+	name(convertLongName(std::move(name))) {
 }
 
 std::unique_ptr<moeconcept::Cutable> AddrFunction::_cutToUniquePtr() {
@@ -193,7 +194,7 @@ AddrVariable::AddrVariable(
 	const TypeInfo & typeInfo, std::string name
 ) :
 	AddrOperand(typeInfo),
-	name(std::move(name)) {
+	name(convertLongName(std::move(name))) {
 }
 
 std::unique_ptr<moeconcept::Cloneable>
@@ -238,7 +239,7 @@ AddrGlobalVariable::AddrGlobalVariable(
 ) :
 	AddrVariable(
 		PointerType(typeInfo),
-		std::move(name)
+		convertLongName(std::move(name))
 	),
 	uPtrStaticValue(
 		com::dynamic_cast_uPtr<StaticValue>(
@@ -258,7 +259,7 @@ AddrGlobalVariable::AddrGlobalVariable(
 ) :
 	AddrVariable(
 		PointerType(typeInfo),
-		std::move(name)
+		convertLongName(std::move(name))
 	),
 	uPtrStaticValue(
 		zeroExtensionValueOfType(typeInfo)
@@ -279,7 +280,7 @@ AddrGlobalVariable::_cloneToUniquePtr() const {
 }
 
 std::string AddrGlobalVariable::toLLVMIR() const {
-	return "@G" + to_string(id) + "." + name;
+	return "@G" + to_string(id) + (name.empty() ? "" : "." + name);
 }
 
 std::string AddrGlobalVariable::toDeclIR() const {
@@ -363,12 +364,13 @@ AddrOperand::AddrOperand(std::unique_ptr<sup::TypeInfo> && uPtrTypeInfo) :
 AddrLocalVariable::AddrLocalVariable(
 	const TypeInfo & typeInfo, std::string name
 ) :
-	AddrVariable(PointerType(typeInfo), std::move(name)),
+	AddrVariable(PointerType(typeInfo), convertLongName(std::move(name))),
 	isConst(false), uPtrStaticValue(nullptr) {
 }
 
 std::string AddrLocalVariable::toLLVMIR() const {
-	return "%V" + to_string(id) + "." + name + (isConstVar() ? ".C" : "");
+	return "%V" + to_string(id) + (name.empty() ? "" : "." + name) +
+		(isConstVar() ? ".C" : "");
 }
 
 AddrLocalVariable::AddrLocalVariable(const AddrLocalVariable & addr) :
@@ -380,7 +382,7 @@ AddrLocalVariable::AddrLocalVariable(const AddrLocalVariable & addr) :
 AddrLocalVariable::AddrLocalVariable(
 	const TypeInfo & typeInfo, std::string name, const StaticValue & staticValue
 ) :
-	AddrVariable(PointerType(typeInfo), std::move(name)),
+	AddrVariable(PointerType(typeInfo), convertLongName(std::move(name))),
 	isConst(true),
 	uPtrStaticValue(
 		com::dynamic_cast_uPtr<StaticValue>(staticValue.cloneToUniquePtr())
@@ -389,6 +391,14 @@ AddrLocalVariable::AddrLocalVariable(
 
 const sup::StaticValue & AddrLocalVariable::getStaticValue() const {
 	return *uPtrStaticValue;
+}
+
+std::string convertLongName(std::string name) {
+	if (name.length() > 50) {
+		return "";
+	} else {
+		return name;
+	}
 }
 
 }

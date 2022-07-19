@@ -342,5 +342,8 @@ class AddrFunction :
 	 */
 	std::string declLLVMIR() const;
 };
+
+std::string convertLongName(std::string name);
+
 }
 

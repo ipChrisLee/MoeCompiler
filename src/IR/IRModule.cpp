@@ -461,7 +461,7 @@ std::list<ircode::IRInstr *> genUnaryOperationInstrs(
 		case Type::Float_t: {
 			com::Assert(typeR == Type::Float_t, "", CODEPOS);
 			auto * pZeroAddr = ir.addrPool.emplace_back(
-				ircode::AddrStaticValue(IntStaticValue(0))
+				ircode::AddrStaticValue(FloatStaticValue(0))
 			);
 			auto instrs = std::list<ircode::IRInstr *>();
 			if (op == "+") {
