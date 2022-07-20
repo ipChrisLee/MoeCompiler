@@ -74,4 +74,6 @@ extern Options options;
 
 extern const char * llvmHeader;
 
+std::string preprocessOnSource(std::istream & is);
+
 }

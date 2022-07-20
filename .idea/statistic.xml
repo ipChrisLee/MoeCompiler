@@ -3,5 +3,18 @@
   <component name="Statistic">
     <option name="fileTypes" value="class;svn-base;svn-work;Extra;gif;png;jpg;jpeg;bmp;tga;tiff;ear;war;zip;jar;iml;iws;ipr;bz2;gz;pyc;a;" />
     <option name="excludeDotArtifactDirectory" value="true" />
+    <option name="excludedDirectories">
+      <list>
+        <option value="$PROJECT_DIR$/cmake-build-release" />
+        <option value="$PROJECT_DIR$/notebooks" />
+        <option value="$PROJECT_DIR$/cmake-build-debug" />
+        <option value="$PROJECT_DIR$/support" />
+        <option value="$PROJECT_DIR$/testcases" />
+        <option value="$PROJECT_DIR$/testDir" />
+        <option value="$PROJECT_DIR$/src/frontend/SysAntlr" />
+        <option value="$PROJECT_DIR$/src/third_party" />
+        <option value="$PROJECT_DIR$/src/third_party" />
+      </list>
+    </option>
   </component>
 </project>

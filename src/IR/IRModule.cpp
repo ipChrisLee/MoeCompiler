@@ -23,7 +23,7 @@ const std::vector<AddrGlobalVariable *> & IRAddrPool::getGlobalVars() const {
 }
 
 std::string IRModule::toLLVMIR() const {
-	std::string res = addrPool.toLLVMIR();
+	auto res = SysY::llvmHeader + addrPool.toLLVMIR();
 	for (auto * funcDecl: funcPool) {
 		res += funcDecl->toLLVMIR();
 	}
@@ -162,6 +162,34 @@ std::vector<AddrFunction *> IRModule::generateSysYDecl() {
 			sysyFuncs.emplace_back(
 				addrPool.emplace_back(
 					AddrFunction("putfarray", std::move(arg))
+				)
+			);
+		}
+		//  _sysy_starttime(int lineno)
+		{
+			auto arg = std::vector<AddrPara *>();
+			arg.emplace_back(
+				addrPool.emplace_back(
+					AddrPara(sup::IntType(), "lineno")
+				)
+			);
+			sysyFuncs.emplace_back(
+				addrPool.emplace_back(
+					AddrFunction("_sysy_starttime", std::move(arg))
+				)
+			);
+		}
+		//  _sysy_stoptime(int lineno)
+		{
+			auto arg = std::vector<AddrPara *>();
+			arg.emplace_back(
+				addrPool.emplace_back(
+					AddrPara(sup::IntType(), "lineno")
+				)
+			);
+			sysyFuncs.emplace_back(
+				addrPool.emplace_back(
+					AddrFunction("_sysy_stoptime", std::move(arg))
 				)
 			);
 		}

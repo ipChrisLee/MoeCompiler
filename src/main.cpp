@@ -18,7 +18,7 @@ int Main(int argc, char ** argv) {
 		com::Throw("You should specify input file path.");
 	}
 	SysY::parseArgs(argc, argv);
-	antlr4::ANTLRInputStream input(SysY::source);
+	antlr4::ANTLRInputStream input(SysY::preprocessOnSource(SysY::source));
 	SysYLexer lexer(&input);
 	antlr4::CommonTokenStream tokens(&lexer);
 	SysYParser parser(&tokens);

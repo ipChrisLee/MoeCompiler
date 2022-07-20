@@ -59,8 +59,17 @@ Just like `cp` command.
 ## Tool installation
 
 ```shell
+sudo apt-get update
 sudo apt-get install gcc-7
 sudo apt-get install vim
+sudo apt-get install file
+sudo apt-get install pip
+```
+
+## Python Environment
+
+```shell
+pip install argparse
 ```
 
 

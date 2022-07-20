@@ -3,7 +3,7 @@ syBaseFilePath="testDir/testSyFile/test"
 
 set -x
 clang -Xclang -disable-O0-optnone -O0 -S -x c -emit-llvm \
-  -target armv7m-unknown-unknown-unknown \
+  -target armv7a-unknown-unknown-unknown \
   -fno-discard-value-names \
   $syBaseFilePath".sy" -o $syBaseFilePath".ll" || touch $syBaseFilePath".ll"
 
@@ -12,4 +12,5 @@ opt -S $syBaseFilePath".ll" -o $syBaseFilePath".m2r.ll" -debug-pass=Executions \
 
 #opt -S $syBaseFilePath".ll" -o $syBaseFilePath".O2.ll" -debug-pass=Arguments -O2
 
-llc $syBaseFilePath".ll" -o $syBaseFilePath".s"
+llc --float-abi=hard \
+  $syBaseFilePath".ll" -o $syBaseFilePath".s"

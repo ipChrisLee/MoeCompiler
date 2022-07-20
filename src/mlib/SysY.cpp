@@ -2,6 +2,7 @@
 // Created by lee on 6/13/22.
 //
 
+#include <regex>
 #include <getopt.h>
 
 #include "SysY.hpp"
@@ -107,4 +108,27 @@ void parseArgs(int argc, char ** argv) {
 const char * llvmHeader =
 	"target datalayout = \"e-m:e-p:32:32-Fi8-i64:64-v128:64:128-a:0:32-n32-S64\"\n"\
     "target triple = \"thumbv7m-unknown-unknown-unknown\"\n";
+
+std::string preprocessOnSource(std::istream & is) {
+	auto buf = std::string();
+	auto res = std::string();
+	auto lineno = 0;
+	while (getline(is, buf)) {
+		++lineno;
+		//  replace starttime() with _sysy_starttime(__LINE__)
+		{
+			auto e = std::regex("starttime\\(\\)");
+			auto replaceWith = "_sysy_starttime(" + to_string(lineno) + ")";
+			buf = std::regex_replace(buf, e, replaceWith);
+		}
+		//  replace stoptime() with _sysy_stoptime(__LINE__)
+		{
+			auto e = std::regex("stoptime\\(\\)");
+			auto replaceWith = "_sysy_stoptime(" + to_string(lineno) + ")";
+			buf = std::regex_replace(buf, e, replaceWith);
+		}
+		res += buf;
+	}
+	return res;
+}
 }
