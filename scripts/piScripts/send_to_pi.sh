@@ -1,6 +1,5 @@
 #!/bin/bash
-files="test.py"
-pi="pi@192.168.0.101"
-projInPi="~/Proj/MoeCompiler"
+source ./scripts/shScripts/settings.sh
+files="scripts/piScripts/test.py"
 
-scp -r ${files} ${pi}:${projInPi}
+scp -r "${files}" "${pi}":"${projPathOnPi}"

@@ -6,8 +6,5 @@ build/
 cmake-build-debug/
 cmake-build-release/
 
-# test files
-testDir/**
-
 # log files
 *.log

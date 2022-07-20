@@ -1,5 +1,5 @@
-syBaseFilePath="testDir/testSyFile/test"
-moe="cmake-build-debug/compiler"
+#!/bin/bash
+source ./scripts/shScripts/settings.sh
 
 ${moe} ${syBaseFilePath}".sy" -S -o ${syBaseFilePath}".mll" --emit-llvm
 
