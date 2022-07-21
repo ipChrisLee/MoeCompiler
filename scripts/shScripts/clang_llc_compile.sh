@@ -1,7 +1,6 @@
 #!/bin/bash
 source ./scripts/shScripts/settings.sh
 
-set -x
 clang -Xclang -disable-O0-optnone -O0 -S -x c -emit-llvm \
 	-include support/syLibFiles/sylib.h \
 	-target armv7a-unknown-linux-gnueabihf -march=armv7-a \

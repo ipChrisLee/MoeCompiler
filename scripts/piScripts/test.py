@@ -118,16 +118,18 @@ def perf_test_main():
 		finish_and_dump_json(
 			return_code=runMain.returncode & 0xFF,
 			info='Program Exit with return code not equal to zero.[performance test]',
-			message=runMain.stderr
+			message=runMain.stderr.decode('utf-8')
 		)
 	
 	if not diff_test_pass(syAnsPath, bufferFilePath):
 		return finish_and_dump_json(
-			return_code=0xFF, info='Performance test failed!', message=''
+			return_code=0xFF, info='Performance test failed!',
+			message=runMain.stderr.decode('utf-8')
 		)
 	else:
 		return finish_and_dump_json(
-			return_code=0, info='Performance test passed!', message=''
+			return_code=0, info='Performance test passed!',
+			message=runMain.stderr.decode('utf-8')
 		)
 
 
