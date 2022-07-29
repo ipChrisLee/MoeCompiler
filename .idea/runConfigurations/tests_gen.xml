@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="run_test" type="PythonConfigurationType" factoryName="Python" editBeforeRun="true" nameIsGenerated="true">
+  <configuration default="false" name="tests_gen" type="PythonConfigurationType" factoryName="Python" editBeforeRun="true">
     <module name="moe" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
@@ -11,8 +11,8 @@
     <option name="IS_MODULE_SDK" value="false" />
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
-    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/scripts/pyScript/run_test.py" />
-    <option name="PARAMETERS" value="--list --copy_failed_test_sy --verbose_of_terminal --test test_frontend_on_running" />
+    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/scripts/pyScript/tests_gen.py" />
+    <option name="PARAMETERS" value="--llvm" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />

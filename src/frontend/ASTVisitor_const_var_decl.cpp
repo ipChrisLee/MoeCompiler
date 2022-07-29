@@ -20,7 +20,8 @@ antlrcpp::Any ASTVisitor::visitConstDecl(SysYParser::ConstDeclContext * ctx) {
 		for (auto son: ctx->constDef()) {
 			son->accept(this);
 			instrsRes.splice(
-				instrsRes.end(), retInstrs.restore<std::list<ircode::IRInstr *>>()
+				instrsRes.end(),
+				retInstrs.restore < std::list < ircode::IRInstr * >> ()
 			);
 		}
 		retInstrs.save(std::move(instrsRes));
@@ -37,7 +38,7 @@ antlrcpp::Any ASTVisitor::visitConstDef(SysYParser::ConstDefContext * ctx) {
 		auto ret = std::vector<int>();
 		for (auto son: ctx->constExp()) {
 			son->accept(this);
-			auto len = retVal.restore<std::unique_ptr<StaticValue>>();
+			auto len = retVal.restore < std::unique_ptr < StaticValue >> ();
 			ret.push_back(
 				com::dynamic_cast_uPtr_get<IntStaticValue>(len)->value
 			);
@@ -51,7 +52,7 @@ antlrcpp::Any ASTVisitor::visitConstDef(SysYParser::ConstDefContext * ctx) {
 	//  Get init val by visiting `constInitVal`.
 	setWithAutoRestorer(info.var.idxView, IdxView(info.var.shapeOfDefiningVar));
 	setWithAutoRestorer(info.var.ndim, -1);
-	setWithAutoRestorer(info.var.staticArrayItems, {});
+	setWithAutoRestorer(info.var.staticArrayItems, { });
 	ctx->constInitVal()->accept(this);
 	//  Create addr of static var.
 	auto pSV = fromArrayItemsToStaticValue(
@@ -100,7 +101,7 @@ ASTVisitor::visitScalarConstInitVal(SysYParser::ScalarConstInitValContext * ctx)
 	// constInitVal -> constExp # scalarConstInitVal
 	ctx->constExp()->accept(this);
 	info.var.staticArrayItems.emplace_back(
-		info.var.idxView.idx, retVal.restore<std::unique_ptr<StaticValue>>()
+		info.var.idxView.idx, retVal.restore < std::unique_ptr < StaticValue >> ()
 	);
 	if (info.var.definingArray()) {
 		info.var.idxView.addOnDimN(-1, 1);
@@ -110,15 +111,23 @@ ASTVisitor::visitScalarConstInitVal(SysYParser::ScalarConstInitValContext * ctx)
 
 antlrcpp::Any
 ASTVisitor::visitListConstInitVal(SysYParser::ListConstInitValContext * ctx) {
-	// constInitVal -> '{' (constInitVal (',' constInitVal)* )? '}' # listConstInitVal
+	// constInitVal -> '{' (constInitVal (',)* )? '}' # listConstInitVal
+	auto added = false;
 	info.var.idxView.set0AfterNDim(info.var.ndim);
 	++info.var.ndim;
 	//  visiting elements index on `ndim`
-	for (auto p: ctx->constInitVal()) { p->accept(this); }
+	for (auto p: ctx->constInitVal()) {
+		p->accept(this);
+		added = true;
+	}
 	--info.var.ndim;
-	if (info.var.ndim != -1) {
-		info.var.idxView.addOnDimN(info.var.ndim, 1);
-		info.var.idxView.set0AfterNDim(info.var.ndim);
+	while (!info.var.idxView.isAll0AfterNDim(info.var.ndim) || !added) {
+		info.var.staticArrayItems.emplace_back(
+			info.var.idxView.idx,
+			zeroExtensionValueOfType(*bTypeToTypeInfoUPtr(info.var.btype))
+		);
+		info.var.idxView.addOnDimN(-1, 1);
+		added = true;
 	}
 	return nullptr;
 }

@@ -345,5 +345,7 @@ class AddrFunction :
 
 std::string convertLongName(std::string name);
 
+extern const char * llvmSyFunctionAttr;
+extern const char * llvmSyLibFunctionAttr;
 }
 

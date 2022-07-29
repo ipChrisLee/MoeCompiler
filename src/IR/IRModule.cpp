@@ -3,6 +3,7 @@
 //
 
 #include "IRModule.hpp"
+#include "IR/IRAddr.hpp"
 
 
 namespace ircode {
@@ -27,6 +28,8 @@ std::string IRModule::toLLVMIR() const {
 	for (auto * funcDecl: funcPool) {
 		res += funcDecl->toLLVMIR();
 	}
+	res += llvmSyFunctionAttr;
+	res += llvmSyLibFunctionAttr;
 	return res;
 }
 
@@ -71,7 +74,7 @@ std::vector<AddrFunction *> IRModule::generateSysYDecl() {
 				AddrFunction("getfloat", sup::FloatType())
 			)
 		);
-		//  int getfarray(int [])
+		//  int getfarray(float [])
 		{
 			auto arg = std::vector<AddrPara *>();
 			arg.emplace_back(
@@ -81,7 +84,7 @@ std::vector<AddrFunction *> IRModule::generateSysYDecl() {
 			);
 			sysyFuncs.emplace_back(
 				addrPool.emplace_back(
-					AddrFunction("getfarray", std::move(arg), sup::FloatType())
+					AddrFunction("getfarray", std::move(arg), sup::IntType())
 				)
 			);
 		}
@@ -443,7 +446,7 @@ std::list<ircode::IRInstr *> genUnaryOperationInstrs(
 					case Type::Int_t: {
 						instrsRes.emplace_back(
 							ir.instrPool.emplace_back(
-								ircode::InstrICmp(opD, opR, ICMP::NE, pZero)
+								ircode::InstrICmp(opD, opR, ICMP::EQ, pZero)
 							)
 						);
 						break;
@@ -451,7 +454,7 @@ std::list<ircode::IRInstr *> genUnaryOperationInstrs(
 					case Type::Float_t: {
 						instrsRes.emplace_back(
 							ir.instrPool.emplace_back(
-								ircode::InstrFCmp(opD, opR, FCMP::UNE, pZero)
+								ircode::InstrFCmp(opD, opR, FCMP::OEQ, pZero)
 							)
 						);
 						break;

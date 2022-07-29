@@ -23,7 +23,15 @@ void IdxView::addOnDimN(int n, int a) {
 	if (n < 0) {
 		n = int(shape.size()) + n;
 	}
-	idx[n] += a;
+	for (int i = n; i >= 0; --i) {
+		idx[i] += a;
+		if (idx[i] >= shape[i]) {
+			a = idx[i] / shape[i];
+			idx[i] = idx[i] % shape[i];
+		} else {
+			break;
+		}
+	}
 }
 
 void IdxView::set0AfterNDim(int n) {
@@ -56,6 +64,15 @@ std::string IdxView::idxToStr() const {
 		idx.begin(), idx.end(), [&_](int x) { _ += to_string(x); }
 	);
 	return _;
+}
+
+bool IdxView::isAll0AfterNDim(int n) {
+	for (int i = n + 1; i < int(idx.size()); ++i) {
+		if (idx[i] != 0) {
+			return false;
+		}
+	}
+	return true;
 }
 
 std::list<ircode::IRInstr *> fromArrayItemsToInstrs(

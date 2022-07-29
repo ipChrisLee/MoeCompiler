@@ -107,7 +107,7 @@ void parseArgs(int argc, char ** argv) {
 
 const char * llvmHeader =
 	"target datalayout = \"e-m:e-p:32:32-Fi8-i64:64-v128:64:128-a:0:32-n32-S64\"\n"\
-    "target triple = \"thumbv7m-unknown-unknown-unknown\"\n";
+    "target triple = \"armv7-unknown-linux-gnueabihf\"\n";
 
 std::string preprocessOnSource(std::istream & is) {
 	auto buf = std::string();
@@ -127,7 +127,7 @@ std::string preprocessOnSource(std::istream & is) {
 			auto replaceWith = "_sysy_stoptime(" + to_string(lineno) + ")";
 			buf = std::regex_replace(buf, e, replaceWith);
 		}
-		res += buf;
+		res += buf + "\n";
 	}
 	return res;
 }

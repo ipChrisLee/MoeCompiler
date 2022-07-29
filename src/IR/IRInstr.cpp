@@ -323,7 +323,8 @@ std::string InstrCall::toLLVMIR() const {
 	if (retAddr) {
 		res += retAddr->toLLVMIR() + " = "; // %call = call arm_aapcscc
 	}
-	res += "call arm_aapcscc ";
+	res += "call ";
+//	res += "arm_aapcscc ";
 	res += func->getReturnTypeInfo().toLLVMIR() + " " + func->toLLVMIR() + "(";
 	for (auto pParaAddrToPass: paramsPassing) {
 		res += pParaAddrToPass->getType().toLLVMIR() + " " +

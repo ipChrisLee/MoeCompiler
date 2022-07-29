@@ -139,16 +139,26 @@ ASTVisitor::visitScalarInitVal(SysYParser::ScalarInitValContext * ctx) {
 
 antlrcpp::Any ASTVisitor::visitListInitval(SysYParser::ListInitvalContext * ctx) {
 	// initVal -> '{' (initVal (',' initVal)* )? '}' # listInitval
+	auto added = false;
 	info.var.idxView.set0AfterNDim(info.var.ndim);
 	++info.var.ndim;
 	//  visiting elements index on `ndim`
-	for (auto p: ctx->initVal()) { p->accept(this); }
-	--info.var.ndim;
-	if (info.var.ndim != -1) {
-		info.var.idxView.addOnDimN(info.var.ndim, 1);
-		info.var.idxView.set0AfterNDim(info.var.ndim);
+	for (auto p: ctx->initVal()) {
+		p->accept(this);
+		added = true;
 	}
-	// TODO?
+	--info.var.ndim;
+	while (!info.var.idxView.isAll0AfterNDim(info.var.ndim) || !added) {
+		auto upTypeInfo = bTypeToTypeInfoUPtr(info.var.btype);
+		auto * pZero = ir.addrPool.emplace_back(
+			ircode::AddrStaticValue(*upTypeInfo)
+		);
+		info.var.localArrayItems.emplace_back(
+			info.var.idxView.idx, pZero, std::list<ircode::IRInstr *>()
+		);
+		info.var.idxView.addOnDimN(-1, 1);
+		added = true;
+	}
 	return nullptr;
 }
 

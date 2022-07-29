@@ -27,6 +27,8 @@ struct IdxView {
 
 	void set0AfterNDim(int n);
 
+	bool isAll0AfterNDim(int n);
+
 	int getPos() const;
 
 	int getStride() const;

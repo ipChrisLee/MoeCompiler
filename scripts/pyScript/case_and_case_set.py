@@ -1,8 +1,9 @@
 from os import walk
 from pathlib import Path
 from enum import Enum
-import typing
-from settings import nullDev
+import typing as typ
+from settings import nullDev, emptyTextFilePath, TestFilesSettings
+from Bash import Bash
 
 
 class TestType(Enum):
@@ -12,19 +13,24 @@ class TestType(Enum):
 
 
 class TestCase:
+	info: typ.Dict[str, str] = dict()
 	"""
 	What to return after action? : (exit_code,syFilePath)
 	"""
 	
 	def __init__(
-			self,
-			testName: str,
-			syFilePath: str, inFilePath: str, outFilePath: str,
-			year: int, testType: TestType
+		self,
+		testName: str,
+		syFilePath: str, inFilePath: str, outFilePath: str,
+		year: int, testType: TestType
 	):
 		self.testName: str = testName
 		self.syFilePath: str = syFilePath
+		if not Path(inFilePath).exists():
+			inFilePath = emptyTextFilePath
 		self.inFilePath: str = inFilePath
+		if not Path(outFilePath).exists():
+			outFilePath = emptyTextFilePath
 		self.outFilePath: str = outFilePath
 		self.year: int = year
 		self.testType: TestType = testType
@@ -40,19 +46,36 @@ class TestCase:
 		if isinstance(other, TestCase):
 			return hash(self) == hash(other)
 		return False
+	
+	def copy_to_test_files(self):
+		Bash.file_copy(
+			srcFilePath=self.syFilePath,
+			dstFilePath=TestFilesSettings.FilePath.testSy
+		)
+		Bash.file_copy(
+			srcFilePath=self.inFilePath,
+			dstFilePath=TestFilesSettings.FilePath.testIn
+		)
+		Bash.file_copy(
+			srcFilePath=self.outFilePath,
+			dstFilePath=TestFilesSettings.FilePath.testOut
+		)
 
 
 class TestCaseSet:
-	def __init__(self, caseSet: typing.Set[TestCase], setName: str):
+	def __init__(self, caseSet: typ.Set[TestCase], setName: str):
 		self.caseSet = caseSet
 		self.setName = setName
 
 
 def load_testcases_under_folder_path(
-		fPath: str, year: int, testType: TestType) -> set:
+	fPath: str, year: int, testType: TestType
+) -> set:
 	res = set()
 	for (path, folders, files) in walk(fPath):
 		for file in files:
+			if not Path(file).suffix == '.sy':
+				continue
 			testName = Path(file).stem
 			thisCase = TestCase(
 				testName,

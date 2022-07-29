@@ -6,7 +6,18 @@
 
 using namespace sup;
 
+
 namespace ircode {
+const char * llvmSyFunctionAttr =
+	"attributes #0 = { noinline nounwind optnone \"disable-tail-calls\"=\"false\" \"frame-pointer\"=\"all\" \"less-precise-fpmad\"=\"false\" \"min-legal-vector-width\"=\"0\" \"no-infs-fp-math\"=\"false\" \"no-jump-tables\"=\"false\" \"no-nans-fp-math\"=\"false\" \"no-signed-zeros-fp-math\"=\"false\" \"no-trapping-math\"=\"true\" \"stack-protector-buffer-size\"=\"8\" \"target-cpu\"=\"generic\" \"target-features\"=\"+armv7-a,+dsp,+fp64,+vfp2,+vfp2sp,+vfp3d16,+vfp3d16sp,-thumb-mode\" \"unsafe-fp-math\"=\"false\" \"use-soft-float\"=\"false\" }\n";
+
+const char * llvmSyLibFunctionAttr =
+	"attributes #1 = { \"disable-tail-calls\"=\"false\" \"frame-pointer\"=\"all\" \"less-precise-fpmad\"=\"false\" \"no-infs-fp-math\"=\"false\" \"no-nans-fp-math\"=\"false\" \"no-signed-zeros-fp-math\"=\"false\" \"no-trapping-math\"=\"true\" \"stack-protector-buffer-size\"=\"8\" \"target-cpu\"=\"generic\" \"target-features\"=\"+armv7-a,+dsp,+fp64,+vfp2,+vfp2sp,+vfp3d16,+vfp3d16sp,-thumb-mode\" \"unsafe-fp-math\"=\"false\" \"use-soft-float\"=\"false\" }\n";
+
+static const char * moeLLVMSyFunctionAttr[2] = {
+	"#0",   //  not just declare
+	"#1"    //  just declare
+};
 
 int IRAddr::cnt = 0;
 
@@ -99,13 +110,21 @@ std::string AddrFunction::toLLVMIR() const {
 			res = "bitcast (" + uPtrReturnTypeInfo->toLLVMIR() + " (...)* @" + name +
 				" to " + uPtrReturnTypeInfo->toLLVMIR() + " ()*)";
 		} else {
-			res = "@F." + name;
+			if (name == "main") {
+				res = name;
+			} else {
+				res = "@F." + name;
+			}
 		}
 	} else {
 		if (justDeclare) {
 			res = "@" + name;
 		} else {
-			res = "@F." + name;
+			if (name == "main") {
+				res = name;
+			} else {
+				res = "@F." + name;
+			}
 		}
 	}
 	return res;
@@ -122,7 +141,11 @@ std::string AddrFunction::declLLVMIR() const {
 	if (justDeclare) {
 		res += " @" + name + "(";
 	} else {
-		res += " @F." + name + "(";
+		if (name == "main") {
+			res += " @" + name + "(";
+		} else {
+			res += " @F." + name + "(";
+		}
 	}
 	if (justDeclare) {
 		if (!vecPtrAddrPara.empty()) {
@@ -141,7 +164,7 @@ std::string AddrFunction::declLLVMIR() const {
 		res.pop_back();
 		res.pop_back();
 	}
-	res += ")";
+	res += ") " + std::string(moeLLVMSyFunctionAttr[justDeclare]);
 	return res;
 }
 
@@ -271,7 +294,7 @@ AddrGlobalVariable::AddrGlobalVariable(const AddrGlobalVariable & addr) :
 	AddrVariable(addr),
 	uPtrStaticValue(
 		com::dynamic_cast_uPtr<StaticValue>(addr.uPtrStaticValue->cloneToUniquePtr())
-	) {
+	), isConst(addr.isConst) {
 }
 
 std::unique_ptr<moeconcept::Cloneable>
