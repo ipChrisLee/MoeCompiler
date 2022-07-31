@@ -11,12 +11,12 @@ argParser = argparse.ArgumentParser(
 	add_help=True
 )
 
-argParser.add_argument(
-	'--release',
-	action='store_true',
-	dest='release',
-	help='Use release version of MoeCompiler.'
-)
+# argParser.add_argument(
+# 	'--release',
+# 	action='store_true',
+# 	dest='release',
+# 	help='Use release version of MoeCompiler.'
+# )
 argParser.add_argument(
 	'--moeOpti',
 	action='store',
@@ -43,6 +43,12 @@ argParser.add_argument(
 	dest='llvm_all',
 	help='Run llvm on all tests'
 )
+argParser.add_argument(
+	'--moe',
+	action='store_true',
+	dest='moe',
+	help='Just test moe.'
+)
 
 
 def test_frontend():
@@ -62,6 +68,28 @@ def test_frontend():
 		outFilePath=TestFilesSettings.FilePath.testOut,
 		resFilePath=TestFilesSettings.FilePath.testRes
 	)
+
+
+def test_moe():
+	Moe.compile(
+		syFilePath=TestFilesSettings.FilePath.testSy,
+		msFilePath=TestFilesSettings.FilePath.testMLL,
+		optiLevel=args.moeOpti, timeout=TimeoutSettings.moe, emit_llvm=True,
+		float_dec_format=True
+	).check_returncode()
+	Moe.compile(
+		syFilePath=TestFilesSettings.FilePath.testSy,
+		msFilePath=TestFilesSettings.FilePath.testMS,
+		optiLevel=args.moeOpti, timeout=TimeoutSettings.moe, emit_llvm=False,
+		float_dec_format=False
+	).check_returncode()
+	res = Pi.run_tester(
+		sFilePath=TestFilesSettings.FilePath.testMS,
+		inFilePath=TestFilesSettings.FilePath.testIn,
+		outFilePath=TestFilesSettings.FilePath.testOut,
+		resFilePath=TestFilesSettings.FilePath.testRes
+	)
+	print(f'Result : {res["test_status"]}')
 
 
 def test_llvm():
@@ -105,3 +133,5 @@ if __name__ == '__main__':
 		test_llvm()
 	elif args.llvm_all:
 		test_llvm_all()
+	elif args.moe:
+		test_moe()
