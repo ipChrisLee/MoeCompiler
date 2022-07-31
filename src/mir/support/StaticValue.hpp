@@ -6,8 +6,8 @@
 #include "moeconcept.hpp"
 
 #include "TypeInfo.hpp"
-#include "support/support-common.hpp"
-#include "support/TypeInfo.hpp"
+#include "SupportFunc.hpp"
+#include "TypeInfo.hpp"
 
 
 namespace sup {

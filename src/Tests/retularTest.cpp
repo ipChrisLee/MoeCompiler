@@ -10,7 +10,7 @@
 #include "gtest/gtest.h"
 #include "mdb.hpp"
 
-#include "support/StaticValue.hpp"
+#include "mir/support/StaticValue.hpp"
 
 std::variant<std::unique_ptr<ircode::StaticValue>> retval;
 

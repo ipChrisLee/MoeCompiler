@@ -8,7 +8,7 @@
 
 #include "common.hpp"
 
-#include "support/StaticValue.hpp"
+#include "mir/support/StaticValue.hpp"
 
 TEST(TestMLib, TestUnaryVariant) {
 	com::UnaryVariant<std::unique_ptr<int>, std::unique_ptr<float>> uv;

@@ -5,8 +5,8 @@
 #include <common.hpp>
 #include <utility>
 
-#include "IR/Instr.hpp"
-#include "IR/Module.hpp"
+#include "mir/Instr.hpp"
+#include "mir/Module.hpp"
 
 
 namespace frontend {

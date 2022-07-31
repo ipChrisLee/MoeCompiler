@@ -7,7 +7,7 @@
 #include "gtest/gtest.h"
 
 #include "common.hpp"
-#include "support/StaticValue.hpp"
+#include "mir/support/StaticValue.hpp"
 
 TEST(DynamicCastUPtrTest, test1) {
 	std::unique_ptr<ircode::StaticValue> up = std::make_unique<ircode::IntStaticValue>(

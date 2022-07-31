@@ -8,15 +8,15 @@
 #include <common.hpp>
 #include <antlr4-runtime.h>
 
-#include "IR/Addr.hpp"
-#include "IR/Instr.hpp"
-#include "IR/Module.hpp"
+#include "mir/Addr.hpp"
+#include "mir/Instr.hpp"
+#include "mir/Module.hpp"
 #include "frontend/SysAntlr/SysYParser.h"
 #include "frontend/SysAntlr/SysYBaseVisitor.h"
 #include "frontend/SysAntlr/SysYVisitor.h"
-#include "support/support-common.hpp"
-#include "support/TypeInfo.hpp"
-#include "support/StaticValue.hpp"
+#include "mir/support/SupportFunc.hpp"
+#include "mir/support/TypeInfo.hpp"
+#include "mir/support/StaticValue.hpp"
 #include "helper.hpp"
 
 

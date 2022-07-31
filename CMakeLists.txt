@@ -11,9 +11,11 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_GLIBCXX_DEBUG")
 file(GLOB_RECURSE cppFiles
 		"src/main.cpp"
 		"src/support/*.cpp"
-		"src/IR/*.cpp"
+		"src/mir/*.cpp"
 		"src/frontend/*.cpp"
-		"src/pass/*.cpp"
+		"src/mirpass/*.cpp"
+		"src/lir/*.cpp"
+		"src/lirpass/*.cpp"
 		)
 
 #   Include Paths

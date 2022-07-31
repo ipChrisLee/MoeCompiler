@@ -3,9 +3,9 @@
 #include <cmath>
 #include <numeric>
 
-#include <stlpro.hpp>
+#include "mlib/stlpro.hpp"
 
-#include "support/TypeInfo.hpp"
+#include "TypeInfo.hpp"
 
 
 namespace sup {

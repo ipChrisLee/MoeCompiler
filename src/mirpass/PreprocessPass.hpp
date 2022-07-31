@@ -6,17 +6,17 @@
 
 #include <unordered_map>
 
-#include "pass/pass-common.hpp"
-#include "IR/Instr.hpp"
+#include "Pass.hpp"
+#include "mir/Instr.hpp"
 
 
-namespace pass {
+namespace mir {
 
 /**
  * @brief Clear Continuous Jump Labels.
  * @example <tt>INSTRS;label_2:</tt> -> <tt>INSTRS;br label_2;label_2:</tt> (INSTRS not end with br)
  */
-class AddBrToNextBB : public IRPass {
+class AddBrToNextBB : public Pass {
   protected:
 	int run(std::list<mir::Instr *> & instrs);
 

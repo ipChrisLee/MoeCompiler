@@ -3,10 +3,10 @@
 #include <list>
 #include <span>
 
-#include "IR/Instr.hpp"
-#include "IR/Addr.hpp"
+#include "Instr.hpp"
+#include "Addr.hpp"
 
-#include "support/support-common.hpp"
+#include "mir/support/SupportFunc.hpp"
 
 
 namespace mir {

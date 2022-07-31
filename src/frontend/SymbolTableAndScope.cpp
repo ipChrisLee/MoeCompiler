@@ -8,7 +8,7 @@
 #include "common.hpp"
 
 #include "SymbolTableAndScope.hpp"
-#include "IR/Addr.hpp"
+#include "mir/Addr.hpp"
 
 
 namespace frontend {

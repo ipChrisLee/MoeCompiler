@@ -5,6 +5,7 @@
 
 #include "common.hpp"
 
+
 namespace STLPro {
 namespace vector {
 template<typename T>
@@ -73,4 +74,9 @@ void move_all_to_front(std::list<T> & ls, UnaryPredicate f) {
 }
 
 }
+}
+
+template<typename Iter>
+typename std::iterator_traits<Iter>::value_type & get(Iter & it) {
+	return *it;
 }

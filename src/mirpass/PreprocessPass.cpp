@@ -2,11 +2,11 @@
 // Created by lee on 7/18/22.
 //
 
-#include "preprocessPass.hpp"
+#include "PreprocessPass.hpp"
+#include "mlib/stlpro.hpp"
 
 
-namespace pass {
-using namespace mir;
+namespace mir {
 
 
 int AddBrToNextBB::run() {
@@ -19,21 +19,21 @@ int AddBrToNextBB::run() {
 	return 0;
 }
 
-AddBrToNextBB::AddBrToNextBB(mir::Module & ir, std::string name) :
-	IRPass(ir, std::move(name)) {
+AddBrToNextBB::AddBrToNextBB(Module & ir, std::string name) :
+	Pass(ir, std::move(name)) {
 }
 
-int AddBrToNextBB::run(std::list<mir::Instr *> & instrs) {
+int AddBrToNextBB::run(std::list<Instr *> & instrs) {
 	auto itPInstrNow = instrs.begin();
 	while (itPInstrNow != instrs.end()) {
 		auto itPInstrNxt = std::next(itPInstrNow);
 		if (itPInstrNxt != instrs.end() &&
-			!isTerminalInstr(g(itPInstrNow)->instrType) &&
-			g(itPInstrNxt)->instrType == InstrType::Label) {
+			!isTerminalInstr(get(itPInstrNow)->instrType) &&
+			get(itPInstrNxt)->instrType == InstrType::Label) {
 			instrs.emplace(
 				itPInstrNxt, ir.instrPool.emplace_back(
-					mir::InstrBr(
-						dynamic_cast<InstrLabel *>(g(itPInstrNxt))->pAddrLabel
+					InstrBr(
+						dynamic_cast<InstrLabel *>(get(itPInstrNxt))->pAddrLabel
 					)
 				)
 			);

@@ -10,7 +10,9 @@
 #include "frontend/SysAntlr/SysYParser.h"
 #include "frontend/SysAntlr/SysYLexer.h"
 #include "frontend/ASTVisitor.hpp"
-#include "pass/pass-common.hpp"
+#include "mirpass/Pass.hpp"
+#include "lir/Module.hpp"
+#include "lirpass/Pass.hpp"
 
 
 int Main(int argc, char ** argv) {
@@ -29,8 +31,9 @@ int Main(int argc, char ** argv) {
 	root->accept(&visitor);
 	ir.finishLoading();
 	if (!SysY::options.withoutAnyPass.get()) {
-		pass::passMain(ir);
+		mir::passMain(ir);
 	}
+
 	if (SysY::options.emitLLVM.get()) {
 		SysY::dest << ir.toLLVMIR() << std::endl;
 	} else if (SysY::options.emitLIR.get()) {

@@ -52,7 +52,8 @@ class CompileToLLVMIRAndUseLLC(ActionBasic):
 			msFilePath=bufferTextFilePath,
 			emit_llvm=True,
 			float_dec_format=False,
-			optiLevel=self.optiLevel
+			optiLevel=self.optiLevel,
+			emit_lir=False,
 		).check_returncode()
 		LLC.compile_llvmir(
 			llFilePath=bufferTextFilePath,
@@ -78,7 +79,8 @@ class CompileToLLVMIRAndUseLLCAndRunOnPi(ActionBasic):
 			msFilePath=bufferTextFilePath,
 			emit_llvm=True,
 			float_dec_format=False,
-			optiLevel=self.optiLevel
+			optiLevel=self.optiLevel,
+			emit_lir=False
 		).check_returncode()
 		LLC.compile_llvmir(
 			llFilePath=bufferTextFilePath,

@@ -8,8 +8,8 @@
 #include "common.hpp"
 #include "moeconcept.hpp"
 
-#include "IR/Addr.hpp"
-#include "support/support-common.hpp"
+#include "Addr.hpp"
+#include "mir/support/SupportFunc.hpp"
 
 
 namespace mir {

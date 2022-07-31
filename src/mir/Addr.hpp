@@ -9,8 +9,8 @@
 #include "mlib/moeconcept.hpp"
 #include "mlib/stlpro.hpp"
 
-#include "support/TypeInfo.hpp"
-#include "support/StaticValue.hpp"
+#include "mir/support/TypeInfo.hpp"
+#include "mir/support/StaticValue.hpp"
 #include "frontend/SymbolTableAndScope.hpp"
 
 

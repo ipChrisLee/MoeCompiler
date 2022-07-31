@@ -3,7 +3,7 @@
 //
 
 #include "Module.hpp"
-#include "IR/Addr.hpp"
+#include "Addr.hpp"
 
 
 namespace mir {

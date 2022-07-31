@@ -1,8 +1,8 @@
 #pragma once
 #include <string>
 
-#include <common.hpp>
-#include <SysY.hpp>
+#include "mlib/common.hpp"
+#include "mlib/SysY.hpp"
 
 namespace sup {
 struct LLVMable {
