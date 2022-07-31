@@ -2,18 +2,18 @@
 #include "mlib/mdb.hpp"
 #include <utility>
 
-#include "IRInstr.hpp"
+#include "Instr.hpp"
 
 
 using namespace sup;
-namespace ircode {
+namespace mir {
 
-int IRInstr::cnt = 0;
+int Instr::cnt = 0;
 
-IRInstr::IRInstr(const IRInstr & irInstr) :
+Instr::Instr(const Instr & irInstr) :
 	id(++cnt), instrType(irInstr.instrType) {
 	com::addRuntimeWarning(
-		"You should NOT call copy constructor of IRInstr.", CODEPOS
+		"You should NOT call copy constructor of Instr.", CODEPOS
 	);
 }
 
@@ -27,7 +27,7 @@ std::string InstrAlloca::toLLVMIR() const {
 }
 
 InstrAlloca::InstrAlloca(AddrVariable * allocaTo, const TypeInfo & typeToAlloca) :
-	IRInstr(InstrType::Alloca), allocaTo(allocaTo),
+	Instr(InstrType::Alloca), allocaTo(allocaTo),
 	uPtrTypeToAlloca(
 		com::dynamic_cast_uPtr<TypeInfo>(typeToAlloca.cloneToUniquePtr())
 	) {
@@ -38,7 +38,7 @@ InstrAlloca::InstrAlloca(AddrVariable * allocaTo, const TypeInfo & typeToAlloca)
 }
 
 InstrAlloca::InstrAlloca(const InstrAlloca & other) :
-	IRInstr(other), allocaTo(other.allocaTo),
+	Instr(other), allocaTo(other.allocaTo),
 	uPtrTypeToAlloca(
 		com::dynamic_cast_uPtr<TypeInfo>(other.uPtrTypeToAlloca->cloneToUniquePtr())
 	) {
@@ -49,7 +49,7 @@ std::unique_ptr<moeconcept::Cutable> InstrAlloca::_cutToUniquePtr() {
 }
 
 InstrAlloca::InstrAlloca(AddrVariable * allocaTo) :
-	IRInstr(InstrType::Alloca), allocaTo(allocaTo) {
+	Instr(InstrType::Alloca), allocaTo(allocaTo) {
 	try {
 		const auto
 			& type = dynamic_cast<const PointerType &>(allocaTo->getType());
@@ -73,7 +73,7 @@ std::unique_ptr<moeconcept::Cutable> InstrLabel::_cutToUniquePtr() {
 }
 
 InstrLabel::InstrLabel(AddrJumpLabel * pAddrLabel) :
-	IRInstr(InstrType::Label), pAddrLabel(pAddrLabel) {
+	Instr(InstrType::Label), pAddrLabel(pAddrLabel) {
 }
 
 // std::unique_ptr<moeconcept::Cloneable> InstrStore::_cloneToUniquePtr() const {
@@ -90,7 +90,7 @@ std::string InstrStore::toLLVMIR() const {
 }
 
 InstrStore::InstrStore(AddrOperand * from, AddrVariable * to) :
-	IRInstr(InstrType::Store), from(from), to(to) {
+	Instr(InstrType::Store), from(from), to(to) {
 	//  Like `*to=from` in C.
 	const auto & fromType = from->getType();
 	const auto & toType = dynamic_cast<const PointerType &>(to->getType());
@@ -102,7 +102,7 @@ InstrStore::InstrStore(AddrOperand * from, AddrVariable * to) :
 
 
 InstrRet::InstrRet(AddrOperand * pAddr) :
-	IRInstr(InstrType::Ret), retAddr(pAddr) {
+	Instr(InstrType::Ret), retAddr(pAddr) {
 	com::Assert(
 		retAddr == nullptr ||
 			com::enum_fun::in(
@@ -127,7 +127,7 @@ std::string InstrRet::toLLVMIR() const {
 InstrBinaryOp::InstrBinaryOp(
 	AddrOperand * left, AddrOperand * right, AddrVariable * res
 ) :
-	IRInstr(InstrType::BinaryOp), left(left), right(right), res(res) {
+	Instr(InstrType::BinaryOp), left(left), right(right), res(res) {
 	com::Assert(
 		left->getType() == right->getType() && right->getType() == res->getType(),
 		"Type of operand and result should be same!",
@@ -183,7 +183,7 @@ std::string InstrFAdd::toLLVMIR() const {
 InstrConversionOp::InstrConversionOp(
 	AddrOperand * from, AddrVariable * to, InstrType instrType
 ) :
-	IRInstr(instrType), from(from), to(to) {
+	Instr(instrType), from(from), to(to) {
 }
 
 std::unique_ptr<moeconcept::Cutable> InstrSitofp::_cutToUniquePtr() {
@@ -212,7 +212,7 @@ std::unique_ptr<moeconcept::Cutable> InstrLoad::_cutToUniquePtr() {
 }
 
 InstrLoad::InstrLoad(AddrVariable * from, AddrVariable * to) :
-	IRInstr(InstrType::Load), from(from), to(to) {
+	Instr(InstrType::Load), from(from), to(to) {
 	//  Like `to=*from` in C;
 	const auto & fromType = dynamic_cast<const PointerType &>(from->getType());
 	const auto & toType = to->getType();
@@ -239,7 +239,7 @@ std::string InstrBr::toLLVMIR() const {
 }
 
 InstrBr::InstrBr(AddrJumpLabel * pLabel) :
-	IRInstr(InstrType::Br),
+	Instr(InstrType::Br),
 	pCond(nullptr),
 	pLabelTrue(pLabel),
 	pLabelFalse(nullptr) {
@@ -249,7 +249,7 @@ InstrBr::InstrBr(AddrJumpLabel * pLabel) :
 InstrBr::InstrBr(
 	AddrOperand * pCond, AddrJumpLabel * pLabelTrue, AddrJumpLabel * pLabelFalse
 ) :
-	IRInstr(InstrType::Br),
+	Instr(InstrType::Br),
 	pCond(pCond), pLabelTrue(pLabelTrue), pLabelFalse(pLabelFalse) {
 	com::Assert(
 		pCond && pLabelTrue && pLabelFalse, "label and cond should not be nullptr",
@@ -342,7 +342,7 @@ InstrCall::InstrCall(
 	AddrFunction * func, std::vector<AddrOperand *> paramsToPass,
 	AddrVariable * retAddr
 ) :
-	IRInstr(InstrType::Call),
+	Instr(InstrType::Call),
 	func(func), paramsPassing(std::move(paramsToPass)), retAddr(retAddr) {
 	com::Assert(
 		int(func->getNumberOfParameter()) == int(paramsPassing.size()), "Same Size!",
@@ -425,7 +425,7 @@ std::string InstrSrem::toLLVMIR() const {
 InstrGetelementptr::InstrGetelementptr(
 	AddrVariable * to, AddrVariable * from, std::vector<AddrOperand *> _idxs
 ) :
-	IRInstr(InstrType::Getelementptr),
+	Instr(InstrType::Getelementptr),
 	to(to), from(from), idxs(std::move(_idxs)) {
 	try {
 		auto && _a = dynamic_cast<const PointerType &>(from->getType());
@@ -462,7 +462,7 @@ std::string InstrGetelementptr::toLLVMIR() const {
 InstrCompare::InstrCompare(
 	AddrVariable * dest, AddrOperand * leftOp, AddrOperand * rightOp,
 	InstrType instrType
-) : IRInstr(instrType),
+) : Instr(instrType),
     dest(dest), leftOp(leftOp), rightOp(rightOp) {
 	com::Assert(
 		leftOp->getType() == rightOp->getType(),

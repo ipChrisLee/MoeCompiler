@@ -6,8 +6,8 @@
 #include <vector>
 
 
-namespace ircode {
-class IRAddr;
+namespace mir {
+class Addr;
 }
 
 namespace frontend {
@@ -25,7 +25,7 @@ enum class IdType {
 
 class Scope {
   protected:
-	std::map<std::string, std::tuple<IdType, ircode::IRAddr *>> addrMap;
+	std::map<std::string, std::tuple<IdType, mir::Addr *>> addrMap;
 	Scope * const father;
 	std::vector<std::unique_ptr<Scope>> sons;
 	static int cnt;
@@ -41,11 +41,11 @@ class Scope {
 	[[nodiscard]] Scope * getFather() const;
 
 	void bindDominateVar(
-		const std::string & str, IdType idType, ircode::IRAddr * addrVar
+		const std::string & str, IdType idType, mir::Addr * addrVar
 	);
 
-	//  Find the IRAddr* of varname. Return <IdType::Error,nullptr> if not found.
-	[[nodiscard]] std::tuple<IdType, ircode::IRAddr *>
+	//  Find the Addr* of varname. Return <IdType::Error,nullptr> if not found.
+	[[nodiscard]] std::tuple<IdType, mir::Addr *>
 	findIdDownToRoot(const std::string & varname) const;
 };
 

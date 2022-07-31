@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include "IR/IRModule.hpp"
-#include "IR/IRInstr.hpp"
+#include "IR/Module.hpp"
+#include "IR/Instr.hpp"
 
 #include <string>
 #include <set>
@@ -16,10 +16,10 @@ class IRPass {
   protected:
 
   public:
-	ircode::IRModule & ir;
+	mir::Module & ir;
 	std::string name;
 
-	explicit IRPass(ircode::IRModule & ir, std::string name = "");
+	explicit IRPass(mir::Module & ir, std::string name = "");
 
 	virtual int run() = 0;
 
@@ -27,7 +27,7 @@ class IRPass {
 
 };
 
-int passMain(ircode::IRModule & ir);
+int passMain(mir::Module & ir);
 
 template<typename Iter>
 typename std::iterator_traits<Iter>::value_type & g(Iter & it) {

@@ -8,17 +8,17 @@
 
 #include "gtest/gtest.h"
 
-#include "frontend/frontendHeader.hpp"
+#include "frontend/helper.hpp"
 
 TEST(test_stringToInt, minV) {
 	int32_t imn = -(int32_t(0x80000000));
 	EXPECT_EQ(imn, -imn);
 	
 	std::vector<int>vec={
-		ircode::literalToInt("2147483648"),
-		-ircode::literalToInt("2147483648"),
-		ircode::literalToInt("0x80000000"),
-		ircode::literalToInt("020000000000"),
+		mir::literalToInt("2147483648"),
+		-mir::literalToInt("2147483648"),
+		mir::literalToInt("0x80000000"),
+		mir::literalToInt("020000000000"),
 	};
 	for(auto x:vec){
 		EXPECT_EQ(x,imn);

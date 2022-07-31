@@ -4,7 +4,7 @@
 #include <SysY.hpp>
 #include <stlpro.hpp>
 
-#include "frontend/frontendHeader.hpp"
+#include "frontend/helper.hpp"
 
 
 //  conversion between literal and btype
@@ -75,11 +75,11 @@ bool IdxView::isAll0AfterNDim(int n) {
 	return true;
 }
 
-std::list<ircode::IRInstr *> fromArrayItemsToInstrs(
-	ircode::IRModule & ir,
-	std::vector<ArrayItem<ircode::AddrOperand *>> && items,
+std::list<mir::Instr *> fromArrayItemsToInstrs(
+	mir::Module & ir,
+	std::vector<ArrayItem<mir::AddrOperand *>> && items,
 	const std::vector<int> & shape,
-	ircode::AddrVariable * varMemBaseAddr,
+	mir::AddrVariable * varMemBaseAddr,
 	const TypeInfo & typeOfElement
 ) {
 	if (shape.empty()) {
@@ -96,23 +96,23 @@ std::list<ircode::IRInstr *> fromArrayItemsToInstrs(
 		instrs.splice(instrs.end(), std::move(convertInstrs));
 		instrs.emplace_back(
 			ir.instrPool.emplace_back(
-				ircode::InstrStore(pConversionAddr, varMemBaseAddr)
+				mir::InstrStore(pConversionAddr, varMemBaseAddr)
 			)
 		);
 		return instrs;
 	}
-	auto instrsRes = std::list<ircode::IRInstr *>();
+	auto instrsRes = std::list<mir::Instr *>();
 	auto pBegin = ir.addrPool.emplace_back(
-		ircode::AddrVariable(
+		mir::AddrVariable(
 			PointerType(typeOfElement)
 		)
 	);
-	auto idx0 = [&shape, &ir]() -> std::vector<ircode::AddrOperand *> {
-		auto idx0 = std::vector<ircode::AddrOperand *>();
+	auto idx0 = [&shape, &ir]() -> std::vector<mir::AddrOperand *> {
+		auto idx0 = std::vector<mir::AddrOperand *>();
 		for (int sz = int(shape.size()) + 1; sz; --sz) {
 			idx0.emplace_back(
 				ir.addrPool.emplace_back(
-					ircode::AddrStaticValue(IntType(), IntStaticValue(0))
+					mir::AddrStaticValue(IntType(), IntStaticValue(0))
 				)
 			);
 		}
@@ -120,7 +120,7 @@ std::list<ircode::IRInstr *> fromArrayItemsToInstrs(
 	}();
 	instrsRes.emplace_back(
 		ir.instrPool.emplace_back(
-			ircode::InstrGetelementptr(pBegin, varMemBaseAddr, std::move(idx0))
+			mir::InstrGetelementptr(pBegin, varMemBaseAddr, std::move(idx0))
 		)
 	);
 	for (auto & item: items) {
@@ -130,21 +130,21 @@ std::list<ircode::IRInstr *> fromArrayItemsToInstrs(
 			genAddrConversion(ir, item.val, typeOfElement);
 		instrsRes.splice(instrsRes.end(), std::move(conversionInstrs));
 		auto pValMem = ir.addrPool.emplace_back(
-			ircode::AddrVariable(PointerType(typeOfElement))
+			mir::AddrVariable(PointerType(typeOfElement))
 		);
-		auto bias = static_cast<ircode::AddrOperand *>(ir.addrPool.emplace_back(
-			ircode::AddrStaticValue(
+		auto bias = static_cast<mir::AddrOperand *>(ir.addrPool.emplace_back(
+			mir::AddrStaticValue(
 				IntType(), IntStaticValue(item.getPos(shape))
 			)
 		));
 		instrsRes.emplace_back(
 			ir.instrPool.emplace_back(
-				ircode::InstrGetelementptr(pValMem, pBegin, {bias})
+				mir::InstrGetelementptr(pValMem, pBegin, {bias})
 			)
 		);
 		instrsRes.emplace_back(
 			ir.instrPool.emplace_back(
-				ircode::InstrStore(pValAddr, pValMem)
+				mir::InstrStore(pValAddr, pValMem)
 			)
 		);
 	}
@@ -156,7 +156,7 @@ std::list<ircode::IRInstr *> fromArrayItemsToInstrs(
 }
 
 std::unique_ptr<sup::StaticValue> fromArrayItemsToStaticValue(
-	ircode::IRModule & ir,
+	mir::Module & ir,
 	const std::vector<ArrayItem<std::unique_ptr<StaticValue>>> & items,
 	const std::vector<int> & shape,
 	const TypeInfo & typeOfElement

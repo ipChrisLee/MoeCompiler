@@ -1,13 +1,13 @@
 #include <stack>
 #include <utility>
 
-#include "IRAddr.hpp"
+#include "Addr.hpp"
 
 
 using namespace sup;
 
 
-namespace ircode {
+namespace mir {
 const char * llvmSyFunctionAttr =
 	"attributes #0 = { noinline nounwind optnone \"disable-tail-calls\"=\"false\" \"frame-pointer\"=\"all\" \"less-precise-fpmad\"=\"false\" \"min-legal-vector-width\"=\"0\" \"no-infs-fp-math\"=\"false\" \"no-jump-tables\"=\"false\" \"no-nans-fp-math\"=\"false\" \"no-signed-zeros-fp-math\"=\"false\" \"no-trapping-math\"=\"true\" \"stack-protector-buffer-size\"=\"8\" \"target-cpu\"=\"generic\" \"target-features\"=\"+armv7-a,+dsp,+fp64,+vfp2,+vfp2sp,+vfp3d16,+vfp3d16sp,-thumb-mode\" \"unsafe-fp-math\"=\"false\" \"use-soft-float\"=\"false\" }\n";
 
@@ -19,17 +19,17 @@ static const char * moeLLVMSyFunctionAttr[2] = {
 	"#1"    //  just declare
 };
 
-int IRAddr::cnt = 0;
+int Addr::cnt = 0;
 
-IRAddr::IRAddr() :
+Addr::Addr() :
 	id(++cnt) {
 }
 
-IRAddr::IRAddr(const IRAddr &) :
+Addr::Addr(const Addr &) :
 	id(++cnt) {
 }
 
-const TypeInfo & IRAddr::getType() const {
+const TypeInfo & Addr::getType() const {
 	com::Throw(
 		com::concatToString(
 			{
@@ -170,7 +170,7 @@ std::string AddrFunction::declLLVMIR() const {
 
 AddrFunction::AddrFunction(const AddrFunction & addrFun)
 	:
-	IRAddr(addrFun),
+	Addr(addrFun),
 	uPtrReturnTypeInfo(
 		com::dynamic_cast_uPtr<TypeInfo>(
 			addrFun.uPtrReturnTypeInfo->cloneToUniquePtr())
@@ -370,7 +370,7 @@ AddrStaticValue::AddrStaticValue(std::unique_ptr<sup::StaticValue> && up) :
 }
 
 AddrOperand::AddrOperand(const AddrOperand & addr) :
-	IRAddr(addr),
+	Addr(addr),
 	uPtrTypeInfo(
 		com::dynamic_cast_uPtr<TypeInfo>(addr.uPtrTypeInfo->cloneToUniquePtr())
 	) {

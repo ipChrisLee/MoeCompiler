@@ -8,16 +8,16 @@
 #include <common.hpp>
 #include <antlr4-runtime.h>
 
-#include "IR/IRAddr.hpp"
-#include "IR/IRInstr.hpp"
-#include "IR/IRModule.hpp"
+#include "IR/Addr.hpp"
+#include "IR/Instr.hpp"
+#include "IR/Module.hpp"
 #include "frontend/SysAntlr/SysYParser.h"
 #include "frontend/SysAntlr/SysYBaseVisitor.h"
 #include "frontend/SysAntlr/SysYVisitor.h"
 #include "support/support-common.hpp"
 #include "support/TypeInfo.hpp"
 #include "support/StaticValue.hpp"
-#include "frontendHeader.hpp"
+#include "helper.hpp"
 
 
 namespace frontend {
@@ -76,27 +76,27 @@ class ASTVisitor : public SysYBaseVisitor {
 			int ndim = -1;           //  Used on defining array.
 			std::vector<ArrayItem<std::unique_ptr<sup::StaticValue>>>
 				staticArrayItems;
-			std::vector<ArrayItem<ircode::AddrOperand *>> localArrayItems;
+			std::vector<ArrayItem<mir::AddrOperand *>> localArrayItems;
 
 			bool definingArray() const { return !shapeOfDefiningVar.empty(); }
 
-			ircode::AddrFunction * pUsingFunc = nullptr;    //  function using
+			mir::AddrFunction * pUsingFunc = nullptr;    //  function using
 		};
 
 
 		struct Func {
 			/*  address of retval of function.
 			 * */
-			ircode::AddrVariable * pRetvalMem = nullptr;
-			ircode::AddrJumpLabel * pRetBlockLabel = nullptr;
-			ircode::IRFuncDef * pFuncDef = nullptr;
+			mir::AddrVariable * pRetvalMem = nullptr;
+			mir::AddrJumpLabel * pRetBlockLabel = nullptr;
+			mir::FuncDef * pFuncDef = nullptr;
 		};
 
 		struct Cond {
-			ircode::AddrJumpLabel * jumpLabelTrue = nullptr;
-			ircode::AddrJumpLabel * jumpLabelFalse = nullptr;
-			ircode::AddrJumpLabel * whileCond = nullptr;
-			ircode::AddrJumpLabel * whileEnd = nullptr;
+			mir::AddrJumpLabel * jumpLabelTrue = nullptr;
+			mir::AddrJumpLabel * jumpLabelFalse = nullptr;
+			mir::AddrJumpLabel * whileCond = nullptr;
+			mir::AddrJumpLabel * whileEnd = nullptr;
 		};
 
 		Stat stat;
@@ -110,23 +110,23 @@ class ASTVisitor : public SysYBaseVisitor {
 		std::string,
 		BType,
 		FuncType,
-		std::vector<ircode::AddrPara *>,
-		ircode::AddrPara *,
-		ircode::AddrVariable *,
-		std::vector<ircode::AddrVariable *>,
-		std::vector<ircode::AddrOperand *>,
-		ircode::AddrOperand *
+		std::vector<mir::AddrPara *>,
+		mir::AddrPara *,
+		mir::AddrVariable *,
+		std::vector<mir::AddrVariable *>,
+		std::vector<mir::AddrOperand *>,
+		mir::AddrOperand *
 	> retVal;
 
 	com::UnaryVariant<
-		std::list<ircode::IRInstr *>
+		std::list<mir::Instr *>
 	> retInstrs;
 
 	frontend::SymbolTable symbolTable;
   public:
-	ircode::IRModule & ir;
+	mir::Module & ir;
 
-	explicit ASTVisitor(ircode::IRModule & irModule);
+	explicit ASTVisitor(mir::Module & irModule);
 
 	antlrcpp::Any visitChildren(antlr4::tree::ParseTree * node) override;
 
@@ -219,7 +219,7 @@ class ASTVisitor : public SysYBaseVisitor {
 
 	/**
 	 * @return_in_retVal <tt>vector\<AddrOperand *\></tt> (Addrs of RParams)
-	 * @return_in_retInstrs <tt>list\<IRInstr *\></tt> (Instrs generated for RParams)
+	 * @return_in_retInstrs <tt>list\<Instr *\></tt> (Instrs generated for RParams)
 	 */
 	antlrcpp::Any visitFuncRParams(SysYParser::FuncRParamsContext * ctx) override;
 

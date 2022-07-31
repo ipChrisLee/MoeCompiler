@@ -2,16 +2,16 @@
 // Created by lee on 6/21/22.
 //
 
-#include "IRModule.hpp"
-#include "IR/IRAddr.hpp"
+#include "Module.hpp"
+#include "IR/Addr.hpp"
 
 
-namespace ircode {
+namespace mir {
 
-IRAddrPool::IRAddrPool() : pool() {
+AddrPool::AddrPool() : pool() {
 }
 
-std::string IRAddrPool::toLLVMIR() const {
+std::string AddrPool::toLLVMIR() const {
 	std::string res;
 	for (auto & pAddr: globalVars) {
 		res += pAddr->toDeclIR() + "\n";
@@ -19,11 +19,11 @@ std::string IRAddrPool::toLLVMIR() const {
 	return res + "\n";
 }
 
-const std::vector<AddrGlobalVariable *> & IRAddrPool::getGlobalVars() const {
+const std::vector<AddrGlobalVariable *> & AddrPool::getGlobalVars() const {
 	return globalVars;
 }
 
-std::string IRModule::toLLVMIR() const {
+std::string Module::toLLVMIR() const {
 	auto res = SysY::llvmHeader + addrPool.toLLVMIR();
 	for (auto * funcDecl: funcPool) {
 		res += funcDecl->toLLVMIR();
@@ -33,13 +33,13 @@ std::string IRModule::toLLVMIR() const {
 	return res;
 }
 
-void IRModule::finishLoading() {
+void Module::finishLoading() {
 	for (auto & func: funcPool) {
 		func->finishLoading(*this);
 	}
 }
 
-std::vector<AddrFunction *> IRModule::generateSysYDecl() {
+std::vector<AddrFunction *> Module::generateSysYDecl() {
 	auto sysyFuncs = std::vector<AddrFunction *>();
 	if (!sysyFuncAdded) {
 		//  int getint()
@@ -198,35 +198,35 @@ std::vector<AddrFunction *> IRModule::generateSysYDecl() {
 		}
 		for (auto * p: sysyFuncs) {
 			p->justDeclare = true;
-			funcPool.emplace_back(IRFuncDef(p));
+			funcPool.emplace_back(FuncDef(p));
 		}
 		sysyFuncAdded = true;
 	}
 	return sysyFuncs;
 }
 
-void IRInstrPool::printAll(std::ostream & os) const {
+void InstrPool::printAll(std::ostream & os) const {
 	for (const auto & p: pool) {
 		os << p->toLLVMIR() << std::endl;
 	}
 }
 
-IRInstrPool::IRInstrPool() : pool() {
+InstrPool::InstrPool() : pool() {
 }
 
-IRFuncBlock::IRFuncBlock() : instrs() {
+FuncBlock::FuncBlock() : instrs() {
 }
 
-std::string IRFuncBlock::toLLVMIR() const {
+std::string FuncBlock::toLLVMIR() const {
 	com::TODO("", CODEPOS);
 }
 
 
-IRFuncDef::IRFuncDef(AddrFunction * pAddrFun)
+FuncDef::FuncDef(AddrFunction * pAddrFun)
 	: pAddrFun(pAddrFun) {
 }
 
-std::string IRFuncDef::toLLVMIR() const {
+std::string FuncDef::toLLVMIR() const {
 	if (pAddrFun->justDeclare) {
 		return pAddrFun->declLLVMIR() + "\n\n";
 	}
@@ -250,7 +250,7 @@ std::string IRFuncDef::toLLVMIR() const {
 	return res;
 }
 
-void IRFuncDef::finishLoading(IRModule & ir) {
+void FuncDef::finishLoading(Module & ir) {
 	if (loadFinished) {
 		com::Throw("Method `finishLoading` can be called only once.", CODEPOS);
 	}
@@ -259,51 +259,51 @@ void IRFuncDef::finishLoading(IRModule & ir) {
 	loadFinished = true;
 }
 
-void IRFuncDef::rearrangeAlloca() {
+void FuncDef::rearrangeAlloca() {
 	STLPro::list::move_all_to_front(
-		instrs, [](ircode::IRInstr * p) -> bool {
-			return dynamic_cast<ircode::InstrAlloca *>(p) != nullptr;
+		instrs, [](mir::Instr * p) -> bool {
+			return dynamic_cast<mir::InstrAlloca *>(p) != nullptr;
 		}
 	);
 }
 
-IRInstr * IRFuncDef::emplace_back(IRInstr * irInstr) {
+Instr * FuncDef::emplace_back(Instr * irInstr) {
 	if (irInstr) { instrs.emplace_back(irInstr); }
 	return irInstr;
 }
 
-AddrJumpLabel * IRFuncDef::addEntryLabelInstr(IRModule & ir) {
-	auto pAddrLabel = ir.addrPool.emplace_back(ircode::AddrJumpLabel("Entry"));
+AddrJumpLabel * FuncDef::addEntryLabelInstr(Module & ir) {
+	auto pAddrLabel = ir.addrPool.emplace_back(mir::AddrJumpLabel("Entry"));
 	instrs.emplace_front(
-		ir.instrPool.emplace_back(ircode::InstrLabel(pAddrLabel))
+		ir.instrPool.emplace_back(mir::InstrLabel(pAddrLabel))
 	);
 	return pAddrLabel;
 }
 
-void IRFuncDef::emplace_back(std::list<IRInstr *> && appendList) {
-	appendList.remove_if([](IRInstr * p) { return p == nullptr; });
+void FuncDef::emplace_back(std::list<Instr *> && appendList) {
+	appendList.remove_if([](Instr * p) { return p == nullptr; });
 	instrs.splice(instrs.end(), std::move(appendList));
 }
 
-IRFuncBlock * IRFuncDef::emplace_back(IRFuncBlock && irFuncBlock) {
-	pool.emplace_back(std::make_unique<IRFuncBlock>(std::move(irFuncBlock)));
+FuncBlock * FuncDef::emplace_back(FuncBlock && irFuncBlock) {
+	pool.emplace_back(std::make_unique<FuncBlock>(std::move(irFuncBlock)));
 	return pool.rbegin()->get();
 }
 
-IRFuncDef * IRFuncDefPool::emplace_back(IRFuncDef && funcDef) {
-	pool.emplace_back(std::make_unique<IRFuncDef>(std::move(funcDef)));
+FuncDef * FuncDefPool::emplace_back(FuncDef && funcDef) {
+	pool.emplace_back(std::make_unique<FuncDef>(std::move(funcDef)));
 	funcDefs.emplace_back(pool.rbegin()->get());
 	return pool.rbegin()->get();
 }
 
 }
 
-using namespace ircode;
+using namespace mir;
 namespace sup {
 
-std::list<ircode::IRInstr *> genBinaryOperationInstrs(
-	ircode::IRModule & ir, AddrOperand * opL, const std::string & op,
-	AddrOperand * opR, ircode::AddrVariable * opD
+std::list<mir::Instr *> genBinaryOperationInstrs(
+	mir::Module & ir, AddrOperand * opL, const std::string & op,
+	AddrOperand * opR, mir::AddrVariable * opD
 ) {
 	com::Assert(
 		opL->getType() == opR->getType(), "Type of Operands should be same!", CODEPOS
@@ -323,37 +323,37 @@ std::list<ircode::IRInstr *> genBinaryOperationInstrs(
 		"If type of dest is not bool, type of operands should be same as dest.",
 		CODEPOS
 	);
-	auto instrsRes = std::list<ircode::IRInstr *>();
+	auto instrsRes = std::list<mir::Instr *>();
 	switch (typeD) {
 		case Type::Int_t: {
 			if (op == "+") {
 				instrsRes.emplace_back(
 					ir.instrPool.emplace_back(
-						ircode::InstrAdd(opL, opR, opD)
+						mir::InstrAdd(opL, opR, opD)
 					)
 				);
 			} else if (op == "-") {
 				instrsRes.emplace_back(
 					ir.instrPool.emplace_back(
-						ircode::InstrSub(opL, opR, opD)
+						mir::InstrSub(opL, opR, opD)
 					)
 				);
 			} else if (op == "*") {
 				instrsRes.emplace_back(
 					ir.instrPool.emplace_back(
-						ircode::InstrMul(opL, opR, opD)
+						mir::InstrMul(opL, opR, opD)
 					)
 				);
 			} else if (op == "/") {
 				instrsRes.emplace_back(
 					ir.instrPool.emplace_back(
-						ircode::InstrSDiv(opL, opR, opD)
+						mir::InstrSDiv(opL, opR, opD)
 					)
 				);
 			} else if (op == "%") {
 				instrsRes.emplace_back(
 					ir.instrPool.emplace_back(
-						ircode::InstrSrem(opL, opR, opD)
+						mir::InstrSrem(opL, opR, opD)
 					)
 				);
 			} else {
@@ -365,25 +365,25 @@ std::list<ircode::IRInstr *> genBinaryOperationInstrs(
 			if (op == "+") {
 				instrsRes.emplace_back(
 					ir.instrPool.emplace_back(
-						ircode::InstrFAdd(opL, opR, opD)
+						mir::InstrFAdd(opL, opR, opD)
 					)
 				);
 			} else if (op == "-") {
 				instrsRes.emplace_back(
 					ir.instrPool.emplace_back(
-						ircode::InstrFSub(opL, opR, opD)
+						mir::InstrFSub(opL, opR, opD)
 					)
 				);
 			} else if (op == "*") {
 				instrsRes.emplace_back(
 					ir.instrPool.emplace_back(
-						ircode::InstrFMul(opL, opR, opD)
+						mir::InstrFMul(opL, opR, opD)
 					)
 				);
 			} else if (op == "/") {
 				instrsRes.emplace_back(
 					ir.instrPool.emplace_back(
-						ircode::InstrFDiv(opL, opR, opD)
+						mir::InstrFDiv(opL, opR, opD)
 					)
 				);
 			} else {
@@ -396,7 +396,7 @@ std::list<ircode::IRInstr *> genBinaryOperationInstrs(
 				case Type::Int_t: {
 					instrsRes.emplace_back(
 						ir.instrPool.emplace_back(
-							ircode::InstrICmp(opD, opL, strToICMP(op), opR)
+							mir::InstrICmp(opD, opL, strToICMP(op), opR)
 						)
 					);
 					break;
@@ -404,7 +404,7 @@ std::list<ircode::IRInstr *> genBinaryOperationInstrs(
 				case Type::Float_t: {
 					instrsRes.emplace_back(
 						ir.instrPool.emplace_back(
-							ircode::InstrFCmp(opD, opL, strToFCMP(op), opR)
+							mir::InstrFCmp(opD, opL, strToFCMP(op), opR)
 						)
 					);
 					break;
@@ -428,25 +428,25 @@ std::list<ircode::IRInstr *> genBinaryOperationInstrs(
 	return instrsRes;
 }
 
-std::list<ircode::IRInstr *> genUnaryOperationInstrs(
-	IRModule & ir, const std::string & op,
-	AddrOperand * opR, ircode::AddrVariable * opD
+std::list<mir::Instr *> genUnaryOperationInstrs(
+	Module & ir, const std::string & op,
+	AddrOperand * opR, mir::AddrVariable * opD
 ) {
 	auto typeD = opD->getType().type;
 	auto typeR = opR->getType().type;
 	switch (typeD) {
 		case Type::Bool_t: {
-			auto instrsRes = std::list<ircode::IRInstr *>();
+			auto instrsRes = std::list<mir::Instr *>();
 			if (op == "!") {
 				auto * pZero = ir.addrPool.emplace_back(
-					ircode::AddrStaticValue(opR->getType())
+					mir::AddrStaticValue(opR->getType())
 				);
 				switch (opR->getType().type) {
 					case Type::Bool_t:
 					case Type::Int_t: {
 						instrsRes.emplace_back(
 							ir.instrPool.emplace_back(
-								ircode::InstrICmp(opD, opR, ICMP::EQ, pZero)
+								mir::InstrICmp(opD, opR, ICMP::EQ, pZero)
 							)
 						);
 						break;
@@ -454,7 +454,7 @@ std::list<ircode::IRInstr *> genUnaryOperationInstrs(
 					case Type::Float_t: {
 						instrsRes.emplace_back(
 							ir.instrPool.emplace_back(
-								ircode::InstrFCmp(opD, opR, FCMP::OEQ, pZero)
+								mir::InstrFCmp(opD, opR, FCMP::OEQ, pZero)
 							)
 						);
 						break;
@@ -470,18 +470,18 @@ std::list<ircode::IRInstr *> genUnaryOperationInstrs(
 			com::Assert(com::enum_fun::in(typeR, {Type::Int_t, Type::Bool_t}));
 			auto [newOpR, _, instrs] = genAddrConversion(ir, opR, IntType());
 			auto * pZeroAddr = ir.addrPool.emplace_back(
-				ircode::AddrStaticValue(IntStaticValue(0))
+				mir::AddrStaticValue(IntStaticValue(0))
 			);
 			if (op == "+") {
 				instrs.emplace_back(
 					ir.instrPool.emplace_back(
-						ircode::InstrAdd(pZeroAddr, newOpR, opD)
+						mir::InstrAdd(pZeroAddr, newOpR, opD)
 					)
 				);
 			} else if (op == "-") {
 				instrs.emplace_back(
 					ir.instrPool.emplace_back(
-						ircode::InstrSub(pZeroAddr, newOpR, opD)
+						mir::InstrSub(pZeroAddr, newOpR, opD)
 					)
 				);
 			} else {
@@ -492,19 +492,19 @@ std::list<ircode::IRInstr *> genUnaryOperationInstrs(
 		case Type::Float_t: {
 			com::Assert(typeR == Type::Float_t, "", CODEPOS);
 			auto * pZeroAddr = ir.addrPool.emplace_back(
-				ircode::AddrStaticValue(FloatStaticValue(0))
+				mir::AddrStaticValue(FloatStaticValue(0))
 			);
-			auto instrs = std::list<ircode::IRInstr *>();
+			auto instrs = std::list<mir::Instr *>();
 			if (op == "+") {
 				instrs.emplace_back(
 					ir.instrPool.emplace_back(
-						ircode::InstrFAdd(pZeroAddr, opR, opD)
+						mir::InstrFAdd(pZeroAddr, opR, opD)
 					)
 				);
 			} else if (op == "-") {
 				instrs.emplace_back(
 					ir.instrPool.emplace_back(
-						ircode::InstrFSub(pZeroAddr, opR, opD)
+						mir::InstrFSub(pZeroAddr, opR, opD)
 					)
 				);
 			} else {
@@ -519,10 +519,10 @@ std::list<ircode::IRInstr *> genUnaryOperationInstrs(
 }
 
 std::tuple<
-	ircode::AddrOperand *, ircode::AddrOperand *, std::unique_ptr<TypeInfo>,
-	std::list<ircode::IRInstr *>
+	mir::AddrOperand *, mir::AddrOperand *, std::unique_ptr<TypeInfo>,
+	std::list<mir::Instr *>
 > genAddrConversion(
-	ircode::IRModule & ir,
+	mir::Module & ir,
 	AddrOperand * preOpL, AddrOperand * preOpR
 ) {
 	auto error = false;
@@ -607,16 +607,16 @@ std::tuple<
 	}
 	auto [newOpL, _1, instrsL] = genAddrConversion(ir, preOpL, typeNewL);
 	auto [newOpR, _2, instrsR] = genAddrConversion(ir, preOpR, typeNewR);
-	auto instrsRes = std::list<ircode::IRInstr *>();
+	auto instrsRes = std::list<mir::Instr *>();
 	instrsRes.splice(instrsRes.end(), std::move(instrsL));
 	instrsRes.splice(instrsRes.end(), std::move(instrsR));
 	return {newOpL, newOpR, std::move(_1), std::move(instrsRes)};
 }
 
 std::tuple<
-	ircode::AddrOperand *, std::unique_ptr<sup::TypeInfo>, std::list<ircode::IRInstr *>
+	mir::AddrOperand *, std::unique_ptr<sup::TypeInfo>, std::list<mir::Instr *>
 > genAddrConversion(
-	ircode::IRModule & ir, ircode::AddrOperand * preOp, sup::Type type
+	mir::Module & ir, mir::AddrOperand * preOp, sup::Type type
 ) {
 	switch (type) {
 		case Type::Bool_t: {
@@ -633,15 +633,15 @@ std::tuple<
 }
 
 static std::tuple<
-	ircode::AddrOperand *, std::unique_ptr<sup::TypeInfo>, std::list<ircode::IRInstr *>
+	mir::AddrOperand *, std::unique_ptr<sup::TypeInfo>, std::list<mir::Instr *>
 > _genAddrConversion(
-	ircode::IRModule & ir,
-	ircode::AddrStaticValue * pSVAddr,
+	mir::Module & ir,
+	mir::AddrStaticValue * pSVAddr,
 	const sup::TypeInfo & typeInfoD
 ) {
 	auto newOp = static_cast<AddrOperand *>(nullptr);
 	auto upResTypeInfo = std::unique_ptr<TypeInfo>();
-	auto instrsRes = std::list<IRInstr *>();
+	auto instrsRes = std::list<Instr *>();
 	auto typeD = typeInfoD.type, typeOp = pSVAddr->getType().type;
 	switch (typeD) {
 		case Type::Int_t: {
@@ -669,7 +669,7 @@ static std::tuple<
 	}
 	if (!newOp) {
 		newOp = ir.addrPool.emplace_back(
-			ircode::AddrStaticValue(
+			mir::AddrStaticValue(
 				convertOnSV(pSVAddr->getStaticValue(), *upResTypeInfo)
 			)
 		);
@@ -679,15 +679,15 @@ static std::tuple<
 }
 
 static std::tuple<
-	ircode::AddrOperand *, std::unique_ptr<sup::TypeInfo>, std::list<ircode::IRInstr *>
+	mir::AddrOperand *, std::unique_ptr<sup::TypeInfo>, std::list<mir::Instr *>
 > _genAddrConversion(
-	ircode::IRModule & ir,
-	ircode::AddrVariable * pVarAddr,
+	mir::Module & ir,
+	mir::AddrVariable * pVarAddr,
 	const sup::TypeInfo & typeInfoD
 ) {
 	auto newOp = static_cast<AddrOperand *>(nullptr);
 	auto upResTypeInfo = std::unique_ptr<TypeInfo>();
-	auto instrsRes = std::list<IRInstr *>();
+	auto instrsRes = std::list<Instr *>();
 	auto typeD = typeInfoD.type, typeOp = pVarAddr->getType().type;
 	switch (typeD) {
 		case Type::Int_t: {
@@ -700,11 +700,11 @@ static std::tuple<
 				case Type::Float_t: {
 					// opD is int but opR is float, convert opR to int. float->int
 					auto convertedAddr = ir.addrPool.emplace_back(
-						ircode::AddrVariable(IntType())
+						mir::AddrVariable(IntType())
 					);
 					instrsRes.emplace_back(
 						ir.instrPool.emplace_back(
-							ircode::InstrFptosi(pVarAddr, convertedAddr)
+							mir::InstrFptosi(pVarAddr, convertedAddr)
 						)
 					);
 					newOp = convertedAddr;
@@ -712,11 +712,11 @@ static std::tuple<
 				}
 				case Type::Bool_t: {
 					auto convertedAddr = ir.addrPool.emplace_back(
-						ircode::AddrVariable(IntType())
+						mir::AddrVariable(IntType())
 					);
 					instrsRes.emplace_back(
 						ir.instrPool.emplace_back(
-							ircode::InstrZExt(pVarAddr, convertedAddr)
+							mir::InstrZExt(pVarAddr, convertedAddr)
 						)
 					);
 					newOp = convertedAddr;
@@ -732,11 +732,11 @@ static std::tuple<
 				case Type::Int_t: {
 					// opD is float but opR is int, convert opR to float. int->float
 					auto convertedAddr = ir.addrPool.emplace_back(
-						ircode::AddrVariable(FloatType())
+						mir::AddrVariable(FloatType())
 					);
 					instrsRes.emplace_back(
 						ir.instrPool.emplace_back(
-							ircode::InstrSitofp(pVarAddr, convertedAddr)
+							mir::InstrSitofp(pVarAddr, convertedAddr)
 						)
 					);
 					newOp = convertedAddr;
@@ -748,19 +748,19 @@ static std::tuple<
 				}
 				case Type::Bool_t: {
 					auto midAddr = ir.addrPool.emplace_back(
-						ircode::AddrVariable(IntType())
+						mir::AddrVariable(IntType())
 					);
 					auto convertedAddr = ir.addrPool.emplace_back(
-						ircode::AddrVariable(FloatType())
+						mir::AddrVariable(FloatType())
 					);
 					instrsRes.emplace_back(
 						ir.instrPool.emplace_back(
-							ircode::InstrZExt(pVarAddr, midAddr)
+							mir::InstrZExt(pVarAddr, midAddr)
 						)
 					);
 					instrsRes.emplace_back(
 						ir.instrPool.emplace_back(
-							ircode::InstrSitofp(midAddr, convertedAddr)
+							mir::InstrSitofp(midAddr, convertedAddr)
 						)
 					);
 					newOp = convertedAddr;
@@ -782,14 +782,14 @@ static std::tuple<
 			switch (typeOp) {
 				case Type::Int_t: {
 					auto * convertedAddr = ir.addrPool.emplace_back(
-						ircode::AddrVariable(BoolType())
+						mir::AddrVariable(BoolType())
 					);
 					auto * pZeroAddr = ir.addrPool.emplace_back(
-						ircode::AddrStaticValue(IntType())
+						mir::AddrStaticValue(IntType())
 					);
 					instrsRes.emplace_back(
 						ir.instrPool.emplace_back(
-							ircode::InstrICmp(
+							mir::InstrICmp(
 								convertedAddr, pVarAddr, ICMP::NE, pZeroAddr
 							)
 						)
@@ -799,14 +799,14 @@ static std::tuple<
 				}
 				case Type::Float_t: {
 					auto * convertedAddr = ir.addrPool.emplace_back(
-						ircode::AddrVariable(BoolType())
+						mir::AddrVariable(BoolType())
 					);
 					auto * pZeroAddr = ir.addrPool.emplace_back(
-						ircode::AddrStaticValue(FloatType())
+						mir::AddrStaticValue(FloatType())
 					);
 					instrsRes.emplace_back(
 						ir.instrPool.emplace_back(
-							ircode::InstrFCmp(
+							mir::InstrFCmp(
 								convertedAddr, pVarAddr, FCMP::UNE, pZeroAddr
 							)
 						)
@@ -829,10 +829,10 @@ static std::tuple<
 }
 
 std::tuple<
-	ircode::AddrOperand *, std::unique_ptr<sup::TypeInfo>, std::list<ircode::IRInstr *>
+	mir::AddrOperand *, std::unique_ptr<sup::TypeInfo>, std::list<mir::Instr *>
 > genAddrConversion(
-	ircode::IRModule & ir,
-	ircode::AddrOperand * preOp,
+	mir::Module & ir,
+	mir::AddrOperand * preOp,
 	const sup::TypeInfo & typeInfoD
 ) {
 	auto * pSVAddr = dynamic_cast<AddrStaticValue *>(preOp);
@@ -846,8 +846,8 @@ std::tuple<
 	}
 }
 
-std::list<ircode::IRInstr *> genStoreInstrInFunction(
-	ircode::IRModule & ir, ircode::AddrVariable * saveTo, ircode::AddrVariable * from
+std::list<mir::Instr *> genStoreInstrInFunction(
+	mir::Module & ir, mir::AddrVariable * saveTo, mir::AddrVariable * from
 ) {
 	com::Assert(
 		saveTo->getType().type == Type::Pointer_t,
@@ -859,14 +859,14 @@ std::list<ircode::IRInstr *> genStoreInstrInFunction(
 		);
 	instrs.emplace_back(
 		ir.instrPool.emplace_back(
-			ircode::InstrStore(from, saveTo)
+			mir::InstrStore(from, saveTo)
 		)
 	);
 	return instrs;
 }
 
-ircode::AddrVariable * genSuitableAddr(
-	ircode::IRModule & ir, const std::string & op, ircode::AddrOperand * preOp
+mir::AddrVariable * genSuitableAddr(
+	mir::Module & ir, const std::string & op, mir::AddrOperand * preOp
 ) {
 	auto upTypeInfo = std::unique_ptr<sup::TypeInfo>();
 	auto preType = preOp->getType().type;
@@ -886,7 +886,7 @@ ircode::AddrVariable * genSuitableAddr(
 			default: com::Throw("Unsupported Type.", CODEPOS);
 		}
 	}
-	auto * destOp = ir.addrPool.emplace_back(ircode::AddrVariable(*upTypeInfo));
+	auto * destOp = ir.addrPool.emplace_back(mir::AddrVariable(*upTypeInfo));
 	return destOp;
 }
 }

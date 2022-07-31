@@ -6,7 +6,7 @@
 
 
 namespace pass {
-using namespace ircode;
+using namespace mir;
 
 
 int AddBrToNextBB::run() {
@@ -19,11 +19,11 @@ int AddBrToNextBB::run() {
 	return 0;
 }
 
-AddBrToNextBB::AddBrToNextBB(ircode::IRModule & ir, std::string name) :
+AddBrToNextBB::AddBrToNextBB(mir::Module & ir, std::string name) :
 	IRPass(ir, std::move(name)) {
 }
 
-int AddBrToNextBB::run(std::list<ircode::IRInstr *> & instrs) {
+int AddBrToNextBB::run(std::list<mir::Instr *> & instrs) {
 	auto itPInstrNow = instrs.begin();
 	while (itPInstrNow != instrs.end()) {
 		auto itPInstrNxt = std::next(itPInstrNow);
@@ -32,7 +32,7 @@ int AddBrToNextBB::run(std::list<ircode::IRInstr *> & instrs) {
 			g(itPInstrNxt)->instrType == InstrType::Label) {
 			instrs.emplace(
 				itPInstrNxt, ir.instrPool.emplace_back(
-					ircode::InstrBr(
+					mir::InstrBr(
 						dynamic_cast<InstrLabel *>(g(itPInstrNxt))->pAddrLabel
 					)
 				)

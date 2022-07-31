@@ -8,7 +8,7 @@
 #include "common.hpp"
 
 #include "SymbolTableAndScope.hpp"
-#include "IR/IRAddr.hpp"
+#include "IR/Addr.hpp"
 
 
 namespace frontend {
@@ -28,14 +28,14 @@ Scope * Scope::getFather() const {
 }
 
 void Scope::bindDominateVar(
-	const std::string & str, IdType idType, ircode::IRAddr * addrVar
+	const std::string & str, IdType idType, mir::Addr * addrVar
 ) {
 	if (addrMap.count(str)) {
 		com::Throw("Same name!", CODEPOS);
 	}
 	switch (idType) {
 		case IdType::LocalVarName: {
-			auto pAddr = dynamic_cast<ircode::AddrLocalVariable *>(addrVar);
+			auto pAddr = dynamic_cast<mir::AddrLocalVariable *>(addrVar);
 			com::Assert(
 				pAddr && pAddr->getType().type == sup::Type::Pointer_t,
 				"addr should be `AddrVariable *` if `idType` is local var "\
@@ -45,7 +45,7 @@ void Scope::bindDominateVar(
 			break;
 		}
 		case IdType::GlobalVarName: {
-			auto pAddr = dynamic_cast<ircode::AddrGlobalVariable *>(addrVar);
+			auto pAddr = dynamic_cast<mir::AddrGlobalVariable *>(addrVar);
 			com::Assert(
 				pAddr && pAddr->getType().type == sup::Type::Pointer_t,
 				"addr should be `AddrGlobalVariable` if `idType` is global var "\
@@ -55,7 +55,7 @@ void Scope::bindDominateVar(
 			break;
 		}
 		case IdType::ParameterName: {
-			auto pAddr = dynamic_cast<ircode::AddrLocalVariable *>(addrVar);
+			auto pAddr = dynamic_cast<mir::AddrLocalVariable *>(addrVar);
 			com::Assert(
 				pAddr && pAddr->getType().type == sup::Type::Pointer_t,
 				"addr should be `AddrGlobalVariable` if `idType` is para var,"\
@@ -66,7 +66,7 @@ void Scope::bindDominateVar(
 		}
 		case IdType::FunctionName:
 		case IdType::BuiltInFunction: {
-			auto pAddr = dynamic_cast<ircode::AddrFunction *>(addrVar);
+			auto pAddr = dynamic_cast<mir::AddrFunction *>(addrVar);
 			com::addRuntimeWarning(
 				"Consider checking name of function for builtin functions.", CODEPOS,
 				true
@@ -85,7 +85,7 @@ void Scope::bindDominateVar(
 }
 
 
-std::tuple<IdType, ircode::IRAddr *>
+std::tuple<IdType, mir::Addr *>
 Scope::findIdDownToRoot(const std::string & name) const { // NOLINT
 	if (!addrMap.count(name)) {
 		if (father == nullptr) {

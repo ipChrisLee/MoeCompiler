@@ -32,6 +32,7 @@ void parseArgs(int argc, char ** argv) {
 			{"float-dec-format",     no_argument, nullptr, 0},
 			{"show-runtime-warning", no_argument, nullptr, 0},
 			{"without-any-pass",     no_argument, nullptr, 0},
+			{"emit-lir",             no_argument, nullptr, 0},
 			{nullptr, 0,                          nullptr, 0}
 		};
 		c = getopt_long(argc, argv, "-o:SO:", longOptions, &optionIndex);
@@ -65,7 +66,11 @@ void parseArgs(int argc, char ** argv) {
 						{
 							"without-any-pass",     []() {
 							options.withoutAnyPass.set(true);
-						}}
+						}},
+						{
+							"emit-lir",             []() {
+							options.emitLIR.set(true);
+						}},
 					}
 				);
 				break;

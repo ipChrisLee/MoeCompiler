@@ -3,38 +3,38 @@
 #include <list>
 #include <span>
 
-#include "IR/IRInstr.hpp"
-#include "IR/IRAddr.hpp"
+#include "IR/Instr.hpp"
+#include "IR/Addr.hpp"
 
 #include "support/support-common.hpp"
 
 
-namespace ircode {
+namespace mir {
 
-class IRModule;
+class Module;
 
-class IRAddrPool : public sup::LLVMable {
+class AddrPool : public sup::LLVMable {
   protected:
-	std::vector<std::unique_ptr<IRAddr>> pool;
+	std::vector<std::unique_ptr<Addr>> pool;
 	std::vector<AddrGlobalVariable *> globalVars;
   public:
 
-	IRAddrPool();
+	AddrPool();
 
-	IRAddrPool(const IRAddrPool &) = delete;
+	AddrPool(const AddrPool &) = delete;
 
 	template<
 		typename T,
 		class = typename std::enable_if<
 			!std::is_lvalue_reference<T>::value &&
-				std::is_base_of<IRAddr, T>::value
+				std::is_base_of<Addr, T>::value
 		>::type
 	>
 	T * emplace_back(T && addr) {
 		pool.emplace_back(
-			com::dynamic_cast_uPtr<IRAddr>(
+			com::dynamic_cast_uPtr<Addr>(
 				com::cutToUniquePtr(std::forward<T>(addr))));
-		IRAddr * p = pool.rbegin()->get();
+		Addr * p = pool.rbegin()->get();
 		if (auto p2 = dynamic_cast<AddrGlobalVariable *>(p)) {
 			globalVars.template emplace_back(p2);
 		}
@@ -46,18 +46,18 @@ class IRAddrPool : public sup::LLVMable {
 	const std::vector<AddrGlobalVariable *> & getGlobalVars() const;
 };
 
-class IRInstrPool {
+class InstrPool {
   protected:
-	std::vector<std::unique_ptr<IRInstr>> pool;
+	std::vector<std::unique_ptr<Instr>> pool;
   public:
-	IRInstrPool();
+	InstrPool();
 
-	IRInstrPool(const IRInstrPool &) = delete;
+	InstrPool(const InstrPool &) = delete;
 
 	template<
 		typename T,
 		class = typename std::enable_if<
-			!std::is_lvalue_reference<T>::value && std::is_base_of<IRInstr, T>::value
+			!std::is_lvalue_reference<T>::value && std::is_base_of<Instr, T>::value
 		>::type
 	>
 	[[nodiscard]] T * emplace_back(std::unique_ptr<T> && instr) {
@@ -68,12 +68,12 @@ class IRInstrPool {
 	template<
 		typename T,
 		class = typename std::enable_if<
-			!std::is_lvalue_reference<T>::value && std::is_base_of<IRInstr, T>::value
+			!std::is_lvalue_reference<T>::value && std::is_base_of<Instr, T>::value
 		>::type
 	>
 	[[nodiscard]] T * emplace_back(T && instr) {
 		pool.emplace_back(
-			com::dynamic_cast_uPtr<IRInstr>(
+			com::dynamic_cast_uPtr<Instr>(
 				com::cutToUniquePtr(std::forward<T>(instr))));
 		return dynamic_cast<T *>(pool.rbegin()->get());
 	}
@@ -84,15 +84,15 @@ class IRInstrPool {
 	void printAll(std::ostream &) const;
 };
 
-class IRFuncDef;
+class FuncDef;
 
-class IRFuncDefPool {
+class FuncDefPool {
   protected:
-	std::vector<std::unique_ptr<IRFuncDef>> pool;
+	std::vector<std::unique_ptr<FuncDef>> pool;
   public:
-	std::vector<IRFuncDef *> funcDefs;
+	std::vector<FuncDef *> funcDefs;
 
-	IRFuncDef * emplace_back(IRFuncDef &&);
+	FuncDef * emplace_back(FuncDef &&);
 
 	auto begin() { return funcDefs.begin(); }
 
@@ -107,59 +107,59 @@ class IRFuncDefPool {
  * @brief Block of instructions.
  * @note If @c instrs form a basic block, @c thisIsBasicBlock will be @c true .
  */
-class IRFuncBlock : public sup::LLVMable {
+class FuncBlock : public sup::LLVMable {
   public:
-	std::list<IRInstr *> instrs;
+	std::list<Instr *> instrs;
 
-	IRFuncBlock();
+	FuncBlock();
 
-	IRFuncBlock(IRFuncBlock &&) = default;
+	FuncBlock(FuncBlock &&) = default;
 
 	std::string toLLVMIR() const override;
 };
 
 /**
- * @brief Composition of IRModule.
+ * @brief Composition of Module.
  */
-class IRFuncDef : public sup::LLVMable {
+class FuncDef : public sup::LLVMable {
   protected:
 	void rearrangeAlloca();
 
-	AddrJumpLabel * addEntryLabelInstr(IRModule & ir);
+	AddrJumpLabel * addEntryLabelInstr(Module & ir);
 
-	std::vector<std::unique_ptr<IRFuncBlock>> pool;
+	std::vector<std::unique_ptr<FuncBlock>> pool;
 
 	bool loadFinished = false;
   public:
 	AddrFunction * pAddrFun;
-	std::list<IRInstr *> instrs;
-	std::list<IRFuncBlock *> blocks;
+	std::list<Instr *> instrs;
+	std::list<FuncBlock *> blocks;
 
-	IRInstr * emplace_back(IRInstr *);
+	Instr * emplace_back(Instr *);
 
-	void emplace_back(std::list<IRInstr *> &&);
+	void emplace_back(std::list<Instr *> &&);
 
-	IRFuncBlock * emplace_back(IRFuncBlock &&);
+	FuncBlock * emplace_back(FuncBlock &&);
 
-	explicit IRFuncDef(AddrFunction * pAddrFun);
+	explicit FuncDef(AddrFunction * pAddrFun);
 
-	IRFuncDef(IRFuncDef &&) = default;
+	FuncDef(FuncDef &&) = default;
 
-	void finishLoading(IRModule & ir);
+	void finishLoading(Module & ir);
 
 	std::string toLLVMIR() const override;
 
 	const AddrFunction * getFuncAddrPtr() const { return pAddrFun; }
 };
 
-class IRModule : public sup::LLVMable {
+class Module : public sup::LLVMable {
 	bool sysyFuncAdded = false;
   public:
-	IRInstrPool instrPool;
-	IRAddrPool addrPool;
-	IRFuncDefPool funcPool;
+	InstrPool instrPool;
+	AddrPool addrPool;
+	FuncDefPool funcPool;
 
-	IRModule() = default;
+	Module() = default;
 
 	void finishLoading();
 
@@ -176,21 +176,21 @@ namespace sup {
  * @note Type @c opL and @c opR should both be int/float. (basic type @b except bool)
  * @note If type of @c opD is not bool, type of @c opL, @c opR and @c opD should be same.
  */
-std::list<ircode::IRInstr *> genBinaryOperationInstrs(
-	ircode::IRModule & ir, ircode::AddrOperand * opL, const std::string & op,
-	ircode::AddrOperand * opR, ircode::AddrVariable * opD
+std::list<mir::Instr *> genBinaryOperationInstrs(
+	mir::Module & ir, mir::AddrOperand * opL, const std::string & op,
+	mir::AddrOperand * opR, mir::AddrVariable * opD
 );
 
 /**
  * @brief Instructions generator for unary operate instruction.
  * @note If type of @c opD is bool, type of @c opR can be bool/int/float and op should be "!"
  * @note If type of @c opD is int, type of @c opR can be bool/int, this function will help you do conversion. At this case, @c op should @b NOT be "!".
- * @note If type of @c opD is float, type of @c opR should be float. At this case, @c op should @b NOT be "!".
+ * @note If type of @c opD is float, type of @c opR should be floated. At this case, @c op should @b NOT be "!".
  * @note You can use @c genSuitableAddr to deduce type from @c opR .
  */
-std::list<ircode::IRInstr *> genUnaryOperationInstrs(
-	ircode::IRModule & ir, const std::string & op, ircode::AddrOperand * opR,
-	ircode::AddrVariable * opD
+std::list<mir::Instr *> genUnaryOperationInstrs(
+	mir::Module & ir, const std::string & op, mir::AddrOperand * opR,
+	mir::AddrVariable * opD
 );
 
 /**
@@ -201,31 +201,31 @@ std::list<ircode::IRInstr *> genUnaryOperationInstrs(
  * @return instructions generated
  */
 std::tuple<
-	ircode::AddrOperand *, ircode::AddrOperand *, std::unique_ptr<sup::TypeInfo>,
-	std::list<ircode::IRInstr *>
+	mir::AddrOperand *, mir::AddrOperand *, std::unique_ptr<sup::TypeInfo>,
+	std::list<mir::Instr *>
 > genAddrConversion(
-	ircode::IRModule & ir, ircode::AddrOperand * preOpL, ircode::AddrOperand * preOpR
+	mir::Module & ir, mir::AddrOperand * preOpL, mir::AddrOperand * preOpR
 );
 
 std::tuple<
-	ircode::AddrOperand *, std::unique_ptr<sup::TypeInfo>, std::list<ircode::IRInstr *>
+	mir::AddrOperand *, std::unique_ptr<sup::TypeInfo>, std::list<mir::Instr *>
 > genAddrConversion(
-	ircode::IRModule & ir, ircode::AddrOperand * preOp,
+	mir::Module & ir, mir::AddrOperand * preOp,
 	const sup::TypeInfo & typeInfoD
 );
 
 std::tuple<
-	ircode::AddrOperand *, std::unique_ptr<sup::TypeInfo>, std::list<ircode::IRInstr *>
+	mir::AddrOperand *, std::unique_ptr<sup::TypeInfo>, std::list<mir::Instr *>
 > genAddrConversion(
-	ircode::IRModule & ir, ircode::AddrOperand * preOp, sup::Type type
+	mir::Module & ir, mir::AddrOperand * preOp, sup::Type type
 );
 
 /**
  * @brief This is used with @c genUnaryOperationInstrs , to generate addr with proper type.
  * @example <tt>int x=+-!!!a;</tt>
  */
-ircode::AddrVariable * genSuitableAddr(
-	ircode::IRModule & ir, const std::string & op, ircode::AddrOperand * preOp
+mir::AddrVariable * genSuitableAddr(
+	mir::Module & ir, const std::string & op, mir::AddrOperand * preOp
 );
 
 /**
@@ -234,13 +234,13 @@ ircode::AddrVariable * genSuitableAddr(
  * @return instructions perform saving.
  * @note conversion will do type conversion.
  */
-std::list<ircode::IRInstr *> genStoreInstrInFunction(
-	ircode::IRModule & ir, ircode::AddrVariable * saveTo, ircode::AddrVariable * from
+std::list<mir::Instr *> genStoreInstrInFunction(
+	mir::Module & ir, mir::AddrVariable * saveTo, mir::AddrVariable * from
 );
 
-//std::tuple<ircode::AddrVariable *, std::list<ircode::IRInstr *>>
+//std::tuple<mir::AddrVariable *, std::list<mir::Instr *>>
 //genValueGetInstrsInFunctionFromVar(
-//	ircode::IRModule & ir, ircode::AddrVariable * from
+//	mir::Module & ir, mir::AddrVariable * from
 //);
 
 }

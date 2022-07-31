@@ -24,7 +24,7 @@ antlrcpp::Any ASTVisitor::visitUninitVarDef(SysYParser::UninitVarDefContext * ct
 		bTypeToTypeInfoUPtr(info.var.btype, info.var.shapeOfDefiningVar);
 	if (info.stat.inGlobal) {
 		auto pAddr = ir.addrPool.emplace_back(
-			ircode::AddrGlobalVariable(*varTypInfo, varname)
+			mir::AddrGlobalVariable(*varTypInfo, varname)
 		);
 		symbolTable.pScopeNow->bindDominateVar(
 			varname, IdType::GlobalVarName, pAddr
@@ -32,12 +32,12 @@ antlrcpp::Any ASTVisitor::visitUninitVarDef(SysYParser::UninitVarDefContext * ct
 		return nullptr;
 	} else {
 		auto pAddr = ir.addrPool.emplace_back(
-			ircode::AddrLocalVariable(*varTypInfo, varname)
+			mir::AddrLocalVariable(*varTypInfo, varname)
 		);
-		auto instrsRes = std::list<ircode::IRInstr *>();
+		auto instrsRes = std::list<mir::Instr *>();
 		instrsRes.emplace_back(
 			ir.instrPool.emplace_back(
-				ircode::InstrAlloca(pAddr)
+				mir::InstrAlloca(pAddr)
 			)
 		);
 		symbolTable.pScopeNow->bindDominateVar(
@@ -80,14 +80,14 @@ antlrcpp::Any ASTVisitor::visitInitVarDef(SysYParser::InitVarDefContext * ctx) {
 			ir, info.var.staticArrayItems, info.var.shapeOfDefiningVar, *eleTypeInfo
 		);
 		auto pAddr = ir.addrPool.emplace_back(
-			ircode::AddrGlobalVariable(*varTypeInfo, varName, *pSV)
+			mir::AddrGlobalVariable(*varTypeInfo, varName, *pSV)
 		);
 		symbolTable.pScopeNow->bindDominateVar(
 			varName, IdType::GlobalVarName, pAddr
 		);
 		return nullptr;
 	} else {
-		auto instrsRes = std::list<ircode::IRInstr *>();
+		auto instrsRes = std::list<mir::Instr *>();
 		//  In local decl, val in `initVal` may be other value, and so will return
 		setWithAutoRestorer(info.stat.calculatingStaticValue, false);
 		setWithAutoRestorer(info.var.idxView, IdxView(info.var.shapeOfDefiningVar));
@@ -95,11 +95,11 @@ antlrcpp::Any ASTVisitor::visitInitVarDef(SysYParser::InitVarDefContext * ctx) {
 		setWithAutoRestorer(info.var.localArrayItems, {});
 		ctx->initVal()->accept(this);
 		auto pVarAddr = ir.addrPool.emplace_back(
-			ircode::AddrLocalVariable(*varTypeInfo, varName)
+			mir::AddrLocalVariable(*varTypeInfo, varName)
 		);
 		instrsRes.emplace_back(
 			ir.instrPool.emplace_back(
-				ircode::InstrAlloca(pVarAddr)
+				mir::InstrAlloca(pVarAddr)
 			)
 		);
 		instrsRes.splice(
@@ -125,8 +125,8 @@ ASTVisitor::visitScalarInitVal(SysYParser::ScalarInitValContext * ctx) {
 			info.var.idxView.idx, retVal.restore<std::unique_ptr<StaticValue>>()
 		);
 	} else {
-		auto * pAddr = retVal.restore<ircode::AddrOperand *>();
-		auto instrs = retInstrs.restore<std::list<ircode::IRInstr *>>();
+		auto * pAddr = retVal.restore<mir::AddrOperand *>();
+		auto instrs = retInstrs.restore<std::list<mir::Instr *>>();
 		info.var.localArrayItems.emplace_back(
 			info.var.idxView.idx, std::move(pAddr), std::move(instrs)//NOLINT
 		);
@@ -151,10 +151,10 @@ antlrcpp::Any ASTVisitor::visitListInitval(SysYParser::ListInitvalContext * ctx)
 	while (!info.var.idxView.isAll0AfterNDim(info.var.ndim) || !added) {
 		auto upTypeInfo = bTypeToTypeInfoUPtr(info.var.btype);
 		auto * pZero = ir.addrPool.emplace_back(
-			ircode::AddrStaticValue(*upTypeInfo)
+			mir::AddrStaticValue(*upTypeInfo)
 		);
 		info.var.localArrayItems.emplace_back(
-			info.var.idxView.idx, pZero, std::list<ircode::IRInstr *>()
+			info.var.idxView.idx, pZero, std::list<mir::Instr *>()
 		);
 		info.var.idxView.addOnDimN(-1, 1);
 		added = true;

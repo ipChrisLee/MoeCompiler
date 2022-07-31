@@ -24,14 +24,18 @@ int Main(int argc, char ** argv) {
 	SysYParser parser(&tokens);
 	parser.setErrorHandler(std::make_shared<antlr4::BailErrorStrategy>());
 	SysYParser::CompUnitContext * root = parser.compUnit();
-	ircode::IRModule ir;
+	mir::Module ir;
 	frontend::ASTVisitor visitor(ir);
 	root->accept(&visitor);
 	ir.finishLoading();
 	if (!SysY::options.withoutAnyPass.get()) {
 		pass::passMain(ir);
 	}
-	SysY::dest << ir.toLLVMIR() << std::endl;
+	if (SysY::options.emitLLVM.get()) {
+		SysY::dest << ir.toLLVMIR() << std::endl;
+	} else if (SysY::options.emitLIR.get()) {
+		com::TODO("LIR Module!", CODEPOS);
+	}
 	return 0;
 }
 

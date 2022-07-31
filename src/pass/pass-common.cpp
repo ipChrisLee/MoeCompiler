@@ -10,7 +10,7 @@
 
 namespace pass {
 
-IRPass::IRPass(ircode::IRModule & ir, std::string name) :
+IRPass::IRPass(mir::Module & ir, std::string name) :
 	ir(ir), name(std::move(name)) {
 	com::addRuntimeWarning(
 		"Consider adding pass dependence management.", CODEPOS,
@@ -18,7 +18,7 @@ IRPass::IRPass(ircode::IRModule & ir, std::string name) :
 	);
 }
 
-int passMain(ircode::IRModule & ir) {
+int passMain(mir::Module & ir) {
 	std::vector<std::unique_ptr<IRPass>> passes;
 	passes.emplace_back(std::make_unique<AddBrToNextBB>(ir));
 	for (auto & p: passes) {

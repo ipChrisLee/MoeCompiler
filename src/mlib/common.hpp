@@ -175,7 +175,7 @@ constexpr bool isTypeTInTypesTs() {
  *
  * @example
  * @code
- * UnaryVariant<std::unique_ptr<ircode::StaticValue>>uv;
+ * UnaryVariant<std::unique_ptr<mir::StaticValue>>uv;
  * uv.save(std::move(up));
  * @endcode
  */

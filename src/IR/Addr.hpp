@@ -14,11 +14,11 @@
 #include "frontend/SymbolTableAndScope.hpp"
 
 
-namespace ircode {
+namespace mir {
 
 class AddrPara;
 
-class IRAddr :
+class Addr :
 	public sup::LLVMable,
 	public moeconcept::Cloneable,
 	public moeconcept::Cutable {
@@ -31,15 +31,15 @@ class IRAddr :
   public:
 	const int id;
 
-	IRAddr();
+	Addr();
 
-	IRAddr(const IRAddr &);
+	Addr(const Addr &);
 
-	IRAddr(IRAddr &&) = default;
+	Addr(Addr &&) = default;
 
-	IRAddr & operator=(const IRAddr &) = delete;
+	Addr & operator=(const Addr &) = delete;
 
-	~IRAddr() override = default;
+	~Addr() override = default;
 
 	[[nodiscard]] virtual const sup::TypeInfo & getType() const;
 
@@ -47,7 +47,7 @@ class IRAddr :
 };
 
 class AddrOperand :
-	public IRAddr {
+	public Addr {
   protected:
 	std::unique_ptr<sup::TypeInfo> uPtrTypeInfo;
   public:
@@ -251,7 +251,7 @@ class AddrLocalVariable :
  *  `.if.then` is `labelName`.
  * */
 class AddrJumpLabel :
-	public IRAddr {
+	public Addr {
   protected:
 	[[nodiscard]] std::unique_ptr<Cloneable> _cloneToUniquePtr() const override;
 
@@ -278,7 +278,7 @@ class AddrJumpLabel :
  *  from source code.
  * */
 class AddrFunction :
-	public IRAddr {
+	public Addr {
   protected:
 	[[nodiscard]] std::unique_ptr<Cloneable> _cloneToUniquePtr() const override;
 

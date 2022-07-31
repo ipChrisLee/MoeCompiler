@@ -5,7 +5,7 @@ using namespace sup;
 namespace frontend {
 
 antlrcpp::Any ASTVisitor::visitConstDecl(SysYParser::ConstDeclContext * ctx) {
-	auto instrsRes = std::list<ircode::IRInstr *>();
+	auto instrsRes = std::list<mir::Instr *>();
 	//  ConstDecl -> "const" BType ConstDef {"," ConstDef};
 	setWithAutoRestorer(info.var.definingConstVar, true);
 	//  Get BType.
@@ -21,7 +21,7 @@ antlrcpp::Any ASTVisitor::visitConstDecl(SysYParser::ConstDeclContext * ctx) {
 			son->accept(this);
 			instrsRes.splice(
 				instrsRes.end(),
-				retInstrs.restore < std::list < ircode::IRInstr * >> ()
+				retInstrs.restore < std::list < mir::Instr * >> ()
 			);
 		}
 		retInstrs.save(std::move(instrsRes));
@@ -60,27 +60,27 @@ antlrcpp::Any ASTVisitor::visitConstDef(SysYParser::ConstDefContext * ctx) {
 	);
 	if (info.stat.inGlobal) {
 		auto pAddr = ir.addrPool.emplace_back(
-			ircode::AddrGlobalVariable(*varTypeInfo, varName, *pSV, true)
+			mir::AddrGlobalVariable(*varTypeInfo, varName, *pSV, true)
 		);
 		symbolTable.pScopeNow
 		           ->bindDominateVar(varName, IdType::GlobalVarName, pAddr);
 		return nullptr;
 	} else {
 		auto pVarAddr = ir.addrPool.emplace_back(
-			ircode::AddrLocalVariable(*varTypeInfo, varName, *pSV)
+			mir::AddrLocalVariable(*varTypeInfo, varName, *pSV)
 		);
 		auto pSVAddr = ir.addrPool.emplace_back(
-			ircode::AddrStaticValue(*pSV)
+			mir::AddrStaticValue(*pSV)
 		);
-		auto instrsRes = std::list<ircode::IRInstr *>();
+		auto instrsRes = std::list<mir::Instr *>();
 		instrsRes.emplace_back(
 			ir.instrPool.emplace_back(
-				ircode::InstrAlloca(pVarAddr)
+				mir::InstrAlloca(pVarAddr)
 			)
 		);
 		instrsRes.emplace_back(
 			ir.instrPool.emplace_back(
-				ircode::InstrStore(pSVAddr, pVarAddr)
+				mir::InstrStore(pSVAddr, pVarAddr)
 			)
 		);
 		symbolTable.pScopeNow

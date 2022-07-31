@@ -7,7 +7,7 @@
 #include <unordered_map>
 
 #include "pass/pass-common.hpp"
-#include "IR/IRInstr.hpp"
+#include "IR/Instr.hpp"
 
 
 namespace pass {
@@ -18,12 +18,12 @@ namespace pass {
  */
 class AddBrToNextBB : public IRPass {
   protected:
-	int run(std::list<ircode::IRInstr *> & instrs);
+	int run(std::list<mir::Instr *> & instrs);
 
   public:
 	int run() override;
 
-	explicit AddBrToNextBB(ircode::IRModule & ir, std::string name = "");
+	explicit AddBrToNextBB(mir::Module & ir, std::string name = "");
 };
 
 

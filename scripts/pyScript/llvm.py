@@ -19,11 +19,12 @@ class Clang:
 	@staticmethod
 	def compile_to_llvmir(
 		syFilePath: str,
-		llFilePath: str
+		llFilePath: str,
+		optiLevel: int = 0
 	):
 		return run_command(
 			[
-				'clang', '-Xclang', '-O0', '-S', '-x', 'c',
+				'clang', '-Xclang', f'-O{optiLevel}', '-S', '-x', 'c',
 				'-emit-llvm',
 				'-include', SysYSettings.syLibHeaderPath,
 				'-target', 'armv7a-unknown-linux-gnueabihf', '-march=armv7-a',

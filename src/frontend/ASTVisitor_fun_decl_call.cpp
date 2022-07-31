@@ -14,30 +14,30 @@ antlrcpp::Any ASTVisitor::visitFuncDef(SysYParser::FuncDefContext * ctx) {
 	//  Visit funcFParams to get parameters information.
 	auto funcDeclScope = symbolTable.pScopeNow;
 	setWithAutoRestorer(symbolTable.pScopeNow, symbolTable.pScopeNow->addSonScope());
-	std::vector<ircode::AddrPara *> params;
+	std::vector<mir::AddrPara *> params;
 	if (ctx->funcFParams()) {
 		ctx->funcFParams()->accept(this);
-		params = retVal.restore<std::vector<ircode::AddrPara *>>();
+		params = retVal.restore<std::vector<mir::AddrPara *>>();
 	}
 	//  Create Addr of function and retval and ret bock label.
-	ircode::AddrFunction * pAddrFun = nullptr;
-	ircode::AddrVariable * pRetvalMem = nullptr;
+	mir::AddrFunction * pAddrFun = nullptr;
+	mir::AddrVariable * pRetvalMem = nullptr;
 	setWithAutoRestorer(info.func.pRetBlockLabel,
-	                    ir.addrPool.emplace_back(ircode::AddrJumpLabel("return")));
+	                    ir.addrPool.emplace_back(mir::AddrJumpLabel("return")));
 	switch (funcType) {
 		case FuncType::Void: {
 			pAddrFun = ir.addrPool.emplace_back(
-				ircode::AddrFunction(funName, params)
+				mir::AddrFunction(funName, params)
 			);
 			pRetvalMem = nullptr;
 			break;
 		}
 		case FuncType::Float: {
 			pAddrFun = ir.addrPool.emplace_back(
-				ircode::AddrFunction(funName, params, FloatType())
+				mir::AddrFunction(funName, params, FloatType())
 			);
 			pRetvalMem = ir.addrPool.emplace_back(
-				ircode::AddrVariable(
+				mir::AddrVariable(
 					PointerType(FloatType()), "retval"
 				)
 			);
@@ -45,10 +45,10 @@ antlrcpp::Any ASTVisitor::visitFuncDef(SysYParser::FuncDefContext * ctx) {
 		}
 		case FuncType::Int: {
 			pAddrFun = ir.addrPool.emplace_back(
-				ircode::AddrFunction(funName, params, IntType())
+				mir::AddrFunction(funName, params, IntType())
 			);
 			pRetvalMem = ir.addrPool.emplace_back(
-				ircode::AddrVariable(
+				mir::AddrVariable(
 					PointerType(IntType()), "retval"
 				)
 			);
@@ -62,56 +62,56 @@ antlrcpp::Any ASTVisitor::visitFuncDef(SysYParser::FuncDefContext * ctx) {
 	//  Add to symbol table
 	funcDeclScope->bindDominateVar(funName, IdType::FunctionName, pAddrFun);
 	//  Create default funcDef variable.
-	auto funcDef = ircode::IRFuncDef(pAddrFun);
+	auto funcDef = mir::FuncDef(pAddrFun);
 	for (const auto & pAddrPara: params) {
 		auto pParaMemAddr = ir.addrPool.emplace_back(
-			ircode::AddrLocalVariable(pAddrPara->getType(), pAddrPara->getName())
+			mir::AddrLocalVariable(pAddrPara->getType(), pAddrPara->getName())
 		);
 		symbolTable.pScopeNow->bindDominateVar(
 			pAddrPara->getName(), IdType::ParameterName, pParaMemAddr
 		);
 		funcDef.emplace_back(
 			ir.instrPool.emplace_back(
-				ircode::InstrAlloca(pParaMemAddr, pAddrPara->getType())
+				mir::InstrAlloca(pParaMemAddr, pAddrPara->getType())
 			)
 		);
 		funcDef.emplace_back(
 			ir.instrPool.emplace_back(
-				ircode::InstrStore(pAddrPara, pParaMemAddr)
+				mir::InstrStore(pAddrPara, pParaMemAddr)
 			)
 		);
 	}
 	setWithAutoRestorer(info.func.pFuncDef, &funcDef);
 	//  Create instrs list.
-	auto instrsRes = std::list<ircode::IRInstr *>();
+	auto instrsRes = std::list<mir::Instr *>();
 	//  for return
 	if (info.func.pRetvalMem) {
 		instrsRes.emplace_back(
 			ir.instrPool.emplace_back(
-				ircode::InstrAlloca(info.func.pRetvalMem)
+				mir::InstrAlloca(info.func.pRetvalMem)
 			)
 		);
 	}
 	//  Translate block items.
 	ctx->block()->accept(this);
-	auto instrsBlock = retInstrs.restore<std::list<ircode::IRInstr *>>();
+	auto instrsBlock = retInstrs.restore<std::list<mir::Instr *>>();
 	instrsRes.splice(instrsRes.end(), std::move(instrsBlock));
 	//  add `return` label
 	instrsRes.emplace_back(
 		ir.instrPool.emplace_back(
-			ircode::InstrLabel(info.func.pRetBlockLabel)
+			mir::InstrLabel(info.func.pRetBlockLabel)
 		)
 	);
 	//  store from retval
-	ircode::AddrVariable * pRetval = nullptr;
+	mir::AddrVariable * pRetval = nullptr;
 	switch (funcType) {
 		case FuncType::Int: {
 			pRetval = ir.addrPool.emplace_back(
-				ircode::AddrVariable(IntType())
+				mir::AddrVariable(IntType())
 			);
 			instrsRes.emplace_back(
 				ir.instrPool.emplace_back(
-					ircode::InstrLoad(
+					mir::InstrLoad(
 						info.func.pRetvalMem, pRetval
 					)
 				)
@@ -120,11 +120,11 @@ antlrcpp::Any ASTVisitor::visitFuncDef(SysYParser::FuncDefContext * ctx) {
 		}
 		case FuncType::Float: {
 			pRetval = ir.addrPool.emplace_back(
-				ircode::AddrVariable(FloatType())
+				mir::AddrVariable(FloatType())
 			);
 			instrsRes.emplace_back(
 				ir.instrPool.emplace_back(
-					ircode::InstrLoad(
+					mir::InstrLoad(
 						info.func.pRetvalMem, pRetval
 					)
 				)
@@ -142,7 +142,7 @@ antlrcpp::Any ASTVisitor::visitFuncDef(SysYParser::FuncDefContext * ctx) {
 	//  `ret` instruction
 	instrsRes.emplace_back(
 		ir.instrPool.emplace_back(
-			ircode::InstrRet(
+			mir::InstrRet(
 				pRetval
 			)
 		)
@@ -159,10 +159,10 @@ antlrcpp::Any ASTVisitor::visitFuncFParams(SysYParser::FuncFParamsContext * ctx)
 	 * @brief The move constructor of std::vector will just move pointer to memory.
 	 * @ref https://stackoverflow.com/a/53879096/17924585
 	 */
-	std::vector<ircode::AddrPara *> vecPara;
+	std::vector<mir::AddrPara *> vecPara;
 	for (auto p: ctx->funcFParam()) {
 		p->accept(this);
-		vecPara.emplace_back(retVal.restore<ircode::AddrPara *>());
+		vecPara.emplace_back(retVal.restore<mir::AddrPara *>());
 	}
 	retVal.save(std::move(vecPara));
 	return nullptr;
@@ -191,8 +191,8 @@ antlrcpp::Any ASTVisitor::visitFuncFParam(SysYParser::FuncFParamContext * ctx) {
 	} else {
 		uPtrTypeInfo = bTypeToTypeInfoUPtr(info.var.btype);
 	}
-	ircode::AddrPara * pAddrPara =
-		ir.addrPool.emplace_back(ircode::AddrPara(*uPtrTypeInfo, varname));
+	mir::AddrPara * pAddrPara =
+		ir.addrPool.emplace_back(mir::AddrPara(*uPtrTypeInfo, varname));
 	retVal.save( // some exception... but not important.
 		std::move(pAddrPara));/*NOLINT*/
 	return nullptr;
@@ -200,8 +200,8 @@ antlrcpp::Any ASTVisitor::visitFuncFParam(SysYParser::FuncFParamContext * ctx) {
 
 antlrcpp::Any ASTVisitor::visitFuncRParams(SysYParser::FuncRParamsContext * ctx) {
 	// funcRParams -> funcRParam (',' funcRParam)*
-	auto instrsRes = std::list<ircode::IRInstr *>();
-	auto params = std::vector<ircode::AddrOperand *>();
+	auto instrsRes = std::list<mir::Instr *>();
+	auto params = std::vector<mir::AddrOperand *>();
 	com::Assert(
 		info.var.pUsingFunc, "funcAddr should not be nullptr when getting rParams.",
 		CODEPOS
@@ -213,8 +213,8 @@ antlrcpp::Any ASTVisitor::visitFuncRParams(SysYParser::FuncRParamsContext * ctx)
 	int nParams = info.var.pUsingFunc->getNumberOfParameter();
 	for (int i = 0; i < nParams; ++i) {
 		ctx->funcRParam(i)->accept(this);
-		auto * pRParaAddr = retVal.restore<ircode::AddrOperand *>();
-		auto instrs = retInstrs.restore<std::list<ircode::IRInstr *>>();
+		auto * pRParaAddr = retVal.restore<mir::AddrOperand *>();
+		auto instrs = retInstrs.restore<std::list<mir::Instr *>>();
 		com::addRuntimeWarning(
 			"Pointer as param?", CODEPOS, com::addWarningOnlyOnce
 		);

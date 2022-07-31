@@ -8,11 +8,11 @@
 #include "common.hpp"
 #include "moeconcept.hpp"
 
-#include "IR/IRAddr.hpp"
+#include "IR/Addr.hpp"
 #include "support/support-common.hpp"
 
 
-namespace ircode {
+namespace mir {
 
 enum class InstrType {
 	Err,                //
@@ -38,7 +38,7 @@ enum class InstrType {
 
 bool isTerminalInstr(InstrType instrType);
 
-class IRInstr
+class Instr
 	: public sup::LLVMable, public moeconcept::Cutable {
   protected:
 	std::unique_ptr<Cutable> _cutToUniquePtr() override = 0;
@@ -48,20 +48,20 @@ class IRInstr
 	const int id;
 	InstrType instrType;
 
-	explicit IRInstr(InstrType instrType) : id(++cnt), instrType(instrType) {};
+	explicit Instr(InstrType instrType) : id(++cnt), instrType(instrType) {};
 
-	IRInstr(const IRInstr &);
+	Instr(const Instr &);
 
-	IRInstr(IRInstr &&) = default;
+	Instr(Instr &&) = default;
 
-	IRInstr & operator=(const IRInstr &) = delete;
+	Instr & operator=(const Instr &) = delete;
 
 	[[nodiscard]] std::string toLLVMIR() const override = 0;
 
-	~IRInstr() override = default;
+	~Instr() override = default;
 };
 
-class InstrAlloca : public IRInstr {
+class InstrAlloca : public Instr {
   protected:
 	// [[nodiscard]] std::unique_ptr<Cloneable> _cloneToUniquePtr() const override;
 
@@ -86,7 +86,7 @@ class InstrAlloca : public IRInstr {
 	[[nodiscard]] std::string toLLVMIR() const override;
 };
 
-class InstrStore : public IRInstr {
+class InstrStore : public Instr {
   protected:
 	// [[nodiscard]] std::unique_ptr<Cloneable> _cloneToUniquePtr() const override;
 
@@ -105,7 +105,7 @@ class InstrStore : public IRInstr {
 	[[nodiscard]] std::string toLLVMIR() const override;
 };
 
-class InstrLoad : public IRInstr {
+class InstrLoad : public Instr {
   protected:
 	// [[nodiscard]] std::unique_ptr<Cloneable> _cloneToUniquePtr() const override;
 
@@ -123,7 +123,7 @@ class InstrLoad : public IRInstr {
 	[[nodiscard]] std::string toLLVMIR() const override;
 };
 
-class InstrLabel : public IRInstr {
+class InstrLabel : public Instr {
   protected:
 	// [[nodiscard]] std::unique_ptr<Cloneable> _cloneToUniquePtr() const override;
 
@@ -141,7 +141,7 @@ class InstrLabel : public IRInstr {
 	[[nodiscard]] std::string toLLVMIR() const override;
 };
 
-class InstrBr : public IRInstr {
+class InstrBr : public Instr {
   protected:
 	std::unique_ptr<Cutable> _cutToUniquePtr() override CUTABLE_DEFAULT_IMPLEMENT;
 
@@ -163,7 +163,7 @@ class InstrBr : public IRInstr {
 	[[nodiscard]] std::string toLLVMIR() const override;
 };
 
-class InstrRet : public IRInstr {
+class InstrRet : public Instr {
   protected:
 	// [[nodiscard]] std::unique_ptr<Cloneable> _cloneToUniquePtr() const override;
 
@@ -181,7 +181,7 @@ class InstrRet : public IRInstr {
 	[[nodiscard]] std::string toLLVMIR() const override;
 };
 
-class InstrBinaryOp : public IRInstr {
+class InstrBinaryOp : public Instr {
   protected:
 	// [[nodiscard]] std::unique_ptr<Cloneable> _cloneToUniquePtr() const override = 0;
 
@@ -201,7 +201,7 @@ class InstrBinaryOp : public IRInstr {
 	[[nodiscard]] std::string toLLVMIR() const override = 0;
 };
 
-class InstrConversionOp : public IRInstr {
+class InstrConversionOp : public Instr {
   protected:
 	// [[nodiscard]] std::unique_ptr<Cloneable> _cloneToUniquePtr() const override = 0;
 
@@ -400,7 +400,7 @@ class InstrSrem : public InstrBinaryOp {
 };
 
 
-class InstrCall : public IRInstr {
+class InstrCall : public Instr {
   protected:
 	// [[nodiscard]] std::unique_ptr<Cloneable> _cloneToUniquePtr() const override;
 
@@ -422,7 +422,7 @@ class InstrCall : public IRInstr {
 
 };
 
-class InstrGetelementptr : public IRInstr {
+class InstrGetelementptr : public Instr {
   protected:
 	std::unique_ptr<Cutable> _cutToUniquePtr() override CUTABLE_DEFAULT_IMPLEMENT;
 
@@ -440,7 +440,7 @@ class InstrGetelementptr : public IRInstr {
 	std::string toLLVMIR() const override;
 };
 
-class InstrCompare : public IRInstr {
+class InstrCompare : public Instr {
   protected:
 	std::unique_ptr<Cutable> _cutToUniquePtr() override CUTABLE_DEFAULT_IMPLEMENT;
 
