@@ -11,9 +11,7 @@ using namespace ircode;
 
 int AddBrToNextBB::run() {
 	for (auto * pFuncDef: ir.funcPool) {
-		if (pFuncDef->pAddrFun->justDeclare) {
-			continue;
-		}
+		if (pFuncDef->pAddrFun->justDeclare) { continue; }
 		run(pFuncDef->instrs);
 	}
 	return 0;
