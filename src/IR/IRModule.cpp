@@ -9,6 +9,11 @@
 namespace ircode {
 
 IRAddrPool::IRAddrPool() : pool() {
+	afterEmplace = [this](IRAddr * pAddr) {
+		if (auto * pp = dynamic_cast<AddrGlobalVariable *>(pAddr)) {
+			globalVars.emplace_back(pp);
+		}
+	};
 }
 
 std::string IRAddrPool::toLLVMIR() const {
@@ -211,8 +216,6 @@ void IRInstrPool::printAll(std::ostream & os) const {
 	}
 }
 
-IRInstrPool::IRInstrPool() : pool() {
-}
 
 IRFuncBlock::IRFuncBlock() : instrs() {
 }
@@ -287,12 +290,6 @@ void IRFuncDef::emplace_back(std::list<IRInstr *> && appendList) {
 
 IRFuncBlock * IRFuncDef::emplace_back(IRFuncBlock && irFuncBlock) {
 	pool.emplace_back(std::make_unique<IRFuncBlock>(std::move(irFuncBlock)));
-	return pool.rbegin()->get();
-}
-
-IRFuncDef * IRFuncDefPool::emplace_back(IRFuncDef && funcDef) {
-	pool.emplace_back(std::make_unique<IRFuncDef>(std::move(funcDef)));
-	funcDefs.emplace_back(pool.rbegin()->get());
 	return pool.rbegin()->get();
 }
 
