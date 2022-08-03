@@ -31,7 +31,9 @@ int Main(int argc, char ** argv) {
 	if (!SysY::options.withoutAnyPass.get()) {
 		pass::passMain(ir);
 	}
-	SysY::dest << ir.toLLVMIR() << std::endl;
+	if (SysY::options.emitLLVM.get()) {
+		SysY::dest << ir.toLLVMIR() << std::endl;
+	}
 	return 0;
 }
 
