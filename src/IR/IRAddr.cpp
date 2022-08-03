@@ -25,8 +25,8 @@ IRAddr::IRAddr() :
 	id(++cnt) {
 }
 
-IRAddr::IRAddr(const IRAddr &) :
-	id(++cnt) {
+IRAddr::IRAddr(const IRAddr & addr) :
+	id(++cnt), addrType(addr.addrType) {
 }
 
 const TypeInfo & IRAddr::getType() const {
@@ -42,6 +42,7 @@ const TypeInfo & IRAddr::getType() const {
 
 AddrJumpLabel::AddrJumpLabel(std::string name) :
 	labelName(convertLongName(std::move(name))) {
+	addrType = AddrType::JumpLabel;
 }
 
 std::string AddrJumpLabel::toLLVMIR() const {
@@ -66,6 +67,7 @@ AddrPara::AddrPara(
 	const TypeInfo & typeInfo, std::string name
 ) :
 	AddrVariable(typeInfo, convertLongName(std::move(name))) {
+	addrType = AddrType::ParaVar;
 }
 
 std::string AddrPara::toLLVMIR() const {
@@ -85,6 +87,7 @@ AddrFunction::AddrFunction(std::string name)
 	:
 	uPtrReturnTypeInfo(std::make_unique<VoidType>()),
 	name(convertLongName(std::move(name))) {
+	addrType = AddrType::Func;
 }
 
 AddrFunction::AddrFunction(
@@ -93,6 +96,7 @@ AddrFunction::AddrFunction(
 	uPtrReturnTypeInfo(std::make_unique<VoidType>()),
 	vecPtrAddrPara(std::move(vecPara)),
 	name(convertLongName(std::move(name))) {
+	addrType = AddrType::Func;
 }
 
 const TypeInfo & AddrFunction::getReturnTypeInfo() const {
@@ -191,6 +195,7 @@ AddrFunction::AddrFunction(
 		com::dynamic_cast_uPtr<TypeInfo>(retType.cloneToUniquePtr())),
 	vecPtrAddrPara(std::move(vecPara)),
 	name(convertLongName(std::move(name))) {
+	addrType = AddrType::Func;
 }
 
 AddrFunction::AddrFunction(
@@ -199,6 +204,7 @@ AddrFunction::AddrFunction(
 	uPtrReturnTypeInfo(
 		com::dynamic_cast_uPtr<TypeInfo>(retType.cloneToUniquePtr())),
 	name(convertLongName(std::move(name))) {
+	addrType = AddrType::Func;
 }
 
 std::unique_ptr<moeconcept::Cutable> AddrFunction::_cutToUniquePtr() {
@@ -218,6 +224,7 @@ AddrVariable::AddrVariable(
 ) :
 	AddrOperand(typeInfo),
 	name(convertLongName(std::move(name))) {
+	addrType = AddrType::Var;
 }
 
 std::unique_ptr<moeconcept::Cloneable>
@@ -232,6 +239,7 @@ std::string AddrVariable::toLLVMIR() const {
 AddrVariable::AddrVariable(const AddrPara & addrPara) :
 	AddrOperand(PointerType(addrPara.getType())),
 	name(addrPara.name) {
+	addrType = AddrType::Var;
 }
 
 std::unique_ptr<moeconcept::Cutable> AddrVariable::_cutToUniquePtr() {
@@ -254,6 +262,7 @@ AddrVariable::AddrVariable(sup::Type type, std::string _name) :
 		}()
 	),
 	name(std::move(_name)) {
+	addrType = AddrType::Var;
 }
 
 AddrGlobalVariable::AddrGlobalVariable(
@@ -270,6 +279,7 @@ AddrGlobalVariable::AddrGlobalVariable(
 				.cloneToUniquePtr())
 	),
 	isConst(isConst) {
+	addrType = AddrType::GlobalVar;
 	com::Assert(
 		staticValue.getType() == typeInfo,
 		"Type of static value and type of variable should be same.",
@@ -288,6 +298,7 @@ AddrGlobalVariable::AddrGlobalVariable(
 		zeroExtensionValueOfType(typeInfo)
 	),
 	isConst(isConst) {
+	addrType = AddrType::GlobalVar;
 }
 
 AddrGlobalVariable::AddrGlobalVariable(const AddrGlobalVariable & addr) :
@@ -330,6 +341,7 @@ AddrStaticValue::AddrStaticValue(
 	uPtrStaticValue(
 		com::dynamic_cast_uPtr<StaticValue>(staticValue.cloneToUniquePtr())
 	) {
+	addrType = AddrType::StaticValue;
 	com::Assert(staticValue.getType() == typeInfo, "", CODEPOS);
 }
 
@@ -358,15 +370,19 @@ AddrStaticValue::AddrStaticValue(const StaticValue & staticValue) :
 	uPtrStaticValue(
 		com::dynamic_cast_uPtr<StaticValue>(staticValue.cloneToUniquePtr())
 	) {
+	addrType = AddrType::StaticValue;
 }
 
 AddrStaticValue::AddrStaticValue(const TypeInfo & typeInfo) :
 	AddrOperand(typeInfo),
 	uPtrStaticValue(zeroExtensionValueOfType(typeInfo)) {
+	addrType = AddrType::StaticValue;
 }
 
 AddrStaticValue::AddrStaticValue(std::unique_ptr<sup::StaticValue> && up) :
-	AddrOperand(up->getType()), uPtrStaticValue(std::move(up)) {
+	AddrOperand(up->getType()),
+	uPtrStaticValue(std::move(up)) {
+	addrType = AddrType::StaticValue;
 }
 
 AddrOperand::AddrOperand(const AddrOperand & addr) :
@@ -389,6 +405,7 @@ AddrLocalVariable::AddrLocalVariable(
 ) :
 	AddrVariable(PointerType(typeInfo), convertLongName(std::move(name))),
 	isConst(false), uPtrStaticValue(nullptr) {
+	addrType = AddrType::LocalVar;
 }
 
 std::string AddrLocalVariable::toLLVMIR() const {

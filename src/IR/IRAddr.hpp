@@ -18,6 +18,17 @@ namespace ircode {
 
 class AddrPara;
 
+enum class AddrType {
+	Err,
+	StaticValue,
+	Var,
+	LocalVar,
+	GlobalVar,
+	ParaVar,
+	JumpLabel,
+	Func,
+};
+
 class IRAddr :
 	public sup::LLVMable,
 	public moeconcept::Cloneable,
@@ -27,11 +38,12 @@ class IRAddr :
 
 	std::unique_ptr<Cutable> _cutToUniquePtr() override = 0;
 
+	IRAddr();
+
 	static int cnt;
   public:
 	const int id;
-
-	IRAddr();
+	AddrType addrType = AddrType::Err;
 
 	IRAddr(const IRAddr &);
 
@@ -50,11 +62,12 @@ class AddrOperand :
 	public IRAddr {
   protected:
 	std::unique_ptr<sup::TypeInfo> uPtrTypeInfo;
-  public:
 
 	explicit AddrOperand(const sup::TypeInfo & typeInfo);
 
 	explicit AddrOperand(std::unique_ptr<sup::TypeInfo> && uPtrTypeInfo);
+
+  public:
 
 	AddrOperand(const AddrOperand &);
 
