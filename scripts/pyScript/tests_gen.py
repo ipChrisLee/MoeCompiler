@@ -96,17 +96,23 @@ def test_llvm():
 	Clang.compile_to_llvmir(
 		syFilePath=TestFilesSettings.FilePath.testSy,
 		llFilePath=TestFilesSettings.FilePath.testLL
-	)
+	).check_returncode()
+	Opt.opt(
+		llFilePath=TestFilesSettings.FilePath.testLL,
+		newLLFilePath=TestFilesSettings.FilePath.testMLL,
+		passes=['-mem2reg']
+	).check_returncode()
 	LLC.compile_llvmir(
 		llFilePath=TestFilesSettings.FilePath.testLL,
 		sFilePath=TestFilesSettings.FilePath.testS
-	)
-	Pi.run_tester(
+	).check_returncode()
+	res = Pi.run_tester(
 		sFilePath=TestFilesSettings.FilePath.testS,
 		inFilePath=TestFilesSettings.FilePath.testIn,
 		outFilePath=TestFilesSettings.FilePath.testOut,
 		resFilePath=TestFilesSettings.FilePath.testRes
 	)
+	print(f'Result : {res["test_status"]}')
 
 
 def test_llvm_all():

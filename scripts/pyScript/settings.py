@@ -43,6 +43,7 @@ class TestFilesSettings:
 		testIn: str = f'{_base}.in'
 		testOut: str = f'{_base}.out'
 		testRes: str = f'{_base}.res.json'
+		testOptLL: str = f'{_base}.opt.ll'
 
 
 class SysYSettings:
