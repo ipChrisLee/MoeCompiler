@@ -87,7 +87,7 @@ class ASTVisitor : public SysYBaseVisitor {
 		struct Func {
 			/*  address of retval of function.
 			 * */
-			ircode::AddrVariable * pRetvalMem = nullptr;
+			ircode::AddrLocalVariable * pRetvalMem = nullptr;
 			ircode::AddrJumpLabel * pRetBlockLabel = nullptr;
 			ircode::IRFuncDef * pFuncDef = nullptr;
 		};

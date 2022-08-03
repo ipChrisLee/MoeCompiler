@@ -26,7 +26,7 @@ std::string InstrAlloca::toLLVMIR() const {
 	return res;
 }
 
-InstrAlloca::InstrAlloca(AddrVariable * allocaTo, const TypeInfo & typeToAlloca) :
+InstrAlloca::InstrAlloca(AddrLocalVariable * allocaTo, const TypeInfo & typeToAlloca) :
 	IRInstr(InstrType::Alloca), allocaTo(allocaTo),
 	uPtrTypeToAlloca(
 		com::dynamic_cast_uPtr<TypeInfo>(typeToAlloca.cloneToUniquePtr())
@@ -48,7 +48,7 @@ std::unique_ptr<moeconcept::Cutable> InstrAlloca::_cutToUniquePtr() {
 	return std::make_unique<InstrAlloca>(std::move(*this));
 }
 
-InstrAlloca::InstrAlloca(AddrVariable * allocaTo) :
+InstrAlloca::InstrAlloca(AddrLocalVariable * allocaTo) :
 	IRInstr(InstrType::Alloca), allocaTo(allocaTo) {
 	try {
 		const auto

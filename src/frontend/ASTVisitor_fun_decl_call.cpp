@@ -21,7 +21,7 @@ antlrcpp::Any ASTVisitor::visitFuncDef(SysYParser::FuncDefContext * ctx) {
 	}
 	//  Create Addr of function and retval and ret bock label.
 	ircode::AddrFunction * pAddrFun = nullptr;
-	ircode::AddrVariable * pRetvalMem = nullptr;
+	ircode::AddrLocalVariable * pRetvalMem = nullptr;
 	setWithAutoRestorer(info.func.pRetBlockLabel,
 	                    ir.addrPool.emplace_back(ircode::AddrJumpLabel("return")));
 	switch (funcType) {
@@ -37,8 +37,8 @@ antlrcpp::Any ASTVisitor::visitFuncDef(SysYParser::FuncDefContext * ctx) {
 				ircode::AddrFunction(funName, params, FloatType())
 			);
 			pRetvalMem = ir.addrPool.emplace_back(
-				ircode::AddrVariable(
-					PointerType(FloatType()), "retval"
+				ircode::AddrLocalVariable(
+					FloatType(), "retval"
 				)
 			);
 			break;
@@ -48,8 +48,8 @@ antlrcpp::Any ASTVisitor::visitFuncDef(SysYParser::FuncDefContext * ctx) {
 				ircode::AddrFunction(funName, params, IntType())
 			);
 			pRetvalMem = ir.addrPool.emplace_back(
-				ircode::AddrVariable(
-					PointerType(IntType()), "retval"
+				ircode::AddrLocalVariable(
+					IntType(), "retval"
 				)
 			);
 			break;

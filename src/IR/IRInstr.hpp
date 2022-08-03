@@ -68,16 +68,16 @@ class InstrAlloca : public IRInstr {
 	std::unique_ptr<Cutable> _cutToUniquePtr() override;
 
   public:
-	AddrVariable * allocaTo;
+	AddrLocalVariable * allocaTo;
 	std::unique_ptr<sup::TypeInfo> uPtrTypeToAlloca;
 
-	InstrAlloca(AddrVariable * allocaTo, const sup::TypeInfo & typeToAlloca);
+	InstrAlloca(AddrLocalVariable * allocaTo, const sup::TypeInfo & typeToAlloca);
 
 	/**
 	 * @brief %c allocaTo = alloca %c type, align 4
 	 * @param allocaTo must be pointer type!
 	 */
-	explicit InstrAlloca(AddrVariable * allocaTo);
+	explicit InstrAlloca(AddrLocalVariable * allocaTo);
 
 	InstrAlloca(const InstrAlloca &);
 
