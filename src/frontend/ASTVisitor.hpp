@@ -14,7 +14,7 @@
 #include "frontend/SysAntlr/SysYParser.h"
 #include "frontend/SysAntlr/SysYBaseVisitor.h"
 #include "frontend/SysAntlr/SysYVisitor.h"
-#include "mir/support/SupportFunc.hpp"
+#include "support/Support.hpp"
 #include "mir/support/TypeInfo.hpp"
 #include "mir/support/StaticValue.hpp"
 #include "helper.hpp"
@@ -35,7 +35,7 @@ class ASTVisitor : public SysYBaseVisitor {
 
 	static FuncType strToFuncType(const std::string & str);
 
-	static std::unique_ptr<sup::TypeInfo>
+	static std::unique_ptr<mir::TypeInfo>
 	bTypeToTypeInfoUPtr(BType btype, const std::vector<int> & shape = { });
 
 
@@ -74,7 +74,7 @@ class ASTVisitor : public SysYBaseVisitor {
 			std::vector<int> shapeOfDefiningVar;
 			IdxView idxView;    //  Used on defining array.
 			int ndim = -1;           //  Used on defining array.
-			std::vector<ArrayItem<std::unique_ptr<sup::StaticValue>>>
+			std::vector<ArrayItem<std::unique_ptr<mir::StaticValue>>>
 				staticArrayItems;
 			std::vector<ArrayItem<mir::AddrOperand *>> localArrayItems;
 
@@ -87,7 +87,7 @@ class ASTVisitor : public SysYBaseVisitor {
 		struct Func {
 			/*  address of retval of function.
 			 * */
-			mir::AddrVariable * pRetvalMem = nullptr;
+			mir::AddrLocalVariable * pRetvalMem = nullptr;
 			mir::AddrJumpLabel * pRetBlockLabel = nullptr;
 			mir::FuncDef * pFuncDef = nullptr;
 		};
@@ -106,7 +106,7 @@ class ASTVisitor : public SysYBaseVisitor {
 	} info;
 
 	com::UnaryVariant<
-		std::unique_ptr<sup::StaticValue>,
+		std::unique_ptr<mir::StaticValue>,
 		std::string,
 		BType,
 		FuncType,

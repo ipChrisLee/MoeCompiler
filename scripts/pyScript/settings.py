@@ -37,6 +37,7 @@ class TestFilesSettings:
 		_base: str = 'testDir/testSyFile/test'
 		testSy: str = f'{_base}.sy'
 		testLL: str = f'{_base}.ll'
+		testOptLL: str = f'{_base}.opt.ll'
 		testMLL: str = f'{_base}.mll'
 		testS: str = f'{_base}.s'
 		testMS: str = f'{_base}.ms'

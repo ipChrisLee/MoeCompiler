@@ -1,7 +1,7 @@
 #include "ASTVisitor.hpp"
 
 
-using namespace sup;
+using namespace mir;
 namespace frontend {
 
 ASTVisitor::ASTVisitor(mir::Module & irModule)

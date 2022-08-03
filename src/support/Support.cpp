@@ -1,8 +1,11 @@
-#include "SupportFunc.hpp"
 #include <sstream>
 
+#include "mlib/common.hpp"
+#include "mlib/SysY.hpp"
+#include "Support.hpp"
 
-namespace sup {
+
+namespace mir {
 std::string LLVMable::toLLVMIR() const {
 	com::Throw("`toLLVMIR` method of some class is not implemented!");
 }

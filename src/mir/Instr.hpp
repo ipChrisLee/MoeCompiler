@@ -9,7 +9,7 @@
 #include "moeconcept.hpp"
 
 #include "Addr.hpp"
-#include "mir/support/SupportFunc.hpp"
+#include "support/Support.hpp"
 
 
 namespace mir {
@@ -39,7 +39,7 @@ enum class InstrType {
 bool isTerminalInstr(InstrType instrType);
 
 class Instr
-	: public sup::LLVMable, public moeconcept::Cutable {
+	: public mir::LLVMable, public moeconcept::Cutable {
   protected:
 	std::unique_ptr<Cutable> _cutToUniquePtr() override = 0;
 
@@ -68,16 +68,16 @@ class InstrAlloca : public Instr {
 	std::unique_ptr<Cutable> _cutToUniquePtr() override;
 
   public:
-	AddrVariable * allocaTo;
-	std::unique_ptr<sup::TypeInfo> uPtrTypeToAlloca;
+	AddrLocalVariable * allocaTo;
+	std::unique_ptr<mir::TypeInfo> uPtrTypeToAlloca;
 
-	InstrAlloca(AddrVariable * allocaTo, const sup::TypeInfo & typeToAlloca);
+	InstrAlloca(AddrLocalVariable * allocaTo, const mir::TypeInfo & typeToAlloca);
 
 	/**
 	 * @brief %c allocaTo = alloca %c type, align 4
 	 * @param allocaTo must be pointer type!
 	 */
-	explicit InstrAlloca(AddrVariable * allocaTo);
+	explicit InstrAlloca(AddrLocalVariable * allocaTo);
 
 	InstrAlloca(const InstrAlloca &);
 
@@ -465,7 +465,7 @@ enum class ICMP {
 	NE,     //  !=
 	SGT,    //  >
 	SGE,    //  >=
-	SLT,    //  >
+	SLT,    //  <
 	SLE,    //  <=
 	ERR,    //  For error handle
 };

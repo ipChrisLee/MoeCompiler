@@ -1,7 +1,7 @@
 #include "ASTVisitor.hpp"
 
 
-using namespace sup;
+using namespace mir;
 namespace frontend {
 
 antlrcpp::Any ASTVisitor::visitConstDecl(SysYParser::ConstDeclContext * ctx) {

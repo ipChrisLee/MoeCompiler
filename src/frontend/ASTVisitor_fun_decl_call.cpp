@@ -1,7 +1,7 @@
 #include "ASTVisitor.hpp"
 
 
-using namespace sup;
+using namespace mir;
 
 namespace frontend {
 antlrcpp::Any ASTVisitor::visitFuncDef(SysYParser::FuncDefContext * ctx) {
@@ -21,7 +21,7 @@ antlrcpp::Any ASTVisitor::visitFuncDef(SysYParser::FuncDefContext * ctx) {
 	}
 	//  Create Addr of function and retval and ret bock label.
 	mir::AddrFunction * pAddrFun = nullptr;
-	mir::AddrVariable * pRetvalMem = nullptr;
+	mir::AddrLocalVariable * pRetvalMem = nullptr;
 	setWithAutoRestorer(info.func.pRetBlockLabel,
 	                    ir.addrPool.emplace_back(mir::AddrJumpLabel("return")));
 	switch (funcType) {
@@ -37,8 +37,8 @@ antlrcpp::Any ASTVisitor::visitFuncDef(SysYParser::FuncDefContext * ctx) {
 				mir::AddrFunction(funName, params, FloatType())
 			);
 			pRetvalMem = ir.addrPool.emplace_back(
-				mir::AddrVariable(
-					PointerType(FloatType()), "retval"
+				mir::AddrLocalVariable(
+					FloatType(), "retval"
 				)
 			);
 			break;
@@ -48,8 +48,8 @@ antlrcpp::Any ASTVisitor::visitFuncDef(SysYParser::FuncDefContext * ctx) {
 				mir::AddrFunction(funName, params, IntType())
 			);
 			pRetvalMem = ir.addrPool.emplace_back(
-				mir::AddrVariable(
-					PointerType(IntType()), "retval"
+				mir::AddrLocalVariable(
+					IntType(), "retval"
 				)
 			);
 			break;
@@ -58,7 +58,7 @@ antlrcpp::Any ASTVisitor::visitFuncDef(SysYParser::FuncDefContext * ctx) {
 			com::Throw("Unknown Type!", CODEPOS);
 		}
 	}
-	setWithAutoRestorer(info.func.pRetvalMem, std::move(pRetvalMem));//NOLINT
+	setWithAutoRestorer(info.func.pRetvalMem, std::move(pRetvalMem));
 	//  Add to symbol table
 	funcDeclScope->bindDominateVar(funName, IdType::FunctionName, pAddrFun);
 	//  Create default funcDef variable.

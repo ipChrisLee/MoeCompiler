@@ -3,12 +3,15 @@
 #include <cmath>
 #include <numeric>
 
-#include "mlib/stlpro.hpp"
+#include <stlpro.hpp>
 
 #include "TypeInfo.hpp"
+#include "support/Support.hpp"
 
 
-namespace sup {
+namespace mir {
+using namespace sup;
+
 std::unique_ptr<StaticValue>
 calcOfFloat(float fl, float fr, const std::string & op) {
 	std::unique_ptr<StaticValue> upSV;
@@ -448,7 +451,7 @@ FloatArrayStaticValue::getValue(const std::vector<int> & ind) const {
 }
 
 FloatArrayStaticValue::FloatArrayStaticValue(std::vector<int> _shape)
-	: StaticValue(sup::FloatArrayType(_shape)), shape(std::move(_shape)),
+	: StaticValue(mir::FloatArrayType(_shape)), shape(std::move(_shape)),
 	  value(
 		  std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<>()),
 		  FloatStaticValue()
@@ -463,7 +466,7 @@ FloatArrayStaticValue::_cutToUniquePtr() {
 FloatArrayStaticValue::FloatArrayStaticValue(
 	std::vector<int> _shape,
 	std::vector<std::unique_ptr<StaticValue>> & staticValueArray
-) : StaticValue(sup::FloatArrayType(_shape)), shape(std::move(_shape)) {
+) : StaticValue(mir::FloatArrayType(_shape)), shape(std::move(_shape)) {
 	com::Assert(
 		std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<>()) ==
 			int(staticValueArray.size()),
@@ -537,7 +540,7 @@ IntArrayStaticValue::getValue(const std::vector<int> & ind) const {
 }
 
 IntArrayStaticValue::IntArrayStaticValue(std::vector<int> _shape)
-	: StaticValue(sup::IntArrayType(_shape)), shape(std::move(_shape)),
+	: StaticValue(mir::IntArrayType(_shape)), shape(std::move(_shape)),
 	  value(
 		  std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<>()),
 		  IntStaticValue()
@@ -551,7 +554,7 @@ std::unique_ptr<moeconcept::Cutable> IntArrayStaticValue::_cutToUniquePtr() {
 IntArrayStaticValue::IntArrayStaticValue(
 	std::vector<int> _shape,
 	std::vector<std::unique_ptr<StaticValue>> & staticValueArray
-) : StaticValue(sup::IntArrayType(_shape)), shape(std::move(_shape)) {
+) : StaticValue(mir::IntArrayType(_shape)), shape(std::move(_shape)) {
 	com::Assert(
 		std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<>()) ==
 			int(staticValueArray.size()),

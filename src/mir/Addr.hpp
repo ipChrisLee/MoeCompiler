@@ -16,10 +16,21 @@
 
 namespace mir {
 
+enum class AddrType {
+	Err,
+	StaticValue,
+	Variable,
+	Para,
+	GlobalVariable,
+	LocalVariable,
+	JumpLabel,
+	Function,
+};
+
 class AddrPara;
 
 class Addr :
-	public sup::LLVMable,
+	public mir::LLVMable,
 	public moeconcept::Cloneable,
 	public moeconcept::Cutable {
   protected:
@@ -30,6 +41,7 @@ class Addr :
 	static int cnt;
   public:
 	const int id;
+	AddrType addrType = AddrType::Err;
 
 	Addr();
 
@@ -41,7 +53,7 @@ class Addr :
 
 	~Addr() override = default;
 
-	[[nodiscard]] virtual const sup::TypeInfo & getType() const;
+	[[nodiscard]] virtual const mir::TypeInfo & getType() const;
 
 	[[nodiscard]] std::string toLLVMIR() const override = 0;
 };
@@ -49,18 +61,18 @@ class Addr :
 class AddrOperand :
 	public Addr {
   protected:
-	std::unique_ptr<sup::TypeInfo> uPtrTypeInfo;
+	std::unique_ptr<mir::TypeInfo> uPtrTypeInfo;
   public:
 
-	explicit AddrOperand(const sup::TypeInfo & typeInfo);
+	explicit AddrOperand(const mir::TypeInfo & typeInfo);
 
-	explicit AddrOperand(std::unique_ptr<sup::TypeInfo> && uPtrTypeInfo);
+	explicit AddrOperand(std::unique_ptr<mir::TypeInfo> && uPtrTypeInfo);
 
 	AddrOperand(const AddrOperand &);
 
 	AddrOperand(AddrOperand &&) = default;
 
-	[[nodiscard]] const sup::TypeInfo &
+	[[nodiscard]] const mir::TypeInfo &
 	getType() const override { return *uPtrTypeInfo; }
 
 };
@@ -74,17 +86,17 @@ class AddrStaticValue :
 
 	std::unique_ptr<Cutable> _cutToUniquePtr() override;
 
-	std::unique_ptr<sup::StaticValue> uPtrStaticValue;
+	std::unique_ptr<mir::StaticValue> uPtrStaticValue;
   public:
 
-	explicit AddrStaticValue(const sup::StaticValue &);
+	explicit AddrStaticValue(const mir::StaticValue &);
 
-	explicit AddrStaticValue(std::unique_ptr<sup::StaticValue> && up);
+	explicit AddrStaticValue(std::unique_ptr<mir::StaticValue> && up);
 
-	AddrStaticValue(const sup::TypeInfo &, const sup::StaticValue &);
+	AddrStaticValue(const mir::TypeInfo &, const mir::StaticValue &);
 
 	//  Default value of type `typeInfo`
-	explicit AddrStaticValue(const sup::TypeInfo &);
+	explicit AddrStaticValue(const mir::TypeInfo &);
 
 	AddrStaticValue(const AddrStaticValue &);
 
@@ -93,7 +105,7 @@ class AddrStaticValue :
 	// {staticValue}
 	[[nodiscard]] std::string toLLVMIR() const override;
 
-	[[nodiscard]] const sup::StaticValue &
+	[[nodiscard]] const mir::StaticValue &
 	getStaticValue() const { return *uPtrStaticValue; }
 };
 
@@ -112,14 +124,14 @@ class AddrVariable :
   public:
 	[[nodiscard]] virtual const std::string & getName() const { return name; }
 
-	explicit AddrVariable(const sup::TypeInfo &, std::string name = "");
+	explicit AddrVariable(const mir::TypeInfo &, std::string name = "");
 
 	/**
 	 * @brief convert type to addrVariable
 	 * @param type one of `Type::Int_t`, `Type::Float_t`, `Type::Bool_t`
 	 * @param name name of variable
 	 */
-	explicit AddrVariable(sup::Type type, std::string name = "");
+	explicit AddrVariable(mir::Type type, std::string name = "");
 
 	AddrVariable(const AddrVariable &) = default;
 
@@ -148,7 +160,7 @@ class AddrPara :
 	std::unique_ptr<Cutable> _cutToUniquePtr() override;
 
   public:
-	explicit AddrPara(const sup::TypeInfo &, std::string name);
+	explicit AddrPara(const mir::TypeInfo &, std::string name);
 
 	AddrPara(const AddrPara &) = default;
 
@@ -176,7 +188,7 @@ class AddrGlobalVariable :
 	std::unique_ptr<Cutable> _cutToUniquePtr() override;
 
 	//  For every global variable, it has its own static init value!
-	std::unique_ptr<sup::StaticValue> uPtrStaticValue;
+	std::unique_ptr<mir::StaticValue> uPtrStaticValue;
 	bool isConst;
   public:
 	/**
@@ -188,8 +200,8 @@ class AddrGlobalVariable :
 	 * @note The @c typeInfo should be same as @c staticValue.
 	 */
 	AddrGlobalVariable(
-		const sup::TypeInfo & typeInfo, std::string name,
-		const sup::StaticValue & staticValue, bool isConst = false
+		const mir::TypeInfo & typeInfo, std::string name,
+		const mir::StaticValue & staticValue, bool isConst = false
 	);
 
 	/**
@@ -198,7 +210,7 @@ class AddrGlobalVariable :
 	 * @param name name from source code.
 	 */
 	AddrGlobalVariable(
-		const sup::TypeInfo & typeInfo, std::string name, bool isConst = false
+		const mir::TypeInfo & typeInfo, std::string name, bool isConst = false
 	);
 
 	AddrGlobalVariable(const AddrGlobalVariable &);
@@ -213,7 +225,7 @@ class AddrGlobalVariable :
 
 	[[nodiscard]] bool isConstVar() const override { return isConst; }
 
-	[[nodiscard]] const sup::StaticValue & getStaticValue() const;
+	[[nodiscard]] const mir::StaticValue & getStaticValue() const;
 };
 
 class AddrLocalVariable :
@@ -225,13 +237,13 @@ class AddrLocalVariable :
 	std::unique_ptr<Cutable> _cutToUniquePtr() override CUTABLE_DEFAULT_IMPLEMENT;
 
 	bool isConst;
-	std::unique_ptr<sup::StaticValue> uPtrStaticValue;
+	std::unique_ptr<mir::StaticValue> uPtrStaticValue;
   public:
-	AddrLocalVariable(const sup::TypeInfo & typeInfo, std::string name);
+	AddrLocalVariable(const mir::TypeInfo & typeInfo, std::string name);
 
 	AddrLocalVariable(
-		const sup::TypeInfo & typeInfo, std::string name,
-		const sup::StaticValue & staticValue
+		const mir::TypeInfo & typeInfo, std::string name,
+		const mir::StaticValue & staticValue
 	);
 
 	AddrLocalVariable(const AddrLocalVariable &);
@@ -243,7 +255,9 @@ class AddrLocalVariable :
 
 	[[nodiscard]] bool isConstVar() const override { return isConst; }
 
-	[[nodiscard]] const sup::StaticValue & getStaticValue() const;
+	[[nodiscard]] const mir::StaticValue & getStaticValue() const;
+
+	int getSize() const;
 };
 
 /*  For LLVM-IR jump label.
@@ -257,8 +271,8 @@ class AddrJumpLabel :
 
 	std::unique_ptr<Cutable> _cutToUniquePtr() override;
 
-	std::string labelName;
   public:
+	std::string labelName;
 
 	explicit AddrJumpLabel(std::string labelName = "");
 
@@ -284,7 +298,7 @@ class AddrFunction :
 
 	std::unique_ptr<Cutable> _cutToUniquePtr() override;
 
-	std::unique_ptr<sup::TypeInfo> uPtrReturnTypeInfo; // nullptr for void
+	std::unique_ptr<mir::TypeInfo> uPtrReturnTypeInfo; // nullptr for void
 	std::vector<AddrPara *> vecPtrAddrPara;
 	std::string name;
   public:
@@ -307,21 +321,21 @@ class AddrFunction :
 	 */
 	AddrFunction(
 		std::string name, std::vector<AddrPara *> vecPara,
-		const sup::TypeInfo & retType
+		const mir::TypeInfo & retType
 	);
 
 	/**
 	 * @brief For @c ...()
 	 */
-	AddrFunction(std::string name, const sup::TypeInfo & retType);
+	AddrFunction(std::string name, const mir::TypeInfo & retType);
 
 	AddrFunction(const AddrFunction &);
 
 	AddrFunction(AddrFunction &&) = default;
 
-	[[nodiscard]] const sup::TypeInfo & getReturnTypeInfo() const;
+	[[nodiscard]] const mir::TypeInfo & getReturnTypeInfo() const;
 
-	[[nodiscard]] const sup::TypeInfo & getNumberThParameterTypeInfo(int) const;
+	[[nodiscard]] const mir::TypeInfo & getNumberThParameterTypeInfo(int) const;
 
 	[[nodiscard]] int getNumberOfParameter() const;
 

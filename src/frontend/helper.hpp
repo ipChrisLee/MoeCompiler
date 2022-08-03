@@ -38,7 +38,7 @@ struct IdxView {
 
 template<typename T>
 struct ArrayItem {
-	//  `T` is `std::unique_ptr<sup::StaticValue>` for const array and global array.
+	//  `T` is `std::unique_ptr<mir::StaticValue>` for const array and global array.
 	//  `T` is `mir::AddrOperand *` for local non-const array.
 	std::vector<int> idx;
 	T val;
@@ -72,14 +72,14 @@ std::list<mir::Instr *> fromArrayItemsToInstrs(
 	std::vector<ArrayItem<mir::AddrOperand *>> && items,
 	const std::vector<int> & shape,
 	mir::AddrVariable * varMemBaseAddr,
-	const sup::TypeInfo & typeOfElement
+	const mir::TypeInfo & typeOfElement
 );
 
-std::unique_ptr<sup::StaticValue> fromArrayItemsToStaticValue(
+std::unique_ptr<mir::StaticValue> fromArrayItemsToStaticValue(
 	mir::Module & ir,
-	const std::vector<ArrayItem<std::unique_ptr<sup::StaticValue>>> & items,
+	const std::vector<ArrayItem<std::unique_ptr<mir::StaticValue>>> & items,
 	const std::vector<int> & shape,
-	const sup::TypeInfo & typeOfElement
+	const mir::TypeInfo & typeOfElement
 );
 
 }

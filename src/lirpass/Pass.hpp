@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "mir/Module.hpp"
+#include "lir/Module.hpp"
 
 
 namespace lir {
@@ -15,6 +15,6 @@ class Pass {
 
 };
 
-int passMain(mir::Module & ir);
+int passMain(lir::Module & ir);
 
 }

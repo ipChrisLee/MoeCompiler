@@ -26,18 +26,22 @@ int Main(int argc, char ** argv) {
 	SysYParser parser(&tokens);
 	parser.setErrorHandler(std::make_shared<antlr4::BailErrorStrategy>());
 	SysYParser::CompUnitContext * root = parser.compUnit();
-	mir::Module ir;
-	frontend::ASTVisitor visitor(ir);
+	mir::Module mIR;
+	frontend::ASTVisitor visitor(mIR);
 	root->accept(&visitor);
-	ir.finishLoading();
+	mIR.finishLoading();
 	if (!SysY::options.withoutAnyPass.get()) {
-		mir::passMain(ir);
+		mir::passMain(mIR);
 	}
-
+	lir::Module lIR(mIR);
+	lIR.main();
+	lir::passMain(lIR);
 	if (SysY::options.emitLLVM.get()) {
-		SysY::dest << ir.toLLVMIR() << std::endl;
+		SysY::dest << mIR.toLLVMIR() << std::endl;
 	} else if (SysY::options.emitLIR.get()) {
-		com::TODO("LIR Module!", CODEPOS);
+		SysY::dest << lIR.toLIR() << std::endl;
+	} else {
+		com::TODO("Not finished from lir to asm.", CODEPOS);
 	}
 	return 0;
 }

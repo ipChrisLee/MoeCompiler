@@ -5,6 +5,6 @@
 #include "Pass.hpp"
 
 
-int lir::passMain(mir::Module & ir) {
+int lir::passMain(lir::Module & ir) {
 	return 0;
 }

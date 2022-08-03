@@ -6,77 +6,29 @@
 #include "Instr.hpp"
 #include "Addr.hpp"
 
-#include "mir/support/SupportFunc.hpp"
+#include "support/Support.hpp"
 
 
 namespace mir {
 
 class Module;
 
-class AddrPool : public sup::LLVMable {
+class AddrPool : public mir::LLVMable, public moeconcept::Pool<mir::Addr> {
   protected:
-	std::vector<std::unique_ptr<Addr>> pool;
 	std::vector<AddrGlobalVariable *> globalVars;
   public:
-
 	AddrPool();
 
 	AddrPool(const AddrPool &) = delete;
-
-	template<
-		typename T,
-		class = typename std::enable_if<
-			!std::is_lvalue_reference<T>::value &&
-				std::is_base_of<Addr, T>::value
-		>::type
-	>
-	T * emplace_back(T && addr) {
-		pool.emplace_back(
-			com::dynamic_cast_uPtr<Addr>(
-				com::cutToUniquePtr(std::forward<T>(addr))));
-		Addr * p = pool.rbegin()->get();
-		if (auto p2 = dynamic_cast<AddrGlobalVariable *>(p)) {
-			globalVars.template emplace_back(p2);
-		}
-		return dynamic_cast<T *>(pool.rbegin()->get());
-	}
 
 	std::string toLLVMIR() const override;
 
 	const std::vector<AddrGlobalVariable *> & getGlobalVars() const;
 };
 
-class InstrPool {
-  protected:
-	std::vector<std::unique_ptr<Instr>> pool;
+class InstrPool : public moeconcept::Pool<mir::Instr> {
   public:
 	InstrPool();
-
-	InstrPool(const InstrPool &) = delete;
-
-	template<
-		typename T,
-		class = typename std::enable_if<
-			!std::is_lvalue_reference<T>::value && std::is_base_of<Instr, T>::value
-		>::type
-	>
-	[[nodiscard]] T * emplace_back(std::unique_ptr<T> && instr) {
-		pool.template emplace_back(std::move(instr));
-		return dynamic_cast<T *>(pool.rbegin()->get());
-	}
-
-	template<
-		typename T,
-		class = typename std::enable_if<
-			!std::is_lvalue_reference<T>::value && std::is_base_of<Instr, T>::value
-		>::type
-	>
-	[[nodiscard]] T * emplace_back(T && instr) {
-		pool.emplace_back(
-			com::dynamic_cast_uPtr<Instr>(
-				com::cutToUniquePtr(std::forward<T>(instr))));
-		return dynamic_cast<T *>(pool.rbegin()->get());
-	}
 
 	/**
 	 * @brief This is just for debugging.
@@ -107,7 +59,7 @@ class FuncDefPool {
  * @brief Block of instructions.
  * @note If @c instrs form a basic block, @c thisIsBasicBlock will be @c true .
  */
-class FuncBlock : public sup::LLVMable {
+class FuncBlock : public mir::LLVMable {
   public:
 	std::list<Instr *> instrs;
 
@@ -121,7 +73,7 @@ class FuncBlock : public sup::LLVMable {
 /**
  * @brief Composition of Module.
  */
-class FuncDef : public sup::LLVMable {
+class FuncDef : public mir::LLVMable {
   protected:
 	void rearrangeAlloca();
 
@@ -152,7 +104,7 @@ class FuncDef : public sup::LLVMable {
 	const AddrFunction * getFuncAddrPtr() const { return pAddrFun; }
 };
 
-class Module : public sup::LLVMable {
+class Module : public mir::LLVMable {
 	bool sysyFuncAdded = false;
   public:
 	InstrPool instrPool;
@@ -169,7 +121,7 @@ class Module : public sup::LLVMable {
 };
 }
 
-namespace sup {
+namespace mir {
 
 /**
  * @brief Instructions generator for binary operate instruction.
@@ -201,23 +153,23 @@ std::list<mir::Instr *> genUnaryOperationInstrs(
  * @return instructions generated
  */
 std::tuple<
-	mir::AddrOperand *, mir::AddrOperand *, std::unique_ptr<sup::TypeInfo>,
+	mir::AddrOperand *, mir::AddrOperand *, std::unique_ptr<mir::TypeInfo>,
 	std::list<mir::Instr *>
 > genAddrConversion(
 	mir::Module & ir, mir::AddrOperand * preOpL, mir::AddrOperand * preOpR
 );
 
 std::tuple<
-	mir::AddrOperand *, std::unique_ptr<sup::TypeInfo>, std::list<mir::Instr *>
+	mir::AddrOperand *, std::unique_ptr<mir::TypeInfo>, std::list<mir::Instr *>
 > genAddrConversion(
 	mir::Module & ir, mir::AddrOperand * preOp,
-	const sup::TypeInfo & typeInfoD
+	const mir::TypeInfo & typeInfoD
 );
 
 std::tuple<
-	mir::AddrOperand *, std::unique_ptr<sup::TypeInfo>, std::list<mir::Instr *>
+	mir::AddrOperand *, std::unique_ptr<mir::TypeInfo>, std::list<mir::Instr *>
 > genAddrConversion(
-	mir::Module & ir, mir::AddrOperand * preOp, sup::Type type
+	mir::Module & ir, mir::AddrOperand * preOp, mir::Type type
 );
 
 /**

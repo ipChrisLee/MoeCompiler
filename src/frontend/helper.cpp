@@ -8,7 +8,7 @@
 
 
 //  conversion between literal and btype
-using namespace sup;
+using namespace mir;
 
 namespace frontend {
 int shapeToStride(const std::vector<int> & shape) {
@@ -155,7 +155,7 @@ std::list<mir::Instr *> fromArrayItemsToInstrs(
 	return instrsRes;
 }
 
-std::unique_ptr<sup::StaticValue> fromArrayItemsToStaticValue(
+std::unique_ptr<mir::StaticValue> fromArrayItemsToStaticValue(
 	mir::Module & ir,
 	const std::vector<ArrayItem<std::unique_ptr<StaticValue>>> & items,
 	const std::vector<int> & shape,

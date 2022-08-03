@@ -6,11 +6,11 @@
 #include "moeconcept.hpp"
 
 #include "TypeInfo.hpp"
-#include "SupportFunc.hpp"
+#include "support/Support.hpp"
 #include "TypeInfo.hpp"
 
 
-namespace sup {
+namespace mir {
 
 class StaticValue;
 
@@ -57,7 +57,7 @@ class StaticValue
 	~StaticValue() override = default;
 
 	[[nodiscard]] virtual std::unique_ptr<StaticValue>
-	getValue(const std::vector<int> &) const = 0;
+	getValue(const std::vector<int> & idx) const = 0;
 };
 
 class FloatStaticValue

@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <list>
+#include <bitset>
 
 #include "common.hpp"
 
@@ -74,6 +75,21 @@ void move_all_to_front(std::list<T> & ls, UnaryPredicate f) {
 }
 
 }
+namespace bitset {
+template<size_t N1, size_t N2>
+std::bitset<N1 + N2> concat(const std::bitset<N1> & b1, const std::bitset<N2> & b2) {
+	auto s1 = b1.to_string();
+	auto s2 = b2.to_string();
+	return std::bitset<N1 + N2>(s1 + s2);
+}
+
+template<size_t N>
+void rotate_right(std::bitset<N> & b, size_t m) {
+	m = m % N;
+	b = b << m | b >> (N - m);
+}
+}
+
 }
 
 template<typename Iter>

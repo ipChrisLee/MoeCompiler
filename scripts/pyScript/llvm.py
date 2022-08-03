@@ -1,5 +1,6 @@
 from command_line_tool import run_command
 from settings import TimeoutSettings, SysYSettings
+import typing as typ
 
 
 class LLC:
@@ -56,12 +57,14 @@ class Opt:
 	@staticmethod
 	def opt(
 		llFilePath: str,
-		newLLFilePath: str
+		newLLFilePath: str,
+		passes: typ.List[str] = []
 	):
 		return run_command(
 			[
 				'opt', '-S', f'{llFilePath}',
 				'-o', f'{newLLFilePath}',
-				'-debug-pass=Executions', '-reg2mem', '-mem2reg'
+				*[f'-{_}' for _ in passes],
+				'-debug-pass=Executions',
 			]
 		)

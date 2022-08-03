@@ -4,9 +4,10 @@
 
 #include "TypeInfo.hpp"
 #include "cprt.hpp"
+#include <numeric>
 
 
-namespace sup {
+namespace mir {
 std::unique_ptr<moeconcept::Cloneable>
 BoolType::_cloneToUniquePtr() const {
 	return std::make_unique<BoolType>(*this);
@@ -21,6 +22,10 @@ std::string BoolType::toLLVMIR() const {
 
 std::unique_ptr<moeconcept::Cutable> BoolType::_cutToUniquePtr() {
 	return std::make_unique<BoolType>(std::move(*this));
+}
+
+int BoolType::getSize() const {
+	return 4;
 }
 
 TypeInfo::TypeInfo(Type type) : type(type) {
@@ -69,6 +74,10 @@ std::unique_ptr<moeconcept::Cutable> IntType::_cutToUniquePtr() {
 	return std::make_unique<IntType>(std::move(*this));
 }
 
+int IntType::getSize() const {
+	return 4;
+}
+
 std::unique_ptr<moeconcept::Cloneable>
 FloatType::_cloneToUniquePtr() const {
 	return std::make_unique<FloatType>(*this);
@@ -84,6 +93,10 @@ std::string FloatType::toLLVMIR() const {
 std::unique_ptr<moeconcept::Cutable> FloatType::_cutToUniquePtr() {
 	return std::make_unique<FloatType>(std::move(*this));
 
+}
+
+int FloatType::getSize() const {
+	return 4;
 }
 
 std::unique_ptr<moeconcept::Cloneable>
@@ -120,6 +133,10 @@ std::unique_ptr<moeconcept::Cutable> IntArrayType::_cutToUniquePtr() {
 	return std::make_unique<IntArrayType>(std::move(*this));
 }
 
+int IntArrayType::getSize() const {
+	return std::accumulate(shape.begin(), shape.end(), 4, std::multiplies<>());
+}
+
 
 std::unique_ptr<moeconcept::Cloneable>
 FloatArrayType::_cloneToUniquePtr() const {
@@ -154,6 +171,10 @@ FloatArrayType::operator==(const TypeInfo & typeInfo) const {
 std::unique_ptr<moeconcept::Cutable> FloatArrayType::_cutToUniquePtr() {
 	return std::make_unique<FloatArrayType>(std::move(*this));
 
+}
+
+int FloatArrayType::getSize() const {
+	return std::accumulate(shape.begin(), shape.end(), 4, std::multiplies<>());
 }
 
 
@@ -200,11 +221,20 @@ std::unique_ptr<moeconcept::Cutable> PointerType::_cutToUniquePtr() {
 	return std::make_unique<PointerType>(std::move(*this));
 }
 
+int PointerType::getSize() const {
+	return 4;
+}
+
 VoidType::VoidType() : TypeInfo(Type::Void_t) {
 }
 
 std::string VoidType::toLLVMIR() const {
 	return "void";
+}
+
+int VoidType::getSize() const {
+	com::addRuntimeWarning("VoidType::getSize() may should not be called?", CODEPOS);
+	return 0;
 }
 
 std::unique_ptr<TypeInfo> typeDeduce(const TypeInfo & _from, size_t dep) {//NOLINT

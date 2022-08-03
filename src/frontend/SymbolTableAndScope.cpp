@@ -37,7 +37,7 @@ void Scope::bindDominateVar(
 		case IdType::LocalVarName: {
 			auto pAddr = dynamic_cast<mir::AddrLocalVariable *>(addrVar);
 			com::Assert(
-				pAddr && pAddr->getType().type == sup::Type::Pointer_t,
+				pAddr && pAddr->getType().type == mir::Type::Pointer_t,
 				"addr should be `AddrVariable *` if `idType` is local var "\
                 "and type of var should be pointer.",
 				CODEPOS
@@ -47,7 +47,7 @@ void Scope::bindDominateVar(
 		case IdType::GlobalVarName: {
 			auto pAddr = dynamic_cast<mir::AddrGlobalVariable *>(addrVar);
 			com::Assert(
-				pAddr && pAddr->getType().type == sup::Type::Pointer_t,
+				pAddr && pAddr->getType().type == mir::Type::Pointer_t,
 				"addr should be `AddrGlobalVariable` if `idType` is global var "\
                 "and type of var should be pointer.",
 				CODEPOS
@@ -57,7 +57,7 @@ void Scope::bindDominateVar(
 		case IdType::ParameterName: {
 			auto pAddr = dynamic_cast<mir::AddrLocalVariable *>(addrVar);
 			com::Assert(
-				pAddr && pAddr->getType().type == sup::Type::Pointer_t,
+				pAddr && pAddr->getType().type == mir::Type::Pointer_t,
 				"addr should be `AddrGlobalVariable` if `idType` is para var,"\
                 " and type of this addr should be pointer.",
 				CODEPOS

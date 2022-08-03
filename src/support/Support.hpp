@@ -1,13 +1,12 @@
 #pragma once
+
 #include <string>
 
-#include "mlib/common.hpp"
-#include "mlib/SysY.hpp"
 
-namespace sup {
+namespace mir {
 struct LLVMable {
 	[[nodiscard]] virtual std::string toLLVMIR() const = 0;
-	
+
 	// [[nodiscard]] virtual std::string toLLVMIRWithoutType() const {
 	// 	com::addRuntimeWarning(
 	// 		com::concatToString(
@@ -19,13 +18,26 @@ struct LLVMable {
 	// 	);
 	// 	return toLLVMIR();
 	// }
-	
+
 	virtual ~LLVMable() = default;
+};
+}
+namespace lir {
+struct LIRable {
+	[[nodiscard]] virtual std::string toLIR() const = 0;
+
+	virtual ~LIRable() = default;
+
+};
+
+struct ASMable {
+	[[nodiscard]] virtual std::string toASM() const = 0;
+
+	virtual ~ASMable() = default;
 };
 }
 
 namespace sup {
-
 std::string floatToString(float f);
 
 std::string intToString(int i);
@@ -34,4 +46,6 @@ int literalToInt(const std::string &);
 
 float literalToFloat(const std::string &);
 
+
 }
+

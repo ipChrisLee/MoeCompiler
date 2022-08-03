@@ -55,6 +55,12 @@ argParser.add_argument(
 	dest='moe',
 	help='Just test moe.'
 )
+argParser.add_argument(
+	'--asm_run',
+	action='store_true',
+	dest='asm_run',
+	help='Compile asm and run.'
+)
 
 
 def test_frontend():
@@ -62,18 +68,20 @@ def test_frontend():
 		syFilePath=TestFilesSettings.FilePath.testSy,
 		msFilePath=TestFilesSettings.FilePath.testMLL,
 		optiLevel=args.moeOpti, timeout=TimeoutSettings.moe, emit_llvm=True,
-		float_dec_format=False
+		float_dec_format=False,
+		emit_lir=False
 	).check_returncode()
 	LLC.compile_llvmir(
 		llFilePath=TestFilesSettings.FilePath.testMLL,
 		sFilePath=TestFilesSettings.FilePath.testMS
 	).check_returncode()
-	Pi.run_tester(
+	res = Pi.run_tester(
 		sFilePath=TestFilesSettings.FilePath.testMS,
 		inFilePath=TestFilesSettings.FilePath.testIn,
 		outFilePath=TestFilesSettings.FilePath.testOut,
 		resFilePath=TestFilesSettings.FilePath.testRes
 	)
+	print(f'Result : {res["test_status"]}')
 
 
 def test_moe():
@@ -81,13 +89,13 @@ def test_moe():
 		syFilePath=TestFilesSettings.FilePath.testSy,
 		msFilePath=TestFilesSettings.FilePath.testMLL,
 		optiLevel=args.moeOpti, timeout=TimeoutSettings.moe, emit_llvm=True,
-		float_dec_format=True
+		float_dec_format=True, emit_lir=False
 	).check_returncode()
 	Moe.compile(
 		syFilePath=TestFilesSettings.FilePath.testSy,
 		msFilePath=TestFilesSettings.FilePath.testMS,
 		optiLevel=args.moeOpti, timeout=TimeoutSettings.moe, emit_llvm=False,
-		float_dec_format=False
+		float_dec_format=False, emit_lir=False
 	).check_returncode()
 	res = Pi.run_tester(
 		sFilePath=TestFilesSettings.FilePath.testMS,
@@ -102,6 +110,11 @@ def test_llvm():
 	Clang.compile_to_llvmir(
 		syFilePath=TestFilesSettings.FilePath.testSy,
 		llFilePath=TestFilesSettings.FilePath.testLL
+	).check_returncode()
+	Opt.opt(
+		llFilePath=TestFilesSettings.FilePath.testLL,
+		newLLFilePath=TestFilesSettings.FilePath.testOptLL,
+		passes=['mem2reg']
 	).check_returncode()
 	LLC.compile_llvmir(
 		llFilePath=TestFilesSettings.FilePath.testLL,
@@ -126,6 +139,16 @@ def test_llvm_O2():
 		llFilePath=TestFilesSettings.FilePath.testLL,
 		sFilePath=TestFilesSettings.FilePath.testS
 	).check_returncode()
+	res = Pi.run_tester(
+		sFilePath=TestFilesSettings.FilePath.testS,
+		inFilePath=TestFilesSettings.FilePath.testIn,
+		outFilePath=TestFilesSettings.FilePath.testOut,
+		resFilePath=TestFilesSettings.FilePath.testRes
+	)
+	print(f'Result : {res["test_status"]}')
+
+
+def test_asm_run():
 	res = Pi.run_tester(
 		sFilePath=TestFilesSettings.FilePath.testS,
 		inFilePath=TestFilesSettings.FilePath.testIn,
@@ -163,3 +186,5 @@ if __name__ == '__main__':
 		test_moe()
 	elif args.llvm_O2:
 		test_llvm_O2()
+	elif args.asm_run:
+		test_asm_run()

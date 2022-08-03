@@ -4,11 +4,17 @@
 
 #include "Module.hpp"
 #include "Addr.hpp"
+#include <SysY.hpp>
 
 
 namespace mir {
 
-AddrPool::AddrPool() : pool() {
+AddrPool::AddrPool() {
+	moeconcept::Pool<mir::Addr>::afterAdd = [this](mir::Addr * p) {
+		if (auto pp = dynamic_cast<AddrGlobalVariable *>(p)) {
+			globalVars.emplace_back(pp);
+		}
+	};
 }
 
 std::string AddrPool::toLLVMIR() const {
@@ -45,13 +51,13 @@ std::vector<AddrFunction *> Module::generateSysYDecl() {
 		//  int getint()
 		sysyFuncs.emplace_back(
 			addrPool.emplace_back(
-				AddrFunction("getint", sup::IntType())
+				AddrFunction("getint", mir::IntType())
 			)
 		);
 		//  int getch()
 		sysyFuncs.emplace_back(
 			addrPool.emplace_back(
-				AddrFunction("getch", sup::IntType())
+				AddrFunction("getch", mir::IntType())
 			)
 		);
 		//  int getarray(int [])
@@ -59,19 +65,19 @@ std::vector<AddrFunction *> Module::generateSysYDecl() {
 			auto arg = std::vector<AddrPara *>();
 			arg.emplace_back(
 				addrPool.emplace_back(
-					AddrPara(sup::PointerType(sup::IntType()), "a")
+					AddrPara(mir::PointerType(mir::IntType()), "a")
 				)
 			);
 			sysyFuncs.emplace_back(
 				addrPool.emplace_back(
-					AddrFunction("getarray", std::move(arg), sup::IntType())
+					AddrFunction("getarray", std::move(arg), mir::IntType())
 				)
 			);
 		}
 		//  float getfloat()
 		sysyFuncs.emplace_back(
 			addrPool.emplace_back(
-				AddrFunction("getfloat", sup::FloatType())
+				AddrFunction("getfloat", mir::FloatType())
 			)
 		);
 		//  int getfarray(float [])
@@ -79,12 +85,12 @@ std::vector<AddrFunction *> Module::generateSysYDecl() {
 			auto arg = std::vector<AddrPara *>();
 			arg.emplace_back(
 				addrPool.emplace_back(
-					AddrPara(sup::PointerType(sup::FloatType()), "a")
+					AddrPara(mir::PointerType(mir::FloatType()), "a")
 				)
 			);
 			sysyFuncs.emplace_back(
 				addrPool.emplace_back(
-					AddrFunction("getfarray", std::move(arg), sup::IntType())
+					AddrFunction("getfarray", std::move(arg), mir::IntType())
 				)
 			);
 		}
@@ -93,7 +99,7 @@ std::vector<AddrFunction *> Module::generateSysYDecl() {
 			auto arg = std::vector<AddrPara *>();
 			arg.emplace_back(
 				addrPool.emplace_back(
-					AddrPara(sup::IntType(), "a")
+					AddrPara(mir::IntType(), "a")
 				)
 			);
 			sysyFuncs.emplace_back(
@@ -107,7 +113,7 @@ std::vector<AddrFunction *> Module::generateSysYDecl() {
 			auto arg = std::vector<AddrPara *>();
 			arg.emplace_back(
 				addrPool.emplace_back(
-					AddrPara(sup::IntType(), "a")
+					AddrPara(mir::IntType(), "a")
 				)
 			);
 			sysyFuncs.emplace_back(
@@ -121,12 +127,12 @@ std::vector<AddrFunction *> Module::generateSysYDecl() {
 			auto arg = std::vector<AddrPara *>();
 			arg.emplace_back(
 				addrPool.emplace_back(
-					AddrPara(sup::IntType(), "n")
+					AddrPara(mir::IntType(), "n")
 				)
 			);
 			arg.emplace_back(
 				addrPool.emplace_back(
-					AddrPara(sup::PointerType(sup::IntType()), "a")
+					AddrPara(mir::PointerType(mir::IntType()), "a")
 				)
 			);
 			sysyFuncs.emplace_back(
@@ -140,7 +146,7 @@ std::vector<AddrFunction *> Module::generateSysYDecl() {
 			auto arg = std::vector<AddrPara *>();
 			arg.emplace_back(
 				addrPool.emplace_back(
-					AddrPara(sup::FloatType(), "a")
+					AddrPara(mir::FloatType(), "a")
 				)
 			);
 			sysyFuncs.emplace_back(
@@ -154,12 +160,12 @@ std::vector<AddrFunction *> Module::generateSysYDecl() {
 			auto arg = std::vector<AddrPara *>();
 			arg.emplace_back(
 				addrPool.emplace_back(
-					AddrPara(sup::IntType(), "n")
+					AddrPara(mir::IntType(), "n")
 				)
 			);
 			arg.emplace_back(
 				addrPool.emplace_back(
-					AddrPara(sup::PointerType(sup::FloatType()), "a")
+					AddrPara(mir::PointerType(mir::FloatType()), "a")
 				)
 			);
 			sysyFuncs.emplace_back(
@@ -173,7 +179,7 @@ std::vector<AddrFunction *> Module::generateSysYDecl() {
 			auto arg = std::vector<AddrPara *>();
 			arg.emplace_back(
 				addrPool.emplace_back(
-					AddrPara(sup::IntType(), "lineno")
+					AddrPara(mir::IntType(), "lineno")
 				)
 			);
 			sysyFuncs.emplace_back(
@@ -187,7 +193,7 @@ std::vector<AddrFunction *> Module::generateSysYDecl() {
 			auto arg = std::vector<AddrPara *>();
 			arg.emplace_back(
 				addrPool.emplace_back(
-					AddrPara(sup::IntType(), "lineno")
+					AddrPara(mir::IntType(), "lineno")
 				)
 			);
 			sysyFuncs.emplace_back(
@@ -211,7 +217,7 @@ void InstrPool::printAll(std::ostream & os) const {
 	}
 }
 
-InstrPool::InstrPool() : pool() {
+InstrPool::InstrPool() : moeconcept::Pool<mir::Instr>() {
 }
 
 FuncBlock::FuncBlock() : instrs() {
@@ -299,7 +305,7 @@ FuncDef * FuncDefPool::emplace_back(FuncDef && funcDef) {
 }
 
 using namespace mir;
-namespace sup {
+namespace mir {
 
 std::list<mir::Instr *> genBinaryOperationInstrs(
 	mir::Module & ir, AddrOperand * opL, const std::string & op,
@@ -614,9 +620,9 @@ std::tuple<
 }
 
 std::tuple<
-	mir::AddrOperand *, std::unique_ptr<sup::TypeInfo>, std::list<mir::Instr *>
+	mir::AddrOperand *, std::unique_ptr<mir::TypeInfo>, std::list<mir::Instr *>
 > genAddrConversion(
-	mir::Module & ir, mir::AddrOperand * preOp, sup::Type type
+	mir::Module & ir, mir::AddrOperand * preOp, mir::Type type
 ) {
 	switch (type) {
 		case Type::Bool_t: {
@@ -633,11 +639,11 @@ std::tuple<
 }
 
 static std::tuple<
-	mir::AddrOperand *, std::unique_ptr<sup::TypeInfo>, std::list<mir::Instr *>
+	mir::AddrOperand *, std::unique_ptr<mir::TypeInfo>, std::list<mir::Instr *>
 > _genAddrConversion(
 	mir::Module & ir,
 	mir::AddrStaticValue * pSVAddr,
-	const sup::TypeInfo & typeInfoD
+	const mir::TypeInfo & typeInfoD
 ) {
 	auto newOp = static_cast<AddrOperand *>(nullptr);
 	auto upResTypeInfo = std::unique_ptr<TypeInfo>();
@@ -679,11 +685,11 @@ static std::tuple<
 }
 
 static std::tuple<
-	mir::AddrOperand *, std::unique_ptr<sup::TypeInfo>, std::list<mir::Instr *>
+	mir::AddrOperand *, std::unique_ptr<mir::TypeInfo>, std::list<mir::Instr *>
 > _genAddrConversion(
 	mir::Module & ir,
 	mir::AddrVariable * pVarAddr,
-	const sup::TypeInfo & typeInfoD
+	const mir::TypeInfo & typeInfoD
 ) {
 	auto newOp = static_cast<AddrOperand *>(nullptr);
 	auto upResTypeInfo = std::unique_ptr<TypeInfo>();
@@ -829,11 +835,11 @@ static std::tuple<
 }
 
 std::tuple<
-	mir::AddrOperand *, std::unique_ptr<sup::TypeInfo>, std::list<mir::Instr *>
+	mir::AddrOperand *, std::unique_ptr<mir::TypeInfo>, std::list<mir::Instr *>
 > genAddrConversion(
 	mir::Module & ir,
 	mir::AddrOperand * preOp,
-	const sup::TypeInfo & typeInfoD
+	const mir::TypeInfo & typeInfoD
 ) {
 	auto * pSVAddr = dynamic_cast<AddrStaticValue *>(preOp);
 	auto * pVarAddr = dynamic_cast<AddrVariable *>(preOp);
@@ -868,19 +874,19 @@ std::list<mir::Instr *> genStoreInstrInFunction(
 mir::AddrVariable * genSuitableAddr(
 	mir::Module & ir, const std::string & op, mir::AddrOperand * preOp
 ) {
-	auto upTypeInfo = std::unique_ptr<sup::TypeInfo>();
+	auto upTypeInfo = std::unique_ptr<mir::TypeInfo>();
 	auto preType = preOp->getType().type;
 	if (op == "!") {
-		upTypeInfo = std::make_unique<sup::BoolType>();
+		upTypeInfo = std::make_unique<mir::BoolType>();
 	} else if (op == "+" || op == "-") {
 		switch (preType) {
 			case Type::Bool_t:
 			case Type::Int_t: {
-				upTypeInfo = std::make_unique<sup::IntType>();
+				upTypeInfo = std::make_unique<mir::IntType>();
 				break;
 			}
 			case Type::Float_t: {
-				upTypeInfo = std::make_unique<sup::FloatType>();
+				upTypeInfo = std::make_unique<mir::FloatType>();
 				break;
 			}
 			default: com::Throw("Unsupported Type.", CODEPOS);

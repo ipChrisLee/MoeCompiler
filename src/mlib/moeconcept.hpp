@@ -46,7 +46,7 @@ struct Storable {
 		ofs.close();
 		return ofs.good();
 	}
-	
+
 	virtual bool store(
 		const std::string & filePath
 	) final {
@@ -56,7 +56,7 @@ struct Storable {
 		ofs.close();
 		return ofs.good();
 	}
-	
+
 	virtual std::string defaultGetContent() {
 		return "Storable::defaultGetContent\n";
 	}
@@ -81,13 +81,13 @@ class Cloneable {
   protected:
 	[[nodiscard]] virtual std::unique_ptr<Cloneable>
 	_cloneToUniquePtr() const = 0;
-  
+
   public:
 	[[nodiscard]] virtual std::unique_ptr<Cloneable>
 	cloneToUniquePtr() const final {
 		std::unique_ptr<Cloneable> clonedUniquePtr = _cloneToUniquePtr();
-		Cloneable * clonedPtr =
-			clonedUniquePtr.get(); /* NOLINT */ // For `-Wpotentially-evaluated-expression`.
+		// For `-Wpotentially-evaluated-expression`.
+		Cloneable * clonedPtr = clonedUniquePtr.get();//NOLINT
 		if (typeid(*clonedPtr) != typeid(*this)) {
 			com::Throw(
 				com::concatToString(
@@ -98,28 +98,72 @@ class Cloneable {
 						typeid(*this).name(),
 						"]. Check if you have implemented `_cloneToUniquePtr` method of type",
 						typeid(*this).name(),
-						" first."}
+						" first."
+					}
 				));
 		}
 		return clonedUniquePtr;
 	}
-	
+
 	virtual ~Cloneable() = default;
 };
 
 class Cutable {
   protected:
 	[[nodiscard]] virtual std::unique_ptr<Cutable> _cutToUniquePtr() = 0;
-  
+
   public:
 	virtual ~Cutable() = default;
-	
+
 	friend std::unique_ptr<Cutable> com::cutToUniquePtr(Cutable && o);
 };
 
 #define CUTABLE_DEFAULT_IMPLEMENT { return std::make_unique<std::remove_reference<decltype(*this)>::type>(std::move(*this));}
 #define CLONEABLE_DEFAULT_IMPLEMENT { return std::make_unique<std::remove_const<std::remove_reference<decltype(*this)>::type>::type>(*this);}
 
+template<typename Base>
+class Pool {
+  protected:
+	std::vector<std::unique_ptr<Base>> pool;
+	std::function<void(Base *)> afterAdd;
+  public:
+	explicit Pool(
+		std::function<void(Base *)> afterAdd = std::function<void(Base *)>()
+	) : afterAdd(afterAdd) {}
+
+	Pool(Pool<Base> &) = delete;
+
+	virtual ~Pool() = default;
+
+	template<
+		typename T,
+		class = typename std::enable_if<
+			!std::is_lvalue_reference<T>::value && std::is_base_of<Base, T>::value
+		>::type
+	>
+	[[nodiscard]] T * emplace_back(std::unique_ptr<T> && instance) {
+		pool.template emplace_back(std::move(instance));
+		auto * p = pool.rbegin()->get();
+		if (afterAdd) { afterAdd(p); }
+		return dynamic_cast<T *>(p);
+	}
+
+	template<
+		typename T,
+		class = typename std::enable_if<
+			!std::is_lvalue_reference<T>::value && std::is_base_of<Base, T>::value
+		>::type
+	>
+	[[nodiscard]] T * emplace_back(T && instance) {
+		pool.template emplace_back(
+			std::make_unique<T>(std::forward<T>(instance))
+		);
+		auto * p = pool.rbegin()->get();
+		if (afterAdd) { afterAdd(p); }
+		return dynamic_cast<T *>(p);
+	}
+
+};
 
 }
 
