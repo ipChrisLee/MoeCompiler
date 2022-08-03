@@ -58,7 +58,7 @@ public:
     static bool & setSysEnable(){ return sysEnable; }
 
     /*  Print messages to outs stream. It will detect '\n' and print 
-     *  newline (and flush stream) and head string (e.g. '[mdb] ') for every '\n'
+     *  newline (and flush stream) and head string (e.get. '[mdb] ') for every '\n'
      *  and {at the end of printing}.
      *  if you don't want text to be decorated, set decorated=false;
      *  detect enable flag automatically.
@@ -91,7 +91,7 @@ public:
     }
 
     /*  Method to print 'list' of 'pair' of string and object. One line one object.
-     *  It will print head string (e.g. '[mdb] ') for every line.
+     *  It will print head string (e.get. '[mdb] ') for every line.
      *  It will NOT print newline after the end of string.
      *  You should limit the count of the lines of S.to_string() to one.
      *  If you don't want text to be decorated, set decorated=false;
@@ -119,7 +119,7 @@ public:
     }
 
     /*  method to print 'list' of 'pair' of string and object. One line one object.
-     *  it will print head string (e.g. '[mdb] ') for every line.
+     *  it will print head string (e.get. '[mdb] ') for every line.
      *  it will noT print newline after the end of string.
      *  you should limit the count of the lines of S.to_string() to one.
      *  if you don't want text to be decorated, set decorated=false;

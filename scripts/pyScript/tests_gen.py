@@ -75,13 +75,17 @@ def test_moe():
 		syFilePath=TestFilesSettings.FilePath.testSy,
 		msFilePath=TestFilesSettings.FilePath.testMLL,
 		optiLevel=args.moeOpti, timeout=TimeoutSettings.moe, emit_llvm=True,
-		float_dec_format=True
-	).check_returncode()
-	Moe.compile(
-		syFilePath=TestFilesSettings.FilePath.testSy,
-		msFilePath=TestFilesSettings.FilePath.testMS,
-		optiLevel=args.moeOpti, timeout=TimeoutSettings.moe, emit_llvm=False,
 		float_dec_format=False
+	).check_returncode()
+	# Moe.compile(
+	# 	syFilePath=TestFilesSettings.FilePath.testSy,
+	# 	msFilePath=TestFilesSettings.FilePath.testMS,
+	# 	optiLevel=args.moeOpti, timeout=TimeoutSettings.moe, emit_llvm=False,
+	# 	float_dec_format=False
+	# ).check_returncode()
+	LLC.compile_llvmir(
+		llFilePath=TestFilesSettings.FilePath.testMLL,
+		sFilePath=TestFilesSettings.FilePath.testMS
 	).check_returncode()
 	res = Pi.run_tester(
 		sFilePath=TestFilesSettings.FilePath.testMS,

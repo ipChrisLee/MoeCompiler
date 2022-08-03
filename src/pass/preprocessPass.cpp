@@ -28,12 +28,12 @@ int AddBrToNextBB::run(std::list<ircode::IRInstr *> & instrs) {
 	while (itPInstrNow != instrs.end()) {
 		auto itPInstrNxt = std::next(itPInstrNow);
 		if (itPInstrNxt != instrs.end() &&
-			!isTerminalInstr(g(itPInstrNow)->instrType) &&
-			g(itPInstrNxt)->instrType == InstrType::Label) {
+			!isTerminalInstr(get(itPInstrNow)->instrType) &&
+			get(itPInstrNxt)->instrType == InstrType::Label) {
 			instrs.emplace(
 				itPInstrNxt, ir.instrPool.emplace_back(
 					ircode::InstrBr(
-						dynamic_cast<InstrLabel *>(g(itPInstrNxt))->pAddrLabel
+						dynamic_cast<InstrLabel *>(get(itPInstrNxt))->pAddrLabel
 					)
 				)
 			);

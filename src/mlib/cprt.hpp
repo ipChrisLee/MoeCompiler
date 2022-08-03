@@ -75,7 +75,7 @@ extern const std::string noc;
  *  Methods defined here mimics java io unit design.
  *  Defect :
  *      1.  cprt cannot handle pointer except char pointer. (e.g. `int *`,`double *`)
- *      2.  cprt cannot handle classes provided by other libs. (e.g. `vector`,`queue`)
+ *      2.  cprt cannot handle classes provided by other libs. (e.get. `vector`,`queue`)
  * */
 class cprt {
   private:
@@ -111,7 +111,7 @@ class cprt {
 	/*  Colored output method. Print text decorated with `defaultColor` or argument
 	 *  `col`.
 	 *
-	 *  e.g. :
+	 *  e.get. :
 	 *      com::ccout.cprint(tuple(1,2,'a',"S",0.5,S()));
 	 *      com::ccout.cprint(tuple(1,2,'a',"S",0.5,S()),cprt::red);
 	 *  Ref :

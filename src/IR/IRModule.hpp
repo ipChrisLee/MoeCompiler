@@ -47,6 +47,7 @@ class IRFuncDef;
 class IRFuncDefPool : public moeconcept::Pool<IRFuncDef> {
   public:
 	std::vector<IRFuncDef *> funcDefs;
+	IRFuncDefPool();
 
 	auto begin() { return funcDefs.begin(); }
 

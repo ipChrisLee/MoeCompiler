@@ -25,7 +25,7 @@ struct Stringable {
 };
 
 /*  Interface of storing object to string.
- *  e.g. :
+ *  e.get. :
  *      struct S : public storable{
  *          int x[2];
  *          S(){ x[0]=rand();x[1]=rand(); }

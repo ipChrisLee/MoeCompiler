@@ -293,6 +293,11 @@ IRFuncBlock * IRFuncDef::emplace_back(IRFuncBlock && irFuncBlock) {
 	return pool.rbegin()->get();
 }
 
+IRFuncDefPool::IRFuncDefPool() {
+	afterEmplace = [this](IRFuncDef * p) {
+		funcDefs.emplace_back(p);
+	};
+}
 }
 
 using namespace ircode;
