@@ -259,7 +259,7 @@ class AddrJumpLabel :
 
 	std::string labelName;
   public:
-
+	inline std::string getLabelName(){return labelName;}
 	explicit AddrJumpLabel(std::string labelName = "");
 
 	AddrJumpLabel(const AddrJumpLabel &) = default;

@@ -6,6 +6,7 @@
 
 #include "pass-common.hpp"
 #include "pass/preprocessPass.hpp"
+#include "pass/backendPass.hpp"
 
 
 namespace pass {
@@ -21,6 +22,7 @@ IRPass::IRPass(ircode::IRModule & ir, std::string name) :
 int passMain(ircode::IRModule & ir) {
 	std::vector<std::unique_ptr<IRPass>> passes;
 	passes.emplace_back(std::make_unique<AddBrToNextBB>(ir));
+	passes.emplace_back(std::make_unique<RegisterAssign>(ir));
 	for (auto & p: passes) {
 		if (auto retCode = p->run()) {
 			return retCode;

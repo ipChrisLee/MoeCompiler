@@ -4,7 +4,7 @@
 #pragma once
 
 
-#include "antlr4-runtime.h"
+#include "../../third_party/antlr4-runtime/antlr4-runtime.h"
 #include "SysYVisitor.h"
 
 

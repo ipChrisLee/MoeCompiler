@@ -6,8 +6,7 @@
 
 #include <cprt.hpp>
 #include <common.hpp>
-#include <antlr4-runtime.h>
-
+#include "../third_party/antlr4-runtime/antlr4-runtime.h"
 #include "IR/IRAddr.hpp"
 #include "IR/IRInstr.hpp"
 #include "IR/IRModule.hpp"

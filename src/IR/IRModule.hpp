@@ -1,7 +1,7 @@
 #pragma once
 
 #include <list>
-#include <span>
+#include <span.h>
 
 #include "IR/IRInstr.hpp"
 #include "IR/IRAddr.hpp"
