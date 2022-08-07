@@ -1,8 +1,0 @@
-{
-    "exit_status": 0,
-    "info": "Test passed!",
-    "test_status": "AC",
-    "stderr": "TOTAL: 0H-0M-0S-0us\n",
-    "out": "110010000\n0",
-    "time_now": "04:25:53"
-}

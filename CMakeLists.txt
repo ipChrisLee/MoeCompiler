@@ -14,6 +14,7 @@ file(GLOB_RECURSE cppFiles
 		"src/IR/*.cpp"
 		"src/frontend/*.cpp"
 		"src/pass/*.cpp"
+		"src/backend/*.cpp"
 		)
 
 #   Include Paths

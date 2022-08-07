@@ -20,7 +20,8 @@ enum class InstrType {
 	Label,
 	Store,
 	Ret,                //  Terminal Instruction
-	BinaryOp,
+	Add, Sub, Mul, SDiv, SRem,
+	FAdd, FSub, FMul, FDiv,
 	ConversionOp,
 	Load,
 	Br,                 //  Terminal Instruction
@@ -32,8 +33,6 @@ enum class InstrType {
 	Fptosi,
 	SExt,
 	ZExt,
-	SDiv,
-	FDiv,
 };
 
 bool isTerminalInstr(InstrType instrType);
@@ -187,12 +186,15 @@ class InstrBinaryOp : public IRInstr {
 
 	std::unique_ptr<Cutable> _cutToUniquePtr() override = 0;
 
+	//  Will check if three addrs have same types.
+	InstrBinaryOp(
+		AddrOperand * left, AddrOperand * right, AddrVariable * res,
+		InstrType instrType
+	);
+
   public:
 	AddrOperand * left, * right;
 	AddrVariable * res;
-
-	//  Will check if three addrs have same types.
-	InstrBinaryOp(AddrOperand * left, AddrOperand * right, AddrVariable * res);
 
 	InstrBinaryOp(const InstrBinaryOp &) = default;
 
@@ -465,10 +467,12 @@ enum class ICMP {
 	NE,     //  !=
 	SGT,    //  >
 	SGE,    //  >=
-	SLT,    //  >
+	SLT,    //  <
 	SLE,    //  <=
 	ERR,    //  For error handle
 };
+
+ICMP getReverse(ICMP icmp);
 
 std::string to_string(ICMP icmp);
 
@@ -478,8 +482,8 @@ class InstrICmp : public InstrCompare {
   protected:
 	std::unique_ptr<Cutable> _cutToUniquePtr() override CUTABLE_DEFAULT_IMPLEMENT;
 
-	ICMP icmp;
   public:
+	ICMP icmp;
 	InstrICmp(
 		AddrVariable * dest, AddrOperand * leftOp, ICMP icmp, AddrOperand * rightOp
 	);

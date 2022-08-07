@@ -11,7 +11,7 @@ antlrcpp::Any ASTVisitor::visitFuncDef(SysYParser::FuncDefContext * ctx) {
 	ctx->funcType()->accept(this);
 	auto funcType = retVal.restore<FuncType>();
 	auto funName = ctx->Identifier()->getText();
-	//  Visit funcFParams to get parameters information.
+	//  Visit funcFParams to get argsOnCallingThis information.
 	auto funcDeclScope = symbolTable.pScopeNow;
 	setWithAutoRestorer(symbolTable.pScopeNow, symbolTable.pScopeNow->addSonScope());
 	std::vector<ircode::AddrPara *> params;

@@ -409,7 +409,7 @@ AddrLocalVariable::AddrLocalVariable(
 }
 
 std::string AddrLocalVariable::toLLVMIR() const {
-	return "%V" + to_string(id) + (name.empty() ? "" : "." + name) +
+	return "%LV" + to_string(id) + (name.empty() ? "" : "." + name) +
 		(isConstVar() ? ".C" : "");
 }
 

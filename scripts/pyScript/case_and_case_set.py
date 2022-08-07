@@ -115,6 +115,13 @@ function2021TestCaseSet = TestCaseSet(
 	), "f2021"
 )
 
+functionWithoutFloat = TestCaseSet(
+	set.union(
+		function2020TestCaseSet.caseSet,
+		function2021TestCaseSet.caseSet
+	),'withoutFloat'
+)
+
 performance2021TestCaseSet = TestCaseSet(
 	set.union(
 		load_testcases_under_folder_path(

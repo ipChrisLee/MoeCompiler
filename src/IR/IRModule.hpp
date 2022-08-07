@@ -1,7 +1,6 @@
 #pragma once
 
 #include <list>
-#include <span>
 
 #include <moeconcept.hpp>
 

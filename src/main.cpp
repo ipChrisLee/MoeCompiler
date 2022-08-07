@@ -11,6 +11,7 @@
 #include "frontend/SysAntlr/SysYLexer.h"
 #include "frontend/ASTVisitor.hpp"
 #include "pass/pass-common.hpp"
+#include "backend/backendPass.hpp"
 
 
 int Main(int argc, char ** argv) {
@@ -33,6 +34,10 @@ int Main(int argc, char ** argv) {
 	}
 	if (SysY::options.emitLLVM.get()) {
 		SysY::dest << ir.toLLVMIR() << std::endl;
+	} else {
+		auto assembler = pass::ToASM(ir);
+		assembler.run();
+		SysY::dest << assembler.toASM() << std::endl;
 	}
 	return 0;
 }

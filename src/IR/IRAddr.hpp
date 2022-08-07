@@ -251,7 +251,7 @@ class AddrLocalVariable :
 
 	AddrLocalVariable(AddrLocalVariable &&) = default;
 
-	// @V{id}.{name}
+	// @LV{id}.{name}
 	[[nodiscard]] std::string toLLVMIR() const override;
 
 	[[nodiscard]] bool isConstVar() const override { return isConst; }
@@ -270,8 +270,8 @@ class AddrJumpLabel :
 
 	std::unique_ptr<Cutable> _cutToUniquePtr() override;
 
-	std::string labelName;
   public:
+	std::string labelName;
 
 	explicit AddrJumpLabel(std::string labelName = "");
 
@@ -297,10 +297,10 @@ class AddrFunction :
 
 	std::unique_ptr<Cutable> _cutToUniquePtr() override;
 
+  public:
 	std::unique_ptr<sup::TypeInfo> uPtrReturnTypeInfo; // nullptr for void
 	std::vector<AddrPara *> vecPtrAddrPara;
 	std::string name;
-  public:
 	bool justDeclare = false;
 
 	[[nodiscard]] const std::string & getName() const { return name; }

@@ -95,3 +95,33 @@ class CompileToLLVMIRAndUseLLCAndRunOnPi(ActionBasic):
 	
 	def get_name(self) -> str:
 		return f'O{self.optiLevel}Compile_To_LLVMIR_And_Use_LLC'
+
+
+class CompileToASMAndRunOnPi(ActionBasic):
+	def get_config(self) -> str:
+		return f'Compile sy file to asm use moe-compiler ' \
+		       f'with optiLevel={self.optiLevel}.' \
+		       f'Then run on pi.'
+	
+	def __init__(self, optiLevel: int):
+		self.optiLevel = optiLevel
+	
+	def __call__(self, testCase, **kwargs):
+		Moe.compile(
+			syFilePath=testCase.syFilePath,
+			msFilePath=bufferTextFilePath,
+			emit_llvm=False,
+			float_dec_format=False,
+			optiLevel=self.optiLevel
+		).check_returncode()
+		res = Pi.run_tester(
+			sFilePath=testCase.msFilePath,
+			inFilePath=testCase.inFilePath,
+			outFilePath=testCase.outFilePath,
+			resFilePath=bufferTextFilePath
+		)
+		if res['exit_status'] != 0:
+			raise Exception()
+	
+	def get_name(self) -> str:
+		return f'O{self.optiLevel}Compile_To_ASM_And_Run_On_Pi'

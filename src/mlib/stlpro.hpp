@@ -74,6 +74,12 @@ void move_all_to_front(std::list<T> & ls, UnaryPredicate f) {
 }
 
 }
+namespace string {
+inline std::string to_string(const char * s) { return s; }
+
+inline std::string to_string(const std::string & s) { return s; }
+
+}
 }
 
 template<typename Iter>

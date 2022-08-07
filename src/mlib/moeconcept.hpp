@@ -30,7 +30,7 @@ struct Stringable {
  *          int x[2];
  *          S(){ x[0]=rand();x[1]=rand(); }
  *          virtual std::string defaultGetContent() override {
- *              return std::to_string(x[0])+","+std::to_string(x[1]);
+ *              return std::to_string(x[0])+","+std::to_asm(x[1]);
  *          }
  *          static int Main(){ S s;s.store("x.log");s.store("y.log",&S::defaultContent); }
  *      };
@@ -154,6 +154,8 @@ cloneable_cast_uPtr(std::unique_ptr<moeconcept::Cloneable> && fromP) {
 namespace moeconcept {
 template<typename B>
 class Pool {
+  private:
+	std::vector<B *> vec;
   protected:
 	std::vector<std::unique_ptr<B>> pool;
 	std::function<void(B *)> afterEmplace;
@@ -164,6 +166,14 @@ class Pool {
 
 	Pool(const Pool &) = delete;
 
+	auto begin() { return vec.begin(); }
+
+	auto end() { return vec.end(); }
+
+	auto begin() const { return vec.begin(); }
+
+	auto end() const { return vec.end(); }
+
 	template<
 		typename T,
 		class = typename std::enable_if<
@@ -173,6 +183,7 @@ class Pool {
 	T * emplace_back(T && t) {
 		pool.emplace_back(std::make_unique<T>(std::forward<T>(t)));
 		B * p = pool.rbegin()->get();
+		vec.template emplace_back(p);
 		if (afterEmplace) { afterEmplace(p); }
 		return reinterpret_cast<T *>(p);
 	}
@@ -186,6 +197,7 @@ class Pool {
 	T * emplace_back(std::unique_ptr<B> && t) {
 		pool.emplace_back(std::forward<>(t));
 		B * p = pool.rbegin()->get();
+		vec.template emplace_back(p);
 		if (afterEmplace) { afterEmplace(p); }
 		return reinterpret_cast<T *>(p);
 	}

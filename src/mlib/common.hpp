@@ -276,6 +276,24 @@ bool in(T val, std::initializer_list<T> enumSet) {
 }
 
 }
+template<typename FT, typename ST>
+class BiMap {
+  protected:
+	std::map<FT, ST> f2s;
+	std::map<ST, FT> s2f;
+  public:
+	void emplace_back(const FT & fT, const ST & sT) {
+		f2s[fT] = sT;
+		s2f[sT] = fT;
+	}
+
+	ST & getST(const FT & fT) { return f2s[fT]; }
+	FT & getFT(const ST & sT) { return s2f[sT]; }
+
+
+	const std::map<FT, ST> & getF2S() const { return f2s; }
+	const std::map<ST, FT> & getS2F() const { return s2f; }
+};
 }
 
 #ifndef __CONCAT

@@ -49,6 +49,30 @@ argParser.add_argument(
 	dest='moe',
 	help='Just test moe.'
 )
+argParser.add_argument(
+	'--asm_run',
+	action='store_true',
+	dest='asm_run',
+	help='Run asm file.'
+)
+argParser.add_argument(
+	'--llvmir-run',
+	action='store_true',
+	dest='llvmir-run',
+	help='Run llvm-ir file.'
+)
+argParser.add_argument(
+	'--compile_backend',
+	action='store_true',
+	dest='compile_backend',
+	help='Use moe compile SysY until backend.'
+)
+argParser.add_argument(
+	'--backend',
+	action='store_true',
+	dest='backend',
+	help='Test backend (almost test moe).'
+)
 
 
 def test_frontend():
@@ -62,12 +86,50 @@ def test_frontend():
 		llFilePath=TestFilesSettings.FilePath.testMLL,
 		sFilePath=TestFilesSettings.FilePath.testMS
 	).check_returncode()
-	Pi.run_tester(
+	res = Pi.run_tester(
 		sFilePath=TestFilesSettings.FilePath.testMS,
 		inFilePath=TestFilesSettings.FilePath.testIn,
 		outFilePath=TestFilesSettings.FilePath.testOut,
 		resFilePath=TestFilesSettings.FilePath.testRes
 	)
+	print(f'Result : {res["test_status"]}')
+
+
+def test_compile_backend():
+	Moe.compile(
+		syFilePath=TestFilesSettings.FilePath.testSy,
+		msFilePath=TestFilesSettings.FilePath.testMLL,
+		optiLevel=args.moeOpti, timeout=TimeoutSettings.moe, emit_llvm=True,
+		float_dec_format=False
+	).check_returncode()
+	Moe.compile(
+		syFilePath=TestFilesSettings.FilePath.testSy,
+		msFilePath=TestFilesSettings.FilePath.testMS,
+		optiLevel=args.moeOpti, timeout=TimeoutSettings.moe, emit_llvm=False,
+		float_dec_format=False
+	).check_returncode()
+
+
+def test_backend():
+	Moe.compile(
+		syFilePath=TestFilesSettings.FilePath.testSy,
+		msFilePath=TestFilesSettings.FilePath.testMLL,
+		optiLevel=args.moeOpti, timeout=TimeoutSettings.moe, emit_llvm=True,
+		float_dec_format=False
+	).check_returncode()
+	Moe.compile(
+		syFilePath=TestFilesSettings.FilePath.testSy,
+		msFilePath=TestFilesSettings.FilePath.testMS,
+		optiLevel=args.moeOpti, timeout=TimeoutSettings.moe, emit_llvm=False,
+		float_dec_format=False
+	).check_returncode()
+	res = Pi.run_tester(
+		sFilePath=TestFilesSettings.FilePath.testMS,
+		inFilePath=TestFilesSettings.FilePath.testIn,
+		outFilePath=TestFilesSettings.FilePath.testOut,
+		resFilePath=TestFilesSettings.FilePath.testRes
+	)
+	print(f'Result : {res["test_status"]}')
 
 
 def test_moe():
@@ -77,15 +139,11 @@ def test_moe():
 		optiLevel=args.moeOpti, timeout=TimeoutSettings.moe, emit_llvm=True,
 		float_dec_format=False
 	).check_returncode()
-	# Moe.compile(
-	# 	syFilePath=TestFilesSettings.FilePath.testSy,
-	# 	msFilePath=TestFilesSettings.FilePath.testMS,
-	# 	optiLevel=args.moeOpti, timeout=TimeoutSettings.moe, emit_llvm=False,
-	# 	float_dec_format=False
-	# ).check_returncode()
-	LLC.compile_llvmir(
-		llFilePath=TestFilesSettings.FilePath.testMLL,
-		sFilePath=TestFilesSettings.FilePath.testMS
+	Moe.compile(
+		syFilePath=TestFilesSettings.FilePath.testSy,
+		msFilePath=TestFilesSettings.FilePath.testMS,
+		optiLevel=args.moeOpti, timeout=TimeoutSettings.moe, emit_llvm=False,
+		float_dec_format=False
 	).check_returncode()
 	res = Pi.run_tester(
 		sFilePath=TestFilesSettings.FilePath.testMS,
@@ -103,7 +161,7 @@ def test_llvm():
 	).check_returncode()
 	Opt.opt(
 		llFilePath=TestFilesSettings.FilePath.testLL,
-		newLLFilePath=TestFilesSettings.FilePath.testMLL,
+		newLLFilePath=TestFilesSettings.FilePath.testOptLL,
 		passes=['-mem2reg']
 	).check_returncode()
 	LLC.compile_llvmir(
@@ -135,6 +193,30 @@ def test_llvm_all():
 		assert res['test_status'] == 'AC'
 
 
+def test_asm_run():
+	res = Pi.run_tester(
+		sFilePath=TestFilesSettings.FilePath.testS,
+		inFilePath=TestFilesSettings.FilePath.testIn,
+		outFilePath=TestFilesSettings.FilePath.testOut,
+		resFilePath=TestFilesSettings.FilePath.testRes
+	)
+	print(f'Result : {res["test_status"]}')
+
+
+def test_llvmir_run():
+	LLC.compile_llvmir(
+		llFilePath=TestFilesSettings.FilePath.testLL,
+		sFilePath=TestFilesSettings.FilePath.testS
+	).check_returncode()
+	res = Pi.run_tester(
+		sFilePath=TestFilesSettings.FilePath.testS,
+		inFilePath=TestFilesSettings.FilePath.testIn,
+		outFilePath=TestFilesSettings.FilePath.testOut,
+		resFilePath=TestFilesSettings.FilePath.testRes,
+	)
+	print(f'Result : {res["test_status"]}')
+
+
 if __name__ == '__main__':
 	args = argParser.parse_args()
 	if args.frontend:
@@ -145,3 +227,11 @@ if __name__ == '__main__':
 		test_llvm_all()
 	elif args.moe:
 		test_moe()
+	elif args.asm_run:
+		test_asm_run()
+	elif args.compile_backend:
+		test_compile_backend()
+	elif args.backend:
+		test_backend()
+	elif args.llvmir_run:
+		test_llvmir_run()

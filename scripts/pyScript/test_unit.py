@@ -4,7 +4,7 @@ from settings import TestUnitSettings, TestFilesSettings
 import actions
 import typing as typ
 from case_and_case_set import emptyTestCaseSet, basicTestCaseSet, \
-	function2020TestCaseSet, allFunctionTestsCaseSet
+	function2020TestCaseSet, allFunctionTestsCaseSet, functionWithoutFloat
 from subprocess import CalledProcessError
 from Bash import Bash
 
@@ -147,6 +147,15 @@ allTestUnits: typ.Dict[str, TestUnit] = dict(
 			helpInfo='Test frontend with llc, and run on pi.',
 			acts=[
 				actions.CompileToLLVMIRAndUseLLCAndRunOnPi(optiLevel=0)
+			]
+		),
+		TestUnit(
+			name='test_moe_function_without_float_test',
+			testCaseSet=functionWithoutFloat,
+			terminalVerbose=True,
+			helpInfo='Test MoeCompiler for all function test without float.',
+			acts=[
+				actions.CompileToASMAndRunOnPi(optiLevel=0)
 			]
 		)
 	])

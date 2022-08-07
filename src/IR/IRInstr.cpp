@@ -26,7 +26,9 @@ std::string InstrAlloca::toLLVMIR() const {
 	return res;
 }
 
-InstrAlloca::InstrAlloca(AddrLocalVariable * allocaTo, const TypeInfo & typeToAlloca) :
+InstrAlloca::InstrAlloca(
+	AddrLocalVariable * allocaTo, const TypeInfo & typeToAlloca
+) :
 	IRInstr(InstrType::Alloca), allocaTo(allocaTo),
 	uPtrTypeToAlloca(
 		com::dynamic_cast_uPtr<TypeInfo>(typeToAlloca.cloneToUniquePtr())
@@ -125,9 +127,10 @@ std::string InstrRet::toLLVMIR() const {
 }
 
 InstrBinaryOp::InstrBinaryOp(
-	AddrOperand * left, AddrOperand * right, AddrVariable * res
+	AddrOperand * left, AddrOperand * right, AddrVariable * res,
+	InstrType instrType
 ) :
-	IRInstr(InstrType::BinaryOp), left(left), right(right), res(res) {
+	IRInstr(instrType), left(left), right(right), res(res) {
 	com::Assert(
 		left->getType() == right->getType() && right->getType() == res->getType(),
 		"Type of operand and result should be same!",
@@ -136,7 +139,7 @@ InstrBinaryOp::InstrBinaryOp(
 }
 
 InstrAdd::InstrAdd(AddrOperand * left, AddrOperand * right, AddrVariable * res) :
-	InstrBinaryOp(left, right, res) {
+	InstrBinaryOp(left, right, res, InstrType::Add) {
 	com::Assert(
 		left->getType() == IntType(),
 		"Type of addr in `add` should be `IntType`!", CODEPOS
@@ -166,7 +169,7 @@ std::unique_ptr<moeconcept::Cutable> InstrFAdd::_cutToUniquePtr() {
 }
 
 InstrFAdd::InstrFAdd(AddrOperand * left, AddrOperand * right, AddrVariable * res) :
-	InstrBinaryOp(left, right, res) {
+	InstrBinaryOp(left, right, res, InstrType::FAdd) {
 	com::Assert(
 		left->getType() == FloatType(),
 		"Type of addr in `fadd` should be `FloatType`!", CODEPOS
@@ -220,6 +223,10 @@ InstrLoad::InstrLoad(AddrVariable * from, AddrVariable * to) :
 		toType == *fromType.pointTo,
 		"Type of %to should be pointer to type of %from.", CODEPOS
 	);
+	com::Assert(
+		to->addrType == AddrType::Var,
+		"", CODEPOS
+	);
 }
 
 std::string InstrLoad::toLLVMIR() const {
@@ -261,7 +268,7 @@ InstrBr::InstrBr(
 }
 
 InstrMul::InstrMul(AddrOperand * left, AddrOperand * right, AddrVariable * res) :
-	InstrBinaryOp(left, right, res) {
+	InstrBinaryOp(left, right, res, InstrType::Mul) {
 	com::Assert(
 		left->getType() == IntType(),
 		"Type of addr in `mul` should be `IntType`!", CODEPOS
@@ -276,7 +283,7 @@ std::string InstrMul::toLLVMIR() const {
 
 InstrFMul::InstrFMul(AddrOperand * left, AddrOperand * right, AddrVariable * res)
 	:
-	InstrBinaryOp(left, right, res) {
+	InstrBinaryOp(left, right, res, InstrType::FMul) {
 	com::Assert(
 		left->getType() == FloatType(),
 		"Type of addr in `fmul` should be `FloatType`!", CODEPOS
@@ -289,7 +296,7 @@ std::string InstrFMul::toLLVMIR() const {
 }
 
 InstrSub::InstrSub(AddrOperand * left, AddrOperand * right, AddrVariable * res) :
-	InstrBinaryOp(left, right, res) {
+	InstrBinaryOp(left, right, res, InstrType::Sub) {
 	com::Assert(
 		left->getType() == IntType(),
 		"Type of addr in `sub` should be `IntType`!", CODEPOS
@@ -303,7 +310,7 @@ std::string InstrSub::toLLVMIR() const {
 }
 
 InstrFSub::InstrFSub(AddrOperand * left, AddrOperand * right, AddrVariable * res) :
-	InstrBinaryOp(left, right, res) {
+	InstrBinaryOp(left, right, res, InstrType::FSub) {
 	com::Assert(
 		left->getType() == FloatType(),
 		"Type of addr in `fsub` should be `FloatType`!", CODEPOS
@@ -381,7 +388,7 @@ std::string InstrFptosi::toLLVMIR() const {
 
 InstrSDiv::InstrSDiv(AddrOperand * left, AddrOperand * right, AddrVariable * res)
 	:
-	InstrBinaryOp(left, right, res) {
+	InstrBinaryOp(left, right, res, InstrType::SDiv) {
 	com::Assert(
 		left->getType() == IntType(),
 		"Type of addr in `div` should be `IntType`!", CODEPOS
@@ -395,7 +402,7 @@ std::string InstrSDiv::toLLVMIR() const {
 }
 
 InstrFDiv::InstrFDiv(AddrOperand * left, AddrOperand * right, AddrVariable * res) :
-	InstrBinaryOp(left, right, res) {
+	InstrBinaryOp(left, right, res, InstrType::FDiv) {
 	com::Assert(
 		left->getType() == FloatType(),
 		"Type of addr in `fdiv` should be `FloatType`!", CODEPOS
@@ -409,7 +416,7 @@ std::string InstrFDiv::toLLVMIR() const {
 
 InstrSrem::InstrSrem(AddrOperand * left, AddrOperand * right, AddrVariable * res)
 	:
-	InstrBinaryOp(left, right, res) {
+	InstrBinaryOp(left, right, res, InstrType::SRem) {
 	com::Assert(
 		left->getType() == IntType(),
 		"Type of addr in `rem` should be `IntType`!", CODEPOS
@@ -476,6 +483,19 @@ InstrCompare::InstrCompare(
 
 std::string InstrCompare::toLLVMIR() const {
 	com::Throw("This method should not be called.", CODEPOS);
+}
+
+
+ICMP getReverse(ICMP icmp) {
+	switch (icmp) {
+		case ICMP::EQ:return ICMP::NE;
+		case ICMP::NE:return ICMP::EQ;
+		case ICMP::SGT:return ICMP::SLE;
+		case ICMP::SLT:return ICMP::SGE;
+		case ICMP::SLE:return ICMP::SGT;
+		case ICMP::SGE:return ICMP::SLT;
+		case ICMP::ERR:return ICMP::ERR;
+	}
 }
 
 std::string to_string(ICMP icmp) {
