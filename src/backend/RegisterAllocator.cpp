@@ -11,7 +11,9 @@ void RegisterAllocator::set(
 	std::map<backend::VRegS *, std::vector<int>> & _defineUseTimelineVRegS,
 	int _totalTim,
 	std::map<ircode::AddrPara *, backend::Opnd *> & _argsOnPrev,
-	int _argsStkSizeOnPrev
+	int _argsStkSizeOnPrev,
+	std::map<ircode::AddrPara *, backend::VRegR *> & _m_AddrArg_VRegR,
+	std::map<ircode::AddrPara *, backend::VRegS *> & _m_AddrArg_VRegS
 ) {
 	this->allUsedVRegR = _allUsedVRegR;
 	this->allUsedVRegS = _allUsedVRegS;
@@ -21,6 +23,8 @@ void RegisterAllocator::set(
 	this->totalTim = _totalTim;
 	this->argsOnCallingThis = _argsOnPrev;
 	this->argsStkSizeOnCallingThis = _argsStkSizeOnPrev;
+	this->m_AddrArg_VRegR = _m_AddrArg_VRegR;
+	this->m_AddrArg_VRegS = _m_AddrArg_VRegS;
 	com::Assert(argsStkSizeOnCallingThis % 8 == 0, "", CODEPOS);
 }
 
@@ -57,31 +61,30 @@ int RegisterAllocator::getRes() {
 	backupRReg.insert(RId::lr);
 	restoreRReg.insert(RId::pc);
 	backupStkSize += 4;
-	if (backupStkSize + spilledStkSize % 8 != 0) {  //  need alignment
+	if ((backupStkSize + spilledStkSize) % 8 != 0) {  //  need alignment
 		spilledStkSize += 4;
 	}
+	//  change vreg of para after register allocation
 	for (auto [pParaAddr, pOpndArg]: argsOnCallingThis) {
 		switch (pOpndArg->getOpndType()) {
 			case OpndType::VRegR: {
-				auto * pVRegRArg = dynamic_cast<VRegR *>(pOpndArg);
+				auto * pVRegRArg = m_AddrArg_VRegR[pParaAddr];
 				if (pVRegRArg->rid == RId::stk) {
 					pVRegRArg->offset = argsStkSizeOnCallingThis +
 						pVRegRArg->offset + spilledStkSize + backupStkSize;
 				} else if (isGPR(pVRegRArg->rid)) {
 					//  do nothing
 				} else { com::Throw("", CODEPOS); }
-				m_AddrArg_VRegR[pParaAddr] = pVRegRArg;
 				break;
 			}
 			case OpndType::VRegS: {
-				auto * pVRegSArg = dynamic_cast<VRegS *>(pOpndArg);
+				auto * pVRegSArg = m_AddrArg_VRegS[pParaAddr];
 				if (pVRegSArg->sid == SId::stk) {
 					pVRegSArg->offset = argsStkSizeOnCallingThis +
 						pVRegSArg->offset + spilledStkSize + backupStkSize;
 				} else if (isGPR(pVRegSArg->sid)) {
 					//  do nothing
 				} else { com::Throw("", CODEPOS); }
-				m_AddrArg_VRegS[pParaAddr] = pVRegSArg;
 				break;
 			}
 			default:com::Throw("", CODEPOS);

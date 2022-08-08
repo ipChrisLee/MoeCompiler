@@ -440,12 +440,30 @@ std::list<ircode::IRInstr *> genUnaryOperationInstrs(
 		case Type::Bool_t: {
 			auto instrsRes = std::list<ircode::IRInstr *>();
 			if (op == "!") {
-				auto * pZero = ir.addrPool.emplace_back(
-					ircode::AddrStaticValue(opR->getType())
-				);
 				switch (opR->getType().type) {
-					case Type::Bool_t:
+					case Type::Bool_t: {
+						auto * pZExt = ir.addrPool.emplace_back(
+							ircode::AddrVariable(IntType())
+						);
+						instrsRes.emplace_back(
+							ir.instrPool.emplace_back(
+								ircode::InstrZExt(opR, pZExt)
+							)
+						);
+						auto * pZero = ir.addrPool.emplace_back(
+							ircode::AddrStaticValue(IntType())
+						);
+						instrsRes.emplace_back(
+							ir.instrPool.emplace_back(
+								ircode::InstrICmp(opD, pZExt, ICMP::EQ, pZero)
+							)
+						);
+						break;
+					}
 					case Type::Int_t: {
+						auto * pZero = ir.addrPool.emplace_back(
+							ircode::AddrStaticValue(IntType())
+						);
 						instrsRes.emplace_back(
 							ir.instrPool.emplace_back(
 								ircode::InstrICmp(opD, opR, ICMP::EQ, pZero)
@@ -454,6 +472,9 @@ std::list<ircode::IRInstr *> genUnaryOperationInstrs(
 						break;
 					}
 					case Type::Float_t: {
+						auto * pZero = ir.addrPool.emplace_back(
+							ircode::AddrStaticValue(FloatType())
+						);
 						instrsRes.emplace_back(
 							ir.instrPool.emplace_back(
 								ircode::InstrFCmp(opD, opR, FCMP::OEQ, pZero)

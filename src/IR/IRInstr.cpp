@@ -498,6 +498,10 @@ ICMP getReverse(ICMP icmp) {
 	}
 }
 
+FCMP getReverse(FCMP fcmp) {
+	com::TODO("", CODEPOS);
+}
+
 std::string to_string(ICMP icmp) {
 	switch (icmp) {
 		case ICMP::EQ: return "eq";

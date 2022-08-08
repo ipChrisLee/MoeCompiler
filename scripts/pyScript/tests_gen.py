@@ -58,14 +58,14 @@ argParser.add_argument(
 argParser.add_argument(
 	'--llvmir-run',
 	action='store_true',
-	dest='llvmir-run',
+	dest='llvmir_run',
 	help='Run llvm-ir file.'
 )
 argParser.add_argument(
-	'--compile_backend',
+	'--difftest',
 	action='store_true',
-	dest='compile_backend',
-	help='Use moe compile SysY until backend.'
+	dest='difftest',
+	help='Difftest between clang and moe.'
 )
 argParser.add_argument(
 	'--backend',
@@ -93,21 +93,6 @@ def test_frontend():
 		resFilePath=TestFilesSettings.FilePath.testRes
 	)
 	print(f'Result : {res["test_status"]}')
-
-
-def test_compile_backend():
-	Moe.compile(
-		syFilePath=TestFilesSettings.FilePath.testSy,
-		msFilePath=TestFilesSettings.FilePath.testMLL,
-		optiLevel=args.moeOpti, timeout=TimeoutSettings.moe, emit_llvm=True,
-		float_dec_format=False
-	).check_returncode()
-	Moe.compile(
-		syFilePath=TestFilesSettings.FilePath.testSy,
-		msFilePath=TestFilesSettings.FilePath.testMS,
-		optiLevel=args.moeOpti, timeout=TimeoutSettings.moe, emit_llvm=False,
-		float_dec_format=False
-	).check_returncode()
 
 
 def test_backend():
@@ -217,6 +202,40 @@ def test_llvmir_run():
 	print(f'Result : {res["test_status"]}')
 
 
+def test_difftest():
+	Moe.compile(
+		syFilePath=TestFilesSettings.FilePath.testSy,
+		msFilePath=TestFilesSettings.FilePath.testMLL,
+		optiLevel=args.moeOpti, timeout=TimeoutSettings.moe, emit_llvm=True,
+		float_dec_format=False
+	).check_returncode()
+	Clang.compile_to_ass(
+		syFilePath=TestFilesSettings.FilePath.testSy,
+		sFilePath=TestFilesSettings.FilePath.testS,
+		optiLevel=0
+	).check_returncode()
+	Pi.run_tester(
+		sFilePath=TestFilesSettings.FilePath.testS,
+		inFilePath=TestFilesSettings.FilePath.testIn,
+		outFilePath=TestFilesSettings.FilePath.testOut,
+		resFilePath=TestFilesSettings.FilePath.testRes
+	)
+	Pi.get_from_pi('.tmp/buffer.txt', TestFilesSettings.FilePath.testOut)
+	Moe.compile(
+		syFilePath=TestFilesSettings.FilePath.testSy,
+		msFilePath=TestFilesSettings.FilePath.testMS,
+		optiLevel=args.moeOpti, timeout=TimeoutSettings.moe, emit_llvm=False,
+		float_dec_format=False
+	).check_returncode()
+	res = Pi.run_tester(
+		sFilePath=TestFilesSettings.FilePath.testMS,
+		inFilePath=TestFilesSettings.FilePath.testIn,
+		outFilePath=TestFilesSettings.FilePath.testOut,
+		resFilePath=TestFilesSettings.FilePath.testRes
+	)
+	print(f'Result : {res["test_status"]}')
+
+
 if __name__ == '__main__':
 	args = argParser.parse_args()
 	if args.frontend:
@@ -229,9 +248,9 @@ if __name__ == '__main__':
 		test_moe()
 	elif args.asm_run:
 		test_asm_run()
-	elif args.compile_backend:
-		test_compile_backend()
 	elif args.backend:
 		test_backend()
 	elif args.llvmir_run:
 		test_llvmir_run()
+	elif args.difftest:
+		test_difftest()

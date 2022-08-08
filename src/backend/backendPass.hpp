@@ -10,6 +10,8 @@
 
 
 namespace pass {
+std::string hexFormOf(int32_t val);
+std::string hexFormOf(float val);
 
 class FuncInfo {
   protected:
@@ -47,7 +49,7 @@ class FuncInfo {
 	int spilledStkSize = 0;
 	//  backup of callee saved registers
 	int backupStkSize = 0;
-	//  backup of callee saved registers
+	//  backup of callee saved registers. Alignment is in consideration.
 	std::set<backend::RId> backupRReg;   //  include lr, which is the return addr
 	std::set<backend::RId> restoreRReg;  //  include pc, which means `return addr`
 	std::set<backend::SId> backupAndRestoreSReg;
@@ -63,7 +65,7 @@ class FuncInfo {
 	std::set<backend::SId> callerSaveSReg;
 	//  AddrPara information when calling this function.
 	//  backendOpnd * : VRegR(rx), VRegR(stk, -bias), VRegS(sx), VRegS(stk, -bias)
-	std::map<ircode::AddrPara *, backend::Opnd *> argsOnCallingThis;
+	std::map<ircode::AddrPara *, backend::Opnd *> argsInfoOnCallingThis;
 	//  Stack size of arguments calling this function
 	int argsStkSizeOnCallingThis = 0;
 	FuncInfo(
@@ -87,8 +89,13 @@ class FuncInfo {
 	std::string toASM();
 
   protected:
+	enum class CmpType {
+		I, F, N
+	} cmpType = CmpType::N;
 	ircode::ICMP lastICmp = ircode::ICMP::ERR;
+	ircode::FCMP lastFCmp = ircode::FCMP::ERR;
 	ircode::AddrVariable * lastCondVarAddr = nullptr;
+
 
 	static void
 	genASMSaveFromRRegToVRegR(
@@ -97,8 +104,20 @@ class FuncInfo {
 	);
 
 	static void
+	genASMSaveFromSRegToVRegS(
+		std::string & res, backend::VRegS * pVRegSTo, backend::SId sIdFrom,
+		backend::RId scratchRId
+	);
+
+	static void
 	genASMSaveFromVRegRToRReg(
 		std::string & res, backend::VRegR * pVRegRFrom, backend::RId rIdTo
+	);
+
+	static void
+	genASMSaveFromVRegSToSReg(
+		std::string & res, backend::VRegS * pVRegSFrom, backend::SId sIdTo,
+		backend::RId scratchRId
 	);
 
 	//  automatically sorted by id
@@ -115,7 +134,10 @@ class FuncInfo {
 	genASMPopRegs(std::string & res, const std::set<backend::SId> & list);
 
 	static backend::RId
-	genASMLoadNumber(std::string & res, int32_t val, backend::RId to);
+	genASMLoadInt(std::string & res, int32_t val, backend::RId to);
+
+	static backend::SId
+	genASMLoadFloat(std::string & res, float val, backend::SId to, backend::RId scratchRId);
 
 	static backend::RId
 	genASMLoadLabel(std::string & res, backend::Label * pLabel, backend::RId to);
@@ -123,8 +145,16 @@ class FuncInfo {
 	static void
 	genASMDerefStkPtr(std::string & res, int offset, backend::RId rIdDest);
 
+	static void
+	genASMDerefStkPtrToSReg(
+		std::string & res, int offset, backend::SId sIdDest, backend::RId scratchRId
+	);
+
 	static std::string
 	genASMPtrOffsetToOperand2(std::string & res, int offset, backend::RId rIdRest);
+
+	static std::string
+	genASMPtrOffsetToFOperand2(std::string & res, int offset, backend::RId scratchRId);
 
 	/**
 	 * @brief Get value stored in VRegR.
@@ -135,13 +165,26 @@ class FuncInfo {
 		std::string & res, backend::VRegR * pVRegR, backend::RId rIdIfInStk
 	);
 
+	static backend::SId genASMGetVRegSVal(
+		std::string & res, backend::VRegS * pVRegS, backend::SId sIdIfInStk,
+		backend::RId scratchRId
+	);
+
 	static void
 	genASMSaveFromRRegToOffset(
 		std::string & res, backend::RId ridFrom, int offset, backend::RId scratchReg
 	);
 
+	static void
+	genASMSaveFromSRegToOffset(
+		std::string & res, backend::SId sidFrom, int offset, backend::RId scratchReg
+	);
+
 	static std::string
-	genASMConditionalBranch(ircode::ICMP icmp, bool reverse = false);
+	genASMCondName(ircode::ICMP icmp, bool reverse = false);
+
+	static std::string
+	genASMCondNameReverse(ircode::FCMP fcmp);
 
 	//  Generate mapping of defined var in instruction
 	//  Complete timeline of VRegs
@@ -164,6 +207,7 @@ class FuncInfo {
 	int run(ircode::InstrRet * pRet);
 	std::string toASM(ircode::InstrRet * pRet);
 	std::string toASM_Ret_Int(ircode::InstrRet * pRet);
+	std::string toASM_Ret_Float(ircode::InstrRet * pRet);
 
 	int run(ircode::InstrLabel * pInstrLabel);
 	std::string toASM(ircode::InstrLabel * pInstrLabel);
@@ -173,9 +217,12 @@ class FuncInfo {
 	int run_Store_Float(ircode::InstrStore * pInstrStore);
 	std::string toASM(ircode::InstrStore * pInstrStore);
 	std::string toASM_Store_Int(ircode::InstrStore * pInstrStore);
+	std::string toASM_Store_IntArray(ircode::InstrStore * pInstrStore);
 	std::string toASM_Store_Float(ircode::InstrStore * pInstrStore);
+	std::string toASM_Store_FloatArray(ircode::InstrStore * pInstrStore);
 
 	int run_Binary_Op_Int(ircode::InstrBinaryOp * pInstrBinaryOp);
+	int run_Binary_Op_Float(ircode::InstrBinaryOp * pInstrBinaryOp);
 	std::string toASM_Binary_Op_Int(ircode::InstrBinaryOp * pInstrBinaryOp);
 	std::string toASM_ADD_SUB_RSB(
 		ircode::AddrOperand * pLOp, ircode::AddrOperand * pROp,
@@ -189,15 +236,27 @@ class FuncInfo {
 		ircode::AddrOperand * pLOp, ircode::AddrOperand * pROp,
 		ircode::AddrVariable * pDest
 	);
+	std::string toASM_Binary_Op_Float(ircode::InstrBinaryOp * pInstrBinaryOp);
 
 	int run(ircode::InstrICmp * pInstrICmp);
 	std::string toASM(ircode::InstrICmp * pInstrICmp);
+
+	int run(ircode::InstrFCmp * pInstrFCmp);
+	std::string toASM(ircode::InstrFCmp * pInstrFCmp);
 
 	int run(ircode::InstrCall * pInstrCall);
 	std::string toASM(ircode::InstrCall * pInstrCall);
 
 	int run(ircode::InstrGetelementptr * pInstrGetelementptr);
 	std::string toASM(ircode::InstrGetelementptr * pInstrGetelementptr);
+
+	int run(ircode::InstrZExt * pInstrZExt);
+	std::string toASM(ircode::InstrZExt * pInstrZExt);
+
+	int run(ircode::InstrConversionOp * pInstrConversionOp);
+	std::string toASM(ircode::InstrSitofp * pInstrSitofp);
+	std::string toASM(ircode::InstrFptosi * pInstrFptosi);
+
 };
 
 class ToASM : public IRPass {

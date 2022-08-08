@@ -157,6 +157,15 @@ allTestUnits: typ.Dict[str, TestUnit] = dict(
 			acts=[
 				actions.CompileToASMAndRunOnPi(optiLevel=0)
 			]
+		),
+		TestUnit(
+			name='test_moe_function',
+			testCaseSet=allFunctionTestsCaseSet,
+			terminalVerbose=True,
+			helpInfo='Test MoeCompiler for all function tests.',
+			acts=[
+				actions.CompileToASMAndRunOnPi(optiLevel=0)
+			]
 		)
 	])
 )

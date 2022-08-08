@@ -41,6 +41,8 @@ enum class RId : int {
 	mem,
 };
 
+static int mxRIdForParameters = 3;
+
 bool isGPR(RId rid);    //  is general purpose register (r0-r11)
 bool isCallerSave(RId rid);
 bool isCalleeSave(RId rid);
@@ -119,6 +121,7 @@ class Label : public Opnd {
 enum class ImmType {
 	ImmOffset,
 	Imm8m,
+	Immed,
 };
 
 template<ImmType immType>
@@ -132,5 +135,6 @@ class Imm {
 //  Only low 16 bits of `a` and `b` is used, and upper bits of them are all zero.
 std::tuple<int32_t, int32_t> splitNumber(int32_t x);
 
+std::tuple<int32_t, int32_t> splitNumber(float x);
 
 }

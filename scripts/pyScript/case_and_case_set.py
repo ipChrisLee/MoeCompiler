@@ -119,7 +119,7 @@ functionWithoutFloat = TestCaseSet(
 	set.union(
 		function2020TestCaseSet.caseSet,
 		function2021TestCaseSet.caseSet
-	),'withoutFloat'
+	), 'withoutFloat'
 )
 
 performance2021TestCaseSet = TestCaseSet(

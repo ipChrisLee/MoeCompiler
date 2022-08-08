@@ -116,8 +116,20 @@ bool Imm<ImmType::Imm8m>::fitThis(int32_t x) {
 	return s0mxLen >= 32 - 8;
 }
 
+template<>
+bool Imm<ImmType::Immed>::fitThis(int32_t x) {
+	return 0 <= x && x <= 1020 && x % 4 == 0;
+}
+
 std::tuple<int32_t, int32_t> splitNumber(int32_t x) {
 	uint32_t u = x;
+	uint16_t uH = u >> 16;
+	uint16_t uL = u & 0x0000FFFF;
+	return {uH, uL};
+}
+
+std::tuple<int32_t, int32_t> splitNumber(float x) {
+	uint32_t u = *reinterpret_cast<uint32_t *>(&x);
 	uint16_t uH = u >> 16;
 	uint16_t uL = u & 0x0000FFFF;
 	return {uH, uL};

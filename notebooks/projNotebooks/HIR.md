@@ -153,4 +153,4 @@ Type of `to` is `toType` and type of `from` is `fromType`.
 
 Return value should be saved on `retval`, which is of `retType`.
 
-`argType`s are same as type of argsOnCallingThis of `func`.
+`argType`s are same as type of argsInfoOnCallingThis of `func`.

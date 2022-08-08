@@ -297,4 +297,64 @@ std::unique_ptr<TypeInfo> typeDeduce(const TypeInfo & _from, size_t dep) {//NOLI
 	}
 }
 
+std::unique_ptr<TypeInfo> typeDeduceForBackend(const TypeInfo & _from, size_t dep) {
+	auto type = _from.type;
+	switch (type) {
+		case Type::FloatArray_t: {
+			const auto & from = dynamic_cast<const FloatArrayType &>(_from);
+			auto dims = from.shape.size();
+			if (dims == dep) {
+				return std::make_unique<FloatType>();
+			} else if (dims >= dep + 1) {
+				auto shape = std::vector(
+					from.shape.begin() + dep, from.shape.end()
+				);
+				return std::make_unique<FloatArrayType>(std::move(shape));
+			} else {
+				com::Throw("dep should be less than dims", CODEPOS);
+			}
+		}
+		case Type::IntArray_t: {
+			const auto & from = dynamic_cast<const IntArrayType &>(_from);
+			auto dims = from.shape.size();
+			if (dims == dep) {
+				return std::make_unique<IntType>();
+			} else if (dims >= dep + 1) {
+				auto shape = std::vector(
+					from.shape.begin() + dep, from.shape.end()
+				);
+				return std::make_unique<IntArrayType>(std::move(shape));
+			} else {
+				com::Throw("dep should be less than dims", CODEPOS);
+			}
+		}
+		case Type::Int_t: {
+			com::Assert(
+				dep == 0, "When type `from` is int, dep should be one.", CODEPOS
+			);
+			return std::make_unique<IntType>();
+		}
+		case Type::Float_t: {
+			com::Assert(
+				dep == 0, "When type `from` is float, dep should be one.", CODEPOS
+			);
+			return std::make_unique<FloatType>();
+		}
+		case Type::Pointer_t: {
+			auto & from = dynamic_cast<const PointerType &>(_from);
+			if (dep > 0) {
+				return typeDeduceForBackend(*from.pointTo, dep - 1);
+			} else if (dep == 0) {
+				return com::dynamic_cast_uPtr<TypeInfo>(from.cloneToUniquePtr());
+			} else {
+				com::Throw("", CODEPOS);
+			}
+		}
+		default: {
+			com::Throw("This type is not supported to deduce type.", CODEPOS);
+		}
+	}
+
+}
+
 }

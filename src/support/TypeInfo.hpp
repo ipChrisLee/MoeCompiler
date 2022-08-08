@@ -209,4 +209,6 @@ class VoidType :
 
 std::unique_ptr<TypeInfo> typeDeduce(const TypeInfo & from, size_t dep);
 
+std::unique_ptr<TypeInfo> typeDeduceForBackend(const TypeInfo & from, size_t dep);
+
 }

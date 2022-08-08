@@ -504,6 +504,8 @@ enum class FCMP {
 	ERR,    //  For error handle
 };
 
+FCMP getReverse(FCMP fcmp);
+
 std::string to_string(FCMP fcmp);
 
 FCMP strToFCMP(const std::string & str);
@@ -512,8 +514,8 @@ class InstrFCmp : public InstrCompare {
   protected:
 	std::unique_ptr<Cutable> _cutToUniquePtr() override CUTABLE_DEFAULT_IMPLEMENT;
 
-	FCMP fcmp;
   public:
+	FCMP fcmp;
 	InstrFCmp(
 		AddrVariable * dest, AddrOperand * leftOp, FCMP fcmp, AddrOperand * rightOp
 	);

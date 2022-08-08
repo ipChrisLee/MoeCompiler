@@ -33,10 +33,13 @@ int ToASM::run() {
 
 std::string ToASM::toASM() {
 	auto res = std::string(pass::ToASM::asmHeader) + "\n\n";
-	for (auto * pGVarAddr: ir.addrPool.getGlobalVars()) {
-		res += declGVar(pGVarAddr) + "\n";
+	if (!ir.addrPool.getGlobalVars().empty()) {
+		res += std::string(gVarHeader);
+		for (auto * pGVarAddr: ir.addrPool.getGlobalVars()) {
+			res += declGVar(pGVarAddr) + "\n";
+		}
+		res += "\n\n";
 	}
-	res += "\n\n";
 	res += std::string(functionsHeader) + "\n\n";
 	for (auto * pFuncInfo: funcInfoPool) {
 		if (pFuncInfo->pFuncDef->pAddrFun->justDeclare) {
@@ -59,31 +62,48 @@ FuncInfo::FuncInfo(
 	pFuncLabel(opndPool.emplace_back(backend::Label(pFuncDef->pAddrFun))) {
 	int rid = 0, sid = 0;
 	for (auto * pAddrPara: pFuncDef->pAddrFun->vecPtrAddrPara) {
-		argsStkSizeOnCallingThis += pAddrPara->getType().getSize();
 		switch (pAddrPara->getType().type) {
 			case sup::Type::Pointer_t:
 			case sup::Type::Int_t: {
-				auto * opndPara = pool.emplace_back(
-					backend::VRegR(
-						rid < 4 ? backend::RId(rid) : backend::RId::stk,
-						rid < 4 ? INT_MIN : (rid - 4 + 1) * -4
-					)
+				auto * opndPara = static_cast<backend::VRegR *>(nullptr);
+				if (rid <= backend::mxRIdForParameters) {
+					opndPara = pool.emplace_back(
+						backend::VRegR(backend::RId(rid), INT_MIN)
+					);
+					++rid;
+				} else {
+					opndPara = pool.emplace_back(
+						backend::VRegR(
+							backend::RId::stk, -argsStkSizeOnCallingThis - 4
+						)
+					);
+					argsStkSizeOnCallingThis += 4;
+				}
+				argsInfoOnCallingThis[pAddrPara] = opndPara;
+				m_AddrArg_VRegR[pAddrPara] = opndPool.emplace_back(
+					backend::VRegR(*opndPara)
 				);
-				++rid;
-				argsOnCallingThis[pAddrPara] = opndPara;
 				break;
 			}
 			case sup::Type::Float_t: {
-				auto * opndPara = pool.emplace_back(
-					backend::VRegS(
-						sid < backend::mxSIdForParameters ? backend::SId(sid)
-						                                  : backend::SId::stk,
-						sid < backend::mxSIdForParameters ? INT_MIN :
-						(sid - backend::mxSIdForParameters + 1) * -4
-					)
+				auto * opndPara = static_cast<backend::VRegS *>(nullptr);
+				if (sid <= backend::mxSIdForParameters) {
+					opndPara = pool.emplace_back(
+						backend::VRegS(backend::SId(sid), INT_MIN)
+					);
+					++sid;
+				} else {
+					opndPara = pool.emplace_back(
+						backend::VRegS(
+							backend::SId::stk, -argsStkSizeOnCallingThis - 4
+						)
+					);
+					argsStkSizeOnCallingThis += 4;
+				}
+				argsInfoOnCallingThis[pAddrPara] = opndPara;
+				m_AddrArg_VRegS[pAddrPara] = opndPool.emplace_back(
+					backend::VRegS(*opndPara)
 				);
-				++sid;
-				argsOnCallingThis[pAddrPara] = opndPara;
 				break;
 			}
 			default:com::Throw("", CODEPOS);
@@ -108,7 +128,7 @@ std::string FuncInfo::toASM() {
 			"sub", backend::RId::sp, backend::RId::sp, spilledStkSize
 		);
 	} else {
-		genASMLoadNumber(res, spilledStkSize, backend::RId::rhs);
+		genASMLoadInt(res, spilledStkSize, backend::RId::rhs);
 		res += backend::toASM(
 			"sub", backend::RId::sp, backend::RId::sp, backend::RId::rhs
 		);
@@ -121,7 +141,7 @@ std::string FuncInfo::toASM() {
 			"add", backend::RId::sp, backend::RId::sp, spilledStkSize
 		);
 	} else {
-		genASMLoadNumber(res, spilledStkSize, backend::RId::rhs);
+		genASMLoadInt(res, spilledStkSize, backend::RId::rhs);
 		res += backend::toASM(
 			"add", backend::RId::sp, backend::RId::sp, backend::RId::rhs
 		);
@@ -143,7 +163,8 @@ int FuncInfo::run() {
 	com::Assert(regAllocator.get(), "", CODEPOS);
 	regAllocator->set(
 		allUsedVRegR, allUsedVRegS, allStkPtr, defineUseTimelineVRegR,
-		defineUseTimelineVRegS, tim, argsOnCallingThis, argsStkSizeOnCallingThis
+		defineUseTimelineVRegS, tim, argsInfoOnCallingThis, argsStkSizeOnCallingThis,
+		m_AddrArg_VRegR, m_AddrArg_VRegS
 	);
 	regAllocator->getRes();
 	backupRReg = regAllocator->backupRReg;
@@ -179,172 +200,103 @@ int FuncInfo::run(ircode::InstrBr * pBr) {
 
 std::string FuncInfo::toASM(ircode::InstrBr * pBr) {
 	auto res = std::string();
-	com::Assert(pBr->pLabelTrue, "", CODEPOS);
 	if (!pBr->pCond) {    //  unconditional jump
+		com::Assert(pBr->pLabelTrue, "", CODEPOS);
 		auto * pASMLabelTrue = convertLabel(pBr->pLabelTrue);
 		res += backend::toASM("b", pASMLabelTrue->labelStr);
+	} else if (pBr->pCond->addrType == ircode::AddrType::StaticValue) {
+		auto * pSVCond = dynamic_cast<ircode::AddrStaticValue *>(pBr->pCond);
+		auto b = dynamic_cast<const sup::BoolStaticValue &>(
+			pSVCond->getStaticValue()
+		).value;
+		if (b) {
+			if (pBr->pLabelTrue) {
+				res += backend::toASM("b", convertLabel(pBr->pLabelTrue)->labelStr);
+			}
+		} else {
+			if (pBr->pLabelFalse) {
+				res += backend::toASM("b", convertLabel(pBr->pLabelFalse)->labelStr);
+			}
+		}
 	} else {
 		com::Assert(lastCondVarAddr == pBr->pCond, "", CODEPOS);
 		if (pBr->pLabelTrue && pBr->pLabelFalse) {
-			auto condStr = genASMConditionalBranch(lastICmp, false);
-			res += backend::toASM(
-				"b" + condStr, convertLabel(pBr->pLabelTrue)->labelStr
-			);
-			res += backend::toASM(
-				"b", convertLabel(pBr->pLabelFalse)->labelStr
-			);
+			auto condStr = std::string();
+			switch (cmpType) {
+				case CmpType::I: {
+					condStr = genASMCondName(lastICmp, false);
+					res += backend::toASM(
+						"b" + condStr, convertLabel(pBr->pLabelTrue)->labelStr
+					);
+					res += backend::toASM(
+						"b", convertLabel(pBr->pLabelFalse)->labelStr
+					);
+					break;
+				}
+				case CmpType::F: {
+					condStr = genASMCondNameReverse(lastFCmp);
+					res += backend::toASM("vmrs", "APSR_nzcv", "fpscr");
+					res += backend::toASM(
+						"b" + condStr, convertLabel(pBr->pLabelFalse)->labelStr
+					);
+					res += backend::toASM("b", convertLabel(pBr->pLabelTrue)->labelStr);
+					break;
+				}
+				default:com::Throw("", CODEPOS);
+			}
 		} else if (pBr->pLabelTrue && !pBr->pLabelFalse) {
-			auto condStr = genASMConditionalBranch(lastICmp, false);
-			res += backend::toASM(
-				"b" + condStr, convertLabel(pBr->pLabelTrue)->labelStr
-			);
+			switch (cmpType) {
+				case CmpType::I: {
+					auto condStr = genASMCondName(lastICmp, false);
+					res += backend::toASM(
+						"b" + condStr, convertLabel(pBr->pLabelTrue)->labelStr
+					);
+					break;
+				}
+				default:com::Throw("", CODEPOS);
+			}
 		} else if (!pBr->pLabelTrue && pBr->pLabelFalse) {
-			auto condStr = genASMConditionalBranch(lastICmp, true);
-			res += backend::toASM(
-				"b" + condStr, convertLabel(pBr->pLabelFalse)->labelStr
-			);
+			auto condStr = std::string();
+			switch (cmpType) {
+				case CmpType::I: {
+					condStr = genASMCondName(lastICmp, true);
+					res += backend::toASM(
+						"b" + condStr, convertLabel(pBr->pLabelTrue)->labelStr
+					);
+					break;
+				}
+				case CmpType::F: {
+					condStr = genASMCondNameReverse(lastFCmp);
+					res += backend::toASM("vmrs");
+					res += backend::toASM(
+						"b" + condStr, convertLabel(pBr->pLabelFalse)->labelStr
+					);
+					break;
+				}
+				default:com::Throw("", CODEPOS);
+			}
 		} else {
 			com::Throw("", CODEPOS);
 		}
 	}
+	cmpType = CmpType::N;
 	lastICmp = ircode::ICMP::ERR;
+	lastFCmp = ircode::FCMP::ERR;
 	lastCondVarAddr = nullptr;
 	return res;
 }
 
-int FuncInfo::run(ircode::InstrLoad * pInstrLoad) {
-	switch (pInstrLoad->to->getType().type) {
-		case sup::Type::Pointer_t:
-		case sup::Type::Int_t: {
-			run_Load_Int(pInstrLoad);
-			break;
-		}
-		case sup::Type::Float_t: {
-			run_Load_Float(pInstrLoad);
-			break;
-		}
-		default:com::Throw("", CODEPOS);
-	}
-	return 0;
-}
-
-int FuncInfo::run_Load_Int(ircode::InstrLoad * pInstrLoad) {
-	auto * pOpnd = convertIntVariable(pInstrLoad->to);
-	defineUseTimelineVRegR[pOpnd].emplace_back(tim);
-	if (pInstrLoad->from->addrType == ircode::AddrType::Var) {
-		auto * pVarVRegR = convertIntVariable(pInstrLoad->from);
-		defineUseTimelineVRegR[pVarVRegR].emplace_back(tim);
-	} else if (pInstrLoad->from->addrType == ircode::AddrType::ParaVar) {
-		com::TODO("", CODEPOS);
-	} else if (pInstrLoad->from->addrType == ircode::AddrType::LocalVar) {
-		auto * pLVarAddr = dynamic_cast<ircode::AddrLocalVariable *>(
-			pInstrLoad->from
-		);
-		convertLocalVar(pLVarAddr);
-	} else if (pInstrLoad->from->addrType == ircode::AddrType::GlobalVar) {
-		auto * pGVarAddr = dynamic_cast<ircode::AddrGlobalVariable *>(
-			pInstrLoad->from
-		);
-		convertGlobalVar(pGVarAddr);
-	} else {
-		com::Throw("", CODEPOS);
-	}
-	return 0;
-}
-
-int FuncInfo::run_Load_Float(ircode::InstrLoad * pInstrLoad) {
-	com::Throw("", CODEPOS);
-}
-
-std::string FuncInfo::toASM(ircode::InstrLoad * pInstrLoad) {
-	auto res = std::string();
-	switch (pInstrLoad->to->getType().type) {
-		case sup::Type::Pointer_t:
-		case sup::Type::Int_t: {
-			res = toASM_Load_Int(pInstrLoad);
-			break;
-		}
-		case sup::Type::Float_t: {
-			res = toASM_Load_Float(pInstrLoad);
-			break;
-		}
-		default:com::Throw("", CODEPOS);
-	}
-	return res;
-}
-
-std::string FuncInfo::toASM_Load_Int(ircode::InstrLoad * pInstrLoad) {
-	auto res = std::string();
-	auto * pTo = pInstrLoad->to;
-	if (pTo->addrType == ircode::AddrType::Var) {
-		auto * pVRegRTo = convertIntVariable(pTo);
-		if (pVRegRTo->rid == backend::RId::stk) {
-			auto loadTo = genASMPtrOffsetToOperand2(
-				res, pVRegRTo->offset, backend::RId::rhs
-			);
-			auto * pFrom = pInstrLoad->from;
-			switch (pFrom->addrType) {
-				case ircode::AddrType::Var: {
-					auto rIdFrom = genASMGetVRegRVal(
-						res, convertIntVariable(pFrom), backend::RId::lhs
-					);
-					auto valFrom = "[" + backend::to_asm(rIdFrom) + ", #0]";
-					res += backend::toASM("ldr", backend::RId::lhs, valFrom);
-					res += backend::toASM("str", backend::RId::lhs, loadTo);
-					break;
-				}
-				case ircode::AddrType::LocalVar: {
-					//  from stack to stack
-					auto * pLVarAddr
-						= dynamic_cast<ircode::AddrLocalVariable *>(pFrom);
-					auto * pStkPtrLVal = convertLocalVar(pLVarAddr);
-					com::Assert(pStkPtrLVal->offset != INT_MIN, "", CODEPOS);
-					genASMDerefStkPtr(res, pStkPtrLVal->offset, backend::RId::lhs);
-					res += backend::toASM("str", backend::RId::lhs, loadTo);
-					break;
-				}
-				case ircode::AddrType::GlobalVar: {
-					auto * pGVarAddr
-						= dynamic_cast<ircode::AddrGlobalVariable *>(pFrom);
-					genASMLoadLabel(
-						res, convertGlobalVar(pGVarAddr), backend::RId::lhs
-					);
-					auto loadFrom = "[" + backend::to_asm(backend::RId::lhs) + ", " +
-						backend::to_asm(0) + "]";
-					res += backend::toASM("ldr", backend::RId::lhs, loadFrom);
-					res += backend::toASM("str", backend::RId::lhs, loadTo);
-					break;
-				}
-				default : {
-					com::Throw("", CODEPOS);
-				}
-			}
-		} else if (backend::isGPR(pVRegRTo->rid)) {
-			com::TODO("", CODEPOS);
-		} else {
-			com::Throw("", CODEPOS);
-		}
-	} else {
-		com::Throw("", CODEPOS);
-	}
-	return res;
-}
-
-std::string FuncInfo::toASM_Load_Float(ircode::InstrLoad * pInstrLoad) {
-	com::TODO("", CODEPOS);
-}
-
-
 int FuncInfo::run(ircode::InstrRet * pRet) {
 	com::Assert(
-		com::enum_fun::in(
-			pRet->retAddr->addrType, {
-				ircode::AddrType::Var, ircode::AddrType::ParaVar,
-				ircode::AddrType::StaticValue
-			}
-		), "", CODEPOS
+		!pRet->retAddr ||
+			com::enum_fun::in(
+				pRet->retAddr->addrType, {
+					ircode::AddrType::Var, ircode::AddrType::ParaVar,
+					ircode::AddrType::StaticValue
+				}
+			), "", CODEPOS
 	);
-	if (pRet->retAddr->addrType == ircode::AddrType::Var) {
+	if (pRet->retAddr && pRet->retAddr->addrType == ircode::AddrType::Var) {
 		auto * pAddrVar = dynamic_cast<ircode::AddrVariable *>(pRet->retAddr);
 		switch (pRet->retAddr->getType().type) {
 			case sup::Type::Int_t: {
@@ -369,12 +321,10 @@ std::string FuncInfo::toASM(ircode::InstrRet * pRet) {
 			return toASM_Ret_Int(pRet);
 		}
 		case sup::Type::Float_t: {
-			com::TODO("", CODEPOS);
-			break;
+			return toASM_Ret_Float(pRet);
 		}
 		case sup::Type::Void_t: {
-			com::TODO("", CODEPOS);
-			break;
+			return { };
 		}
 		default:com::Throw("", CODEPOS);
 	}
@@ -390,21 +340,41 @@ std::string FuncInfo::toASM_Ret_Int(ircode::InstrRet * pRet) {
 			genASMGetVRegRVal(res, pVRegRRet, backend::RId::r0);
 			break;
 		}
-		case ircode::AddrType::ParaVar: {
-			com::TODO("", CODEPOS);
-			break;
-		}
 		case ircode::AddrType::StaticValue: {
 			auto * pRetSV = dynamic_cast<ircode::AddrStaticValue *>(pRetAddr);
 			int value = dynamic_cast<const sup::IntStaticValue &>(
 				pRetSV->getStaticValue()
 			).value;
-			genASMLoadNumber(res, value, backend::RId::r0);
+			genASMLoadInt(res, value, backend::RId::r0);
 			break;
 		}
 		default: { com::Throw("", CODEPOS); }
 	}
 	return res;
+}
+
+std::string FuncInfo::toASM_Ret_Float(ircode::InstrRet * pRet) {
+	auto res = std::string();
+	auto * pRetAddr = pRet->retAddr;
+	switch (pRetAddr->addrType) {
+		case ircode::AddrType::Var: {
+			auto * pRetVarAddr = dynamic_cast<ircode::AddrVariable *>(pRetAddr);
+			auto * pVRegSRet = convertFloatVariable(pRetVarAddr);
+			genASMGetVRegSVal(res, pVRegSRet, backend::SId::s0, backend::RId::lhs);
+			break;
+		}
+		case ircode::AddrType::StaticValue: {
+			auto * pRetSV = dynamic_cast<ircode::AddrStaticValue *>(pRetAddr);
+			auto value = dynamic_cast<const sup::FloatStaticValue &>(
+				pRetSV->getStaticValue()
+			).value;
+			genASMLoadFloat(res, value, backend::SId::s0, backend::RId::lhs);
+			break;
+		}
+		default: { com::Throw("", CODEPOS); }
+	}
+	return res;
+
 }
 
 int FuncInfo::run(ircode::IRInstr * pInstr) {
@@ -440,12 +410,15 @@ int FuncInfo::run(ircode::IRInstr * pInstr) {
 		case ircode::InstrType::Mul:
 		case ircode::InstrType::SDiv:
 		case ircode::InstrType::SRem: {
-			retVal = run_Binary_Op_Int(
-				dynamic_cast<ircode::InstrBinaryOp *>(pInstr));
+			retVal = run_Binary_Op_Int(dynamic_cast<ircode::InstrBinaryOp *>(pInstr));
 			break;
 		}
 		case ircode::InstrType::ICmp: {
 			retVal = run(dynamic_cast<ircode::InstrICmp *>(pInstr));
+			break;
+		}
+		case ircode::InstrType::FCmp: {
+			retVal = run(dynamic_cast<ircode::InstrFCmp *>(pInstr));
 			break;
 		}
 		case ircode::InstrType::Call: {
@@ -454,6 +427,22 @@ int FuncInfo::run(ircode::IRInstr * pInstr) {
 		}
 		case ircode::InstrType::Getelementptr: {
 			retVal = run(dynamic_cast<ircode::InstrGetelementptr *>(pInstr));
+			break;
+		}
+		case ircode::InstrType::ZExt: {
+			retVal = run(dynamic_cast<ircode::InstrZExt *>(pInstr));
+			break;
+		}
+		case ircode::InstrType::FAdd:
+		case ircode::InstrType::FSub:
+		case ircode::InstrType::FDiv:
+		case ircode::InstrType::FMul: {
+			retVal = run_Binary_Op_Float(dynamic_cast<ircode::InstrBinaryOp *>(pInstr));
+			break;
+		}
+		case ircode::InstrType::Fptosi:
+		case ircode::InstrType::Sitofp: {
+			retVal = run(dynamic_cast<ircode::InstrConversionOp *>(pInstr));
 			break;
 		}
 		default: {
@@ -503,12 +492,35 @@ std::string FuncInfo::toASM(ircode::IRInstr * pInstr) {
 			res += toASM(dynamic_cast<ircode::InstrICmp *>(pInstr));
 			break;
 		}
+		case ircode::InstrType::FCmp: {
+			res += toASM(dynamic_cast<ircode::InstrFCmp *>(pInstr));
+			break;
+		}
 		case ircode::InstrType::Call: {
 			res += toASM(dynamic_cast<ircode::InstrCall *>(pInstr));
 			break;
 		}
 		case ircode::InstrType::Getelementptr: {
 			res += toASM(dynamic_cast<ircode::InstrGetelementptr *>(pInstr));
+			break;
+		}
+		case ircode::InstrType::ZExt: {
+			res += toASM(dynamic_cast<ircode::InstrZExt *>(pInstr));
+			break;
+		}
+		case ircode::InstrType::FAdd:
+		case ircode::InstrType::FSub:
+		case ircode::InstrType::FDiv:
+		case ircode::InstrType::FMul: {
+			res += toASM_Binary_Op_Float(dynamic_cast<ircode::InstrBinaryOp *>(pInstr));
+			break;
+		}
+		case ircode::InstrType::Sitofp: {
+			res += toASM(dynamic_cast<ircode::InstrSitofp *>(pInstr));
+			break;
+		}
+		case ircode::InstrType::Fptosi: {
+			res += toASM(dynamic_cast<ircode::InstrFptosi *>(pInstr));
 			break;
 		}
 		default: {
@@ -529,136 +541,15 @@ std::string FuncInfo::toASM(ircode::InstrLabel * pInstrLabel) {
 	return res;
 }
 
-int FuncInfo::run_Store_Int(ircode::InstrStore * pInstrStore) {
-	auto * pFrom = pInstrStore->from;
-	if (pFrom->addrType == ircode::AddrType::Var) {
-		auto * pVarFrom = dynamic_cast<ircode::AddrVariable *>(pFrom);
-		auto * pVRegR = convertIntVariable(pVarFrom);
-		defineUseTimelineVRegR[pVRegR].emplace_back(tim);
-	} else if (pFrom->addrType == ircode::AddrType::ParaVar) {
-		//  do nothing
-	} else if (pFrom->addrType == ircode::AddrType::StaticValue) {
-		// do nothing
-	} else {
-		com::Throw("", CODEPOS);
-	}
-	auto * pTo = pInstrStore->to;
-	if (pTo->addrType == ircode::AddrType::Var) {
-		auto * pVarTo = dynamic_cast<ircode::AddrVariable *>(pTo);
-		com::Assert(pVarTo->getType().type == sup::Type::Pointer_t, "", CODEPOS);
-		auto * pVRegR = convertIntVariable(pVarTo);
-		defineUseTimelineVRegR[pVRegR].emplace_back(tim);
-	} else if (pTo->addrType == ircode::AddrType::LocalVar) {
-		auto * pLVarTo = dynamic_cast<ircode::AddrLocalVariable *>(pTo);
-		convertLocalVar(pLVarTo);
-	} else if (pTo->addrType == ircode::AddrType::GlobalVar) {
-		auto * pGVarTo = dynamic_cast<ircode::AddrGlobalVariable *>(pTo);
-		convertGlobalVar(pGVarTo);
-	} else { com::Throw("", CODEPOS); }
-	return 0;
-}
-
-std::string FuncInfo::toASM(ircode::InstrStore * pInstrStore) {
-	switch (pInstrStore->from->getType().type) {
-		case sup::Type::Pointer_t:
-		case sup::Type::Int_t: {
-			return toASM_Store_Int(pInstrStore);
-		}
-		case sup::Type::Float_t: {
-			return toASM_Store_Float(pInstrStore);
-		}
-		default:com::Throw("", CODEPOS);
-	}
-}
-
-std::string FuncInfo::toASM_Store_Int(ircode::InstrStore * pInstrStore) {
-	auto res = std::string();
-	auto storeTo = std::string();
-	auto storeFrom = std::string();
-	auto * pTo = pInstrStore->to;
-	if (pTo->addrType == ircode::AddrType::Var) {
-		auto * pVarTo = dynamic_cast<ircode::AddrVariable *>(pTo);
-		com::Assert(pVarTo->getType().type == sup::Type::Pointer_t, "", CODEPOS);
-		auto * pVRegR = convertIntVariable(pVarTo);
-		storeTo = "[" +
-			backend::to_asm(genASMGetVRegRVal(res, pVRegR, backend::RId::rhs)) +
-			", #0]";
-	} else if (pTo->addrType == ircode::AddrType::LocalVar) {
-		auto * pLVarTo = dynamic_cast<ircode::AddrLocalVariable *>(pTo);
-		com::Assert(
-			pLVarTo->getType().type == sup::Type::Pointer_t, "", CODEPOS
-		);
-		auto * pStkPtr = convertLocalVar(pLVarTo);
-		int offset = pStkPtr->offset;
-		com::Assert(offset != INT_MIN, "", CODEPOS);
-		if (backend::Imm<backend::ImmType::ImmOffset>::fitThis(offset)) {
-			storeTo = "[sp, " + backend::to_asm(offset) + "]";
-		} else if (backend::Imm<backend::ImmType::Imm8m>::fitThis(offset)) {
-			res += backend::toASM(
-				"add", backend::RId::rhs, backend::RId::sp, offset
-			);
-			storeTo = "[" + to_asm(backend::RId::rhs) + ", #0]";
-		} else {
-			storeTo = "[" +
-				to_asm(genASMLoadNumber(res, offset, backend::RId::rhs)) + ", #0]";
-		}
-	} else if (pTo->addrType == ircode::AddrType::GlobalVar) {
-		auto * pGVarAddrTo = dynamic_cast<ircode::AddrGlobalVariable *>(pTo);
-		auto storeRId = genASMLoadLabel(
-			res, convertGlobalVar(pGVarAddrTo), backend::RId::rhs
-		);
-		storeTo = "[" + backend::to_asm(storeRId) + ", " + backend::to_asm(0) + "]";
-	} else { com::Throw("", CODEPOS); }
-
-	auto * pFrom = pInstrStore->from;
-	if (pFrom->addrType == ircode::AddrType::Var) {
-		auto * pVarFrom = dynamic_cast<ircode::AddrVariable *>(pFrom);
-		auto * pVRegR = convertIntVariable(pVarFrom);
-		auto rIdVal = genASMGetVRegRVal(res, pVRegR, backend::RId::lhs);
-		storeFrom = backend::to_asm(rIdVal);
-	} else if (pFrom->addrType == ircode::AddrType::ParaVar) {
-		auto * pVarFrom = dynamic_cast<ircode::AddrPara *>(pFrom);
-		auto * pVRegR = convertThisIntArg(pVarFrom);
-		auto rIdVal = genASMGetVRegRVal(res, pVRegR, backend::RId::lhs);
-		storeFrom = backend::to_asm(rIdVal);
-	} else if (pFrom->addrType == ircode::AddrType::StaticValue) {
-		auto * pSVAddr = dynamic_cast<ircode::AddrStaticValue *>(pFrom);
-		auto & pSV = dynamic_cast<const sup::IntStaticValue &>(
-			pSVAddr->getStaticValue()
-		);
-		storeFrom = backend::to_asm(
-			genASMLoadNumber(res, pSV.value, backend::RId::lhs));
-	} else {
-		com::Throw("", CODEPOS);
-	}
-	res += backend::toASM("str", storeFrom, storeTo);
-	return res;
-}
-
-int FuncInfo::run(ircode::InstrStore * pInstrStore) {
-	switch (pInstrStore->from->getType().type) {
-		case sup::Type::Pointer_t:
-		case sup::Type::Int_t: {
-			return run_Store_Int(pInstrStore);
-		}
-		case sup::Type::Float_t: {
-			return run_Store_Float(pInstrStore);
-		}
-		default:com::Throw("", CODEPOS);
-	}
-}
-
-int FuncInfo::run_Store_Float(ircode::InstrStore * pInstrStore) {
-	com::TODO("", CODEPOS);
-}
-
-std::string FuncInfo::toASM_Store_Float(ircode::InstrStore * pInstrStore) {
-	com::TODO("", CODEPOS);
-}
-
 int FuncInfo::run(ircode::InstrICmp * pInstrICmp) {
 	markOperand(pInstrICmp->leftOp);
 	markOperand(pInstrICmp->rightOp);
+	return 0;
+}
+
+int FuncInfo::run(ircode::InstrFCmp * pInstrFCmp) {
+	markOperand(pInstrFCmp->leftOp);
+	markOperand(pInstrFCmp->rightOp);
 	return 0;
 }
 
@@ -681,7 +572,7 @@ std::string FuncInfo::toASM(ircode::InstrICmp * pInstrICmp) {
 			auto val = dynamic_cast<const sup::IntStaticValue &>(
 				pSVAddr->getStaticValue()
 			).value;
-			lOp = backend::to_asm(genASMLoadNumber(res, val, backend::RId::lhs));
+			lOp = backend::to_asm(genASMLoadInt(res, val, backend::RId::lhs));
 			break;
 		}
 		default: com::Throw("", CODEPOS);
@@ -706,18 +597,76 @@ std::string FuncInfo::toASM(ircode::InstrICmp * pInstrICmp) {
 			if (backend::Imm<backend::ImmType::Imm8m>::fitThis(val)) {
 				rOp = backend::to_asm(val);
 			} else {
-				rOp = backend::to_asm(genASMLoadNumber(res, val, backend::RId::rhs));
+				rOp = backend::to_asm(genASMLoadInt(res, val, backend::RId::rhs));
 			}
 			break;
 		}
 		default: com::Throw("", CODEPOS);
 	}
 	res += backend::toASM("cmp", lOp, rOp);
+	cmpType = CmpType::I;
 	lastICmp = pInstrICmp->icmp;
 	lastCondVarAddr = pInstrICmp->dest;
 	return res;
 }
 
+std::string FuncInfo::toASM(ircode::InstrFCmp * pInstrFCmp) {
+	auto res = std::string();
+	auto lOp = std::string();
+	auto * pOpndAddrL = pInstrFCmp->leftOp;
+	switch (pOpndAddrL->addrType) {
+		case ircode::AddrType::Var: {
+			auto * pVarAddr = dynamic_cast<ircode::AddrVariable *>(pOpndAddrL);
+			lOp = backend::to_asm(
+				genASMGetVRegSVal(
+					res, convertFloatVariable(pVarAddr), backend::SId::lhs, backend::RId::lhs
+				)
+			);
+			break;
+		}
+		case ircode::AddrType::StaticValue: {
+			auto * pSVAddr = dynamic_cast<ircode::AddrStaticValue *>(pOpndAddrL);
+			auto val = dynamic_cast<const sup::FloatStaticValue &>(
+				pSVAddr->getStaticValue()
+			).value;
+			lOp = backend::to_asm(
+				genASMLoadFloat(res, val, backend::SId::lhs, backend::RId::lhs)
+			);
+			break;
+		}
+		default: com::Throw("", CODEPOS);
+	}
+	auto rOp = std::string();
+	auto * pOpndAddrR = pInstrFCmp->rightOp;
+	switch (pOpndAddrR->addrType) {
+		case ircode::AddrType::Var: {
+			auto * pVarAddr = dynamic_cast<ircode::AddrVariable *>(pOpndAddrR);
+			rOp = backend::to_asm(
+				genASMGetVRegSVal(
+					res, convertFloatVariable(pVarAddr), backend::SId::rhs, backend::RId::rhs
+				)
+			);
+			break;
+		}
+		case ircode::AddrType::StaticValue: {
+			auto * pSVAddr = dynamic_cast<ircode::AddrStaticValue *>(pOpndAddrR);
+			auto val = dynamic_cast<const sup::FloatStaticValue &>(
+				pSVAddr->getStaticValue()
+			).value;
+			rOp = backend::to_asm(
+				genASMLoadFloat(res, val, backend::SId::rhs, backend::RId::rhs)
+			);
+			break;
+		}
+		default: com::Throw("", CODEPOS);
+	}
+	res += backend::toASM("vcmp.f32", lOp, rOp);
+	cmpType = CmpType::F;
+	lastFCmp = pInstrFCmp->fcmp;
+	lastCondVarAddr = pInstrFCmp->dest;
+	return res;
+
+}
 
 int FuncInfo::run(ircode::InstrCall * pInstrCall) {
 	for (auto * pOperandAddr: pInstrCall->paramsPassing) {
@@ -750,7 +699,7 @@ std::string FuncInfo::toASM(ircode::InstrGetelementptr * pInstrGetelementptr) {
 	);
 	auto biasCntOnStk = 0;
 	for (auto * pOperandIdx: pInstrGetelementptr->idxs) {
-		pTypeInfoNow = sup::typeDeduce(*pTypeInfoNow, 1);
+		pTypeInfoNow = sup::typeDeduceForBackend(*pTypeInfoNow, 1);
 		if (pOperandIdx->addrType == ircode::AddrType::StaticValue) {
 			auto * pSVIdx = dynamic_cast<ircode::AddrStaticValue *>(pOperandIdx);
 			auto i = dynamic_cast<const sup::IntStaticValue &>(
@@ -761,7 +710,7 @@ std::string FuncInfo::toASM(ircode::InstrGetelementptr * pInstrGetelementptr) {
 			auto * pVarIdx = dynamic_cast<ircode::AddrVariable *>(pOperandIdx);
 			auto * pVRegRIdx = convertIntVariable(pVarIdx);
 			genASMSaveFromVRegRToRReg(res, pVRegRIdx, backend::RId::lhs);
-			genASMLoadNumber(res, pTypeInfoNow->getSize(), backend::RId::rhs);
+			genASMLoadInt(res, pTypeInfoNow->getSize(), backend::RId::rhs);
 			res += backend::toASM(
 				"mul", backend::RId::lhs, backend::RId::lhs, backend::RId::rhs
 			);
@@ -771,7 +720,7 @@ std::string FuncInfo::toASM(ircode::InstrGetelementptr * pInstrGetelementptr) {
 			biasCntOnStk += 1;
 		} else { com::Throw("", CODEPOS); }
 	}
-	genASMLoadNumber(res, biasInt, backend::RId::lhs);  //  biasInt
+	genASMLoadInt(res, biasInt, backend::RId::lhs);  //  biasInt
 	while (biasCntOnStk > 0) {  //  \sum size[i]*idx[i]
 		genASMDerefStkPtr(res, -biasCntOnStk * 4, backend::RId::rhs);
 		res += backend::toASM(
@@ -813,7 +762,7 @@ std::string FuncInfo::toASM(ircode::InstrGetelementptr * pInstrGetelementptr) {
 					"add", backend::RId::rhs, backend::RId::sp, offset
 				);
 			} else {
-				genASMLoadNumber(res, offset, backend::RId::rhs);
+				genASMLoadInt(res, offset, backend::RId::rhs);
 				res += backend::toASM(
 					"add", backend::RId::rhs, backend::RId::rhs, backend::RId::sp
 				);
@@ -836,5 +785,163 @@ std::string FuncInfo::toASM(ircode::InstrGetelementptr * pInstrGetelementptr) {
 	return res;
 }
 
+int FuncInfo::run(ircode::InstrZExt * pInstrZExt) {
+	markOperand(pInstrZExt->to);
+	return 0;
+}
 
+std::string FuncInfo::toASM(ircode::InstrZExt * pInstrZExt) {
+	//  TODO: can be optimized
+	auto res = std::string();
+	auto * pOpndFrom = pInstrZExt->from;
+	com::Assert(pInstrZExt->from->getType().type == sup::Type::Bool_t, "", CODEPOS);
+	auto extValRId = backend::RId::lhs;
+	switch (pOpndFrom->addrType) {
+		case ircode::AddrType::Var: {
+			auto * pVarAddrFrom = dynamic_cast<ircode::AddrVariable *>(
+				pInstrZExt->from
+			);
+			com::Assert(lastCondVarAddr == pVarAddrFrom, "", CODEPOS);
+			switch (cmpType) {
+				case CmpType::I: {
+					res += backend::toASM("eor", extValRId, extValRId, extValRId);
+					res += backend::toASM("movw" + genASMCondName(lastICmp), extValRId, 1);
+					break;
+				}
+				case CmpType::F: {
+					res += backend::toASM("movw", extValRId, 1);
+					res += backend::toASM(
+						"movw" + genASMCondNameReverse(lastFCmp), extValRId, 0
+					);
+					break;
+				}
+				default:com::Throw("", CODEPOS);
+			}
+			lastCondVarAddr = nullptr;
+			lastICmp = ircode::ICMP::ERR;
+			lastFCmp = ircode::FCMP::ERR;
+			break;
+		}
+		case ircode::AddrType::StaticValue: {
+			auto * pSVAddrFrom = dynamic_cast<ircode::AddrStaticValue * >(
+				pInstrZExt->from
+			);
+			auto val = dynamic_cast<const sup::BoolStaticValue &>(
+				pSVAddrFrom->getStaticValue()
+			).value;
+			if (val) {
+				res += backend::toASM("movw", extValRId, 1);
+			} else {
+				res += backend::toASM("eor", extValRId, extValRId, extValRId);
+			}
+			break;
+		}
+		default:com::Throw("", CODEPOS);
+	}
+	auto * pVarTo = pInstrZExt->to;
+	auto * pVRegTo = convertIntVariable(pVarTo);
+	genASMSaveFromRRegToVRegR(res, pVRegTo, extValRId, backend::RId::rhs);
+	return res;
+}
+
+int FuncInfo::run(ircode::InstrConversionOp * pInstrConversionOp) {
+	markOperand(pInstrConversionOp->from);
+	markOperand(pInstrConversionOp->to);
+	return 0;
+}
+
+std::string FuncInfo::toASM(ircode::InstrSitofp * pInstrSitofp) {
+	auto res = std::string();
+	auto valIntFrom = backend::RId::err;
+	auto * pOperandFrom = pInstrSitofp->from;
+	auto * pVarTo = pInstrSitofp->to;
+	switch (pOperandFrom->addrType) {
+		case ircode::AddrType::Var: {
+			auto * pVarFrom = dynamic_cast<ircode::AddrVariable *>(pOperandFrom);
+			auto * pVRegRFrom = convertIntVariable(pVarFrom);
+			valIntFrom = genASMGetVRegRVal(res, pVRegRFrom, backend::RId::lhs);
+			break;
+		}
+		case ircode::AddrType::StaticValue: {
+			auto * pSVFrom = dynamic_cast<ircode::AddrStaticValue *>(pOperandFrom);
+			auto staticVal = dynamic_cast<const sup::IntStaticValue &>(
+				pSVFrom->getStaticValue()
+			).value;
+			valIntFrom = genASMLoadInt(res, staticVal, backend::RId::lhs);
+			break;
+		}
+		default:com::Throw("", CODEPOS);
+	}
+	com::Assert(pVarTo->addrType == ircode::AddrType::Var, "", CODEPOS);
+	auto * pVRegSTo = convertFloatVariable(pVarTo);
+	if (backend::isGPR(pVRegSTo->sid)) {
+		res += backend::toASM("vmov", pVRegSTo->sid, valIntFrom);
+		res += backend::toASM("vcvt.f32.s32", pVRegSTo->sid, pVRegSTo->sid);
+	} else if (pVRegSTo->sid == backend::SId::stk) {
+		res += backend::toASM("vmov", backend::SId::lhs, valIntFrom);
+		res += backend::toASM("vcvt.f32.s32", backend::SId::lhs, backend::SId::lhs);
+		auto offset = pVRegSTo->offset;
+		auto strTo = std::string();
+		if (backend::Imm<backend::ImmType::Immed>::fitThis(offset)) {
+			strTo = "[sp, " + backend::to_asm(offset) + "]";
+		} else if (backend::Imm<backend::ImmType::ImmOffset>::fitThis(offset)) {
+			res += backend::toASM("add", backend::RId::rhs, backend::RId::rhs, offset);
+			strTo = "[" + backend::to_asm(backend::RId::rhs) + ", " + backend::to_asm(0) + "]";
+		} else {
+			genASMLoadInt(res, offset, backend::RId::rhs);
+			res += backend::toASM(
+				"add", backend::RId::rhs, backend::RId::sp, backend::RId::rhs
+			);
+			strTo = "[" + backend::to_asm(backend::RId::rhs) + ", " + backend::to_asm(0) + "]";
+		}
+		res += backend::toASM("vstr", backend::SId::lhs, strTo);
+	} else { com::Throw("", CODEPOS); }
+	return res;
+}
+
+std::string FuncInfo::toASM(ircode::InstrFptosi * pInstrFptosi) {
+	auto res = std::string();
+	auto * pOperandFrom = pInstrFptosi->from;
+	auto * pVarTo = pInstrFptosi->to;
+	switch (pOperandFrom->addrType) {
+		case ircode::AddrType::Var: {
+			auto * pVarFrom = dynamic_cast<ircode::AddrVariable *>(pOperandFrom);
+			auto * pVRegSFrom = convertFloatVariable(pVarFrom);
+			genASMSaveFromVRegSToSReg(res, pVRegSFrom, backend::SId::lhs, backend::RId::lhs);
+			res += backend::toASM("vcvt.s32.f32", backend::SId::lhs, backend::SId::lhs);
+			break;
+		}
+		case ircode::AddrType::StaticValue: {
+			auto * pSVFrom = dynamic_cast<ircode::AddrStaticValue *>(pOperandFrom);
+			auto staticVal = dynamic_cast<const sup::FloatStaticValue &>(
+				pSVFrom->getStaticValue()
+			).value;
+			genASMLoadFloat(res, staticVal, backend::SId::lhs, backend::RId::lhs);
+			break;
+		}
+		default:com::Throw("", CODEPOS);
+	}
+	com::Assert(pVarTo->addrType == ircode::AddrType::Var, "", CODEPOS);
+	auto * pVRegRTo = convertIntVariable(pVarTo);
+	if (backend::isGPR(pVRegRTo->rid)) {
+		res += backend::toASM("vmov", pVRegRTo->rid, backend::SId::lhs);
+	} else if (pVRegRTo->rid == backend::RId::stk) {
+		auto offset = pVRegRTo->offset;
+		auto strTo = std::string();
+		if (backend::Imm<backend::ImmType::Immed>::fitThis(offset)) {
+			strTo = "[sp, " + backend::to_asm(offset) + "]";
+		} else if (backend::Imm<backend::ImmType::ImmOffset>::fitThis(offset)) {
+			res += backend::toASM("add", backend::RId::rhs, backend::RId::rhs, offset);
+			strTo = "[" + backend::to_asm(backend::RId::rhs) + ", " + backend::to_asm(0) + "]";
+		} else {
+			genASMLoadInt(res, offset, backend::RId::rhs);
+			res += backend::toASM(
+				"add", backend::RId::rhs, backend::RId::sp, backend::RId::rhs
+			);
+			strTo = "[" + backend::to_asm(backend::RId::rhs) + ", " + backend::to_asm(0) + "]";
+		}
+		res += backend::toASM("vstr", backend::SId::lhs, strTo);
+	} else { com::Throw("", CODEPOS); }
+	return res;
+}
 }

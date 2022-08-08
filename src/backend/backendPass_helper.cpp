@@ -6,11 +6,23 @@ namespace pass {
 
 
 backend::RId
-FuncInfo::genASMLoadNumber(std::string & res, int32_t val, backend::RId to) {
+FuncInfo::genASMLoadInt(std::string & res, int32_t val, backend::RId to) {
 	if (val < 0) { res += "@\t " + to_string(val) + " \n"; }
 	auto [highVal, lowVal] = backend::splitNumber(val);
 	res += backend::toASM("movw", to, lowVal);
 	if (highVal) { res += backend::toASM("movt", to, highVal); }
+	return to;
+}
+
+backend::SId
+FuncInfo::genASMLoadFloat(
+	std::string & res, float val, backend::SId to, backend::RId scratchRId
+) {
+	res += "@\t" + to_string(val) + "\n";
+	auto [highVal, lowVal] = backend::splitNumber(val);
+	res += backend::toASM("movw", scratchRId, lowVal);
+	if (highVal) { res += backend::toASM("movt", scratchRId, highVal); }
+	res += backend::toASM("vmov", to, scratchRId);
 	return to;
 }
 
@@ -36,15 +48,37 @@ void FuncInfo::genASMDerefStkPtr(
 		res += backend::toASM(
 			"add", rIdDest, backend::RId::sp, offset
 		);
-		loadFrom = "[" + to_asm(rIdDest) + ", #0]";
+		loadFrom = "[" + to_asm(rIdDest) + ", " + backend::to_asm(0) + "]";
 	} else {
-		genASMLoadNumber(res, offset, rIdDest);
+		genASMLoadInt(res, offset, rIdDest);
 		res += backend::toASM(
 			"add", rIdDest, backend::RId::sp, rIdDest
 		);
-		loadFrom = "[" + to_asm(rIdDest) + ", #0]";
+		loadFrom = "[" + to_asm(rIdDest) + ", " + backend::to_asm(0) + "]";
 	}
 	res += backend::toASM("ldr", rIdDest, loadFrom);
+}
+
+void FuncInfo::genASMDerefStkPtrToSReg(
+	std::string & res, int offset, backend::SId sIdDest, backend::RId scratchRId
+) {
+	com::Assert(offset != INT_MIN, "", CODEPOS);
+	auto loadFrom = std::string();
+	if (backend::Imm<backend::ImmType::Immed>::fitThis(offset)) {
+		loadFrom = "[sp, " + backend::to_asm(offset) + "]";
+	} else if (backend::Imm<backend::ImmType::Imm8m>::fitThis(offset)) {
+		res += backend::toASM(
+			"add", scratchRId, backend::RId::sp, offset
+		);
+		loadFrom = "[" + to_asm(scratchRId) + ", " + backend::to_asm(0) + "]";
+	} else {
+		genASMLoadInt(res, offset, scratchRId);
+		res += backend::toASM(
+			"add", scratchRId, backend::RId::sp, scratchRId
+		);
+		loadFrom = "[" + to_asm(scratchRId) + ", " + backend::to_asm(0) + "]";
+	}
+	res += backend::toASM("vldr", sIdDest, loadFrom);
 }
 
 std::string
@@ -59,13 +93,36 @@ FuncInfo::genASMPtrOffsetToOperand2(
 		res += backend::toASM(
 			"add", rIdRest, backend::RId::sp, offset
 		);
-		ptrStk = "[" + backend::to_asm(rIdRest) + ", #0]";
+		ptrStk = "[" + backend::to_asm(rIdRest) + ", " + backend::to_asm(0) + "]";
 	} else {
-		genASMLoadNumber(res, offset, rIdRest);
+		genASMLoadInt(res, offset, rIdRest);
 		res += backend::toASM(
 			"add", rIdRest, rIdRest, backend::RId::sp
 		);
-		ptrStk = "[" + backend::to_asm(rIdRest) + ", #0]";
+		ptrStk = "[" + backend::to_asm(rIdRest) + ", " + backend::to_asm(0) + "]";
+	}
+	return ptrStk;
+}
+
+std::string
+FuncInfo::genASMPtrOffsetToFOperand2(
+	std::string & res, int offset, backend::RId scratchRId
+) {
+	com::Assert(offset != INT_MIN, "", CODEPOS);
+	auto ptrStk = std::string();
+	if (backend::Imm<backend::ImmType::Immed>::fitThis(offset)) {
+		ptrStk = "[sp, " + backend::to_asm(offset) + "]";
+	} else if (backend::Imm<backend::ImmType::Imm8m>::fitThis(offset)) {
+		res += backend::toASM(
+			"add", scratchRId, backend::RId::sp, offset
+		);
+		ptrStk = "[" + backend::to_asm(scratchRId) + ", " + backend::to_asm(0) + "]";
+	} else {
+		genASMLoadInt(res, offset, scratchRId);
+		res += backend::toASM(
+			"add", scratchRId, scratchRId, backend::RId::sp
+		);
+		ptrStk = "[" + backend::to_asm(scratchRId) + ", " + backend::to_asm(0) + "]";
 	}
 	return ptrStk;
 }
@@ -82,8 +139,21 @@ backend::RId FuncInfo::genASMGetVRegRVal(
 	} else { com::Throw("", CODEPOS); }
 }
 
+backend::SId FuncInfo::genASMGetVRegSVal(
+	std::string & res, backend::VRegS * pVRegS, backend::SId sIdIfInStk,
+	backend::RId scratchRId
+) {
+	if (pVRegS->sid == backend::SId::stk) {
+		int offset = pVRegS->offset;
+		genASMDerefStkPtrToSReg(res, offset, sIdIfInStk, scratchRId);
+		return sIdIfInStk;
+	} else if (backend::isGPR(pVRegS->sid)) {
+		return pVRegS->sid;
+	} else { com::Throw("", CODEPOS); }
+}
 
-std::string FuncInfo::genASMConditionalBranch(ircode::ICMP icmp, bool reverse) {
+
+std::string FuncInfo::genASMCondName(ircode::ICMP icmp, bool reverse) {
 	if (reverse) { icmp = ircode::getReverse(icmp); }
 	switch (icmp) {
 		case ircode::ICMP::NE: { return "ne"; }
@@ -96,6 +166,17 @@ std::string FuncInfo::genASMConditionalBranch(ircode::ICMP icmp, bool reverse) {
 	}
 }
 
+std::string FuncInfo::genASMCondNameReverse(ircode::FCMP fcmp) {
+	switch (fcmp) {
+		case ircode::FCMP::UNE: { return "eq"; }
+		case ircode::FCMP::OEQ: { return "ne"; }
+		case ircode::FCMP::OLT: { return "pl"; }
+		case ircode::FCMP::OLE: { return "hi"; }
+		case ircode::FCMP::OGE: { return "lt"; }
+		case ircode::FCMP::OGT: { return "le"; }
+		default: { com::Throw("", CODEPOS); }
+	}
+}
 
 void
 FuncInfo::genASMPushRegs(std::string & res, const std::set<backend::RId> & list) {
@@ -154,10 +235,26 @@ FuncInfo::genASMSaveFromRRegToOffset(
 		auto to = "[sp, " + backend::to_asm(offset) + "]";
 		res += backend::toASM("str", ridFrom, to);
 	} else {
-		genASMLoadNumber(res, offset, scratchReg);
+		genASMLoadInt(res, offset, scratchReg);
 		res += backend::toASM("add", scratchReg, backend::RId::sp, scratchReg);
-		auto to = "[" + backend::to_asm(scratchReg) + ", #0]";
+		auto to = "[" + backend::to_asm(scratchReg) + ", " + backend::to_asm(0) + "]";
 		res += backend::toASM("str", ridFrom, to);
+	}
+}
+
+void
+FuncInfo::genASMSaveFromSRegToOffset(
+	std::string & res, backend::SId sidFrom, int offset, backend::RId scratchReg
+) {
+	com::Assert(offset != INT_MIN, "", CODEPOS);
+	if (backend::Imm<backend::ImmType::Immed>::fitThis(offset)) {
+		auto to = "[sp, " + backend::to_asm(offset) + "]";
+		res += backend::toASM("vstr", sidFrom, to);
+	} else {
+		genASMLoadInt(res, offset, scratchReg);
+		res += backend::toASM("add", scratchReg, backend::RId::sp, scratchReg);
+		auto to = "[" + backend::to_asm(scratchReg) + ", " + backend::to_asm(0) + "]";
+		res += backend::toASM("vstr", sidFrom, to);
 	}
 }
 
@@ -172,6 +269,18 @@ void FuncInfo::genASMSaveFromRRegToVRegR(
 	} else { com::Throw("", CODEPOS); }
 }
 
+void FuncInfo::genASMSaveFromSRegToVRegS(
+	std::string & res, backend::VRegS * pVRegSTo, backend::SId sIdFrom,
+	backend::RId scratchRId
+) {
+	if (pVRegSTo->sid == backend::SId::stk) {
+		genASMSaveFromSRegToOffset(res, sIdFrom, pVRegSTo->offset, scratchRId);
+	} else if (backend::isGPR(pVRegSTo->sid)) {
+		res += backend::toASM("mov", pVRegSTo->sid, sIdFrom);
+	} else { com::Throw("", CODEPOS); }
+
+}
+
 void FuncInfo::genASMSaveFromVRegRToRReg(
 	std::string & res, backend::VRegR * pVRegRFrom, backend::RId rIdTo
 ) {
@@ -181,15 +290,25 @@ void FuncInfo::genASMSaveFromVRegRToRReg(
 	}
 }
 
+void FuncInfo::genASMSaveFromVRegSToSReg(
+	std::string & res, backend::VRegS * pVRegSFrom, backend::SId sIdTo,
+	backend::RId scratchRId
+) {
+	auto xSId = genASMGetVRegSVal(res, pVRegSFrom, sIdTo, scratchRId);
+	if (xSId != sIdTo) {
+		res += backend::toASM("mov", sIdTo, xSId);
+	}
+}
+
 const char * ToASM::asmHeader = ".arch armv7ve\n.arm\n";
 
-const char * ToASM::gVarHeader = ".section .bss\n.align\n";
+const char * ToASM::gVarHeader = ".section .data\n";
 
 const char * ToASM::functionsHeader = ".global main \n.section .text\n";
 
 
 std::string ToASM::declGVar(ircode::AddrGlobalVariable * pGVarAddr) {
-	auto res = std::string(gVarHeader);
+	auto res = std::string(".align\n");
 	auto gType = pGVarAddr->getStaticValue().getType().type;
 	auto * pLabel = gVarToLabel[pGVarAddr];
 	switch (gType) {
@@ -198,11 +317,15 @@ std::string ToASM::declGVar(ircode::AddrGlobalVariable * pGVarAddr) {
 				pGVarAddr->getStaticValue()
 			).value;
 			res += pLabel->labelStr + ":\n";
-			res += "\t.long\t" + to_string(value);
+			res += "\t.long\t" + hexFormOf(value);
 			break;
 		}
 		case sup::Type::Float_t: {
-			com::TODO("", CODEPOS);
+			auto value = dynamic_cast<const sup::FloatStaticValue &>(
+				pGVarAddr->getStaticValue()
+			).value;
+			res += pLabel->labelStr + ":\n";
+			res += "\t.long\t" + hexFormOf(value);
 			break;
 		}
 		case sup::Type::IntArray_t: {
@@ -215,26 +338,55 @@ std::string ToASM::declGVar(ircode::AddrGlobalVariable * pGVarAddr) {
 				auto value = intStaticValue.value;
 				if (value) {
 					if (space) {
-						res += "\t.space\t" + to_string(space) + "\n";
+						res += "\t.space\t" + hexFormOf(space) + "\n";
 						space = 0;
 					}
-					res += "\t.long\t" + to_string(value) + "\n";
+					res += "\t.long\t" + hexFormOf(value) + "\n";
 				} else {
 					space += 4;
 				}
 			}
 			if (space) {
-				res += "\t.space\t" + to_string(space) + "\n";
+				res += "\t.space\t" + hexFormOf(space) + "\n";
 			}
 			break;
 		}
 		case sup::Type::FloatArray_t: {
-			com::TODO("", CODEPOS);
+			auto vecValue = dynamic_cast<const sup::FloatArrayStaticValue &>(
+				pGVarAddr->getStaticValue()
+			).value;
+			res += pLabel->labelStr + ":\n";
+			auto space = 0;
+			for (auto floatStaticValue: vecValue) {
+				auto value = floatStaticValue.value;
+				if (value != 0) {
+					if (space) {
+						res += "\t.space\t" + hexFormOf(space) + "\n";
+						space = 0;
+					}
+					res += "\t.long\t" + hexFormOf(value) + "\n";
+				} else {
+					space += 4;
+				}
+			}
+			if (space) {
+				res += "\t.space\t" + hexFormOf(space) + "\n";
+			}
 			break;
 		}
 		default:com::Throw("", CODEPOS);
 	}
 	return res;
+}
+
+std::string hexFormOf(int32_t val) {
+	static char buf[50];
+	sprintf(buf, "0x%x", val);
+	return buf;
+}
+
+std::string hexFormOf(float val) {
+	return hexFormOf(*reinterpret_cast<int32_t *>(&val));
 }
 
 }

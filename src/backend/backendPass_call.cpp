@@ -4,7 +4,6 @@
 namespace pass {
 
 std::string FuncInfo::toASM(ircode::InstrCall * pInstrCall) {
-	//  TODO: Check for correctness
 	auto res = std::string();
 	auto * pFuncInfoToCall = m_AddrFunc_FuncInfo[pInstrCall->func];
 	auto rId2StkOffset = std::map<backend::RId, int>();
@@ -12,13 +11,13 @@ std::string FuncInfo::toASM(ircode::InstrCall * pInstrCall) {
 	//  back up caller saved registers; create mapping of caller-save rid and stk offset
 	auto backUpStkSize = 0;
 	for (auto rId: pFuncInfoToCall->callerSaveRReg) {
-		rId2StkOffset[rId] = -(backUpStkSize + 1) * 4;
-		genASMSaveFromRRegToOffset(res, rId, -(backUpStkSize + 1) * 4, rId);
+		rId2StkOffset[rId] = -backUpStkSize - 4;
+		genASMSaveFromRRegToOffset(res, rId, -backupStkSize - 4, backend::RId::lhs);
 		backUpStkSize += 4;
 	}
 	for (auto sId: pFuncInfoToCall->callerSaveSReg) {
-		sId2StkOffset[sId] = -(backUpStkSize + 1) * 4;
-		com::TODO("", CODEPOS);
+		sId2StkOffset[sId] = -backUpStkSize * 4;
+		genASMSaveFromSRegToOffset(res, sId, -backUpStkSize - 4, backend::RId::lhs);
 		backUpStkSize += 4;
 	}
 	if (backUpStkSize % 8 != 0) { backUpStkSize += 4; }
@@ -26,32 +25,143 @@ std::string FuncInfo::toASM(ircode::InstrCall * pInstrCall) {
 	auto iArg = 0;
 	auto cntArg = (int) pFuncInfoToCall->pFuncDef->pAddrFun->vecPtrAddrPara.size();
 	for (; iArg < cntArg; ++iArg) {
-		auto * pPara = pFuncInfoToCall->pFuncDef->pAddrFun->vecPtrAddrPara[iArg];
+		auto * pParaAddr = pFuncInfoToCall->pFuncDef->pAddrFun->vecPtrAddrPara[iArg];
+		auto * pOpndPara = pFuncInfoToCall->argsInfoOnCallingThis[pParaAddr];
 		auto * pOperandArg = pInstrCall->paramsPassing[iArg];
-		auto * pOpndPara = pFuncInfoToCall->argsOnCallingThis[pPara];
 		switch (pOpndPara->getOpndType()) {
 			case backend::OpndType::VRegS: {
-				com::Throw("", CODEPOS);
+				auto * pVRegSPara = dynamic_cast<backend::VRegS *>(pOpndPara);
+				if (backend::isGPR(pVRegSPara->sid)) {
+					//  passing this parameter by sreg
+					switch (pOperandArg->addrType) {
+						case ircode::AddrType::Var: {
+							auto * pVarArg
+								= dynamic_cast<ircode::AddrVariable *>(pOperandArg);
+							auto * pVRegArg = convertFloatVariable(pVarArg);
+							if (sId2StkOffset.find(pVRegArg->sid) != sId2StkOffset.end()) {
+								//  the value of this arg is saving on stk, not sreg
+								//  since sreg may have been covered.
+								genASMDerefStkPtrToSReg(
+									res, sId2StkOffset[pVRegArg->sid], pVRegSPara->sid,
+									backend::RId::lhs
+								);
+							} else if (backend::isGPR(pVRegArg->sid)) {
+								//  the value of this arg is saving on sreg which does not
+								//  pass parameter.
+								res += backend::toASM("mov", pVRegSPara->sid, pVRegArg->sid);
+							} else if (pVRegArg->sid == backend::SId::stk) {
+								//  the value of this arg is saving on stk.
+								genASMDerefStkPtrToSReg(
+									res, pVRegArg->offset, pVRegSPara->sid, backend::RId::lhs
+								);
+							} else { com::Throw("", CODEPOS); };
+							break;
+						}
+						case ircode::AddrType::LocalVar: {
+							com::TODO("", CODEPOS);
+							break;
+						}
+						case ircode::AddrType::GlobalVar: {
+							com::TODO("", CODEPOS);
+							break;
+						}
+						case ircode::AddrType::StaticValue: {
+							auto * pSVArg
+								= dynamic_cast<ircode::AddrStaticValue *>(pOperandArg);
+							auto val = dynamic_cast<const sup::FloatStaticValue &>(
+								pSVArg->getStaticValue()
+							).value;
+							genASMLoadFloat(res, val, pVRegSPara->sid, backend::RId::lhs);
+							break;
+						}
+						default:com::Throw("", CODEPOS);
+					}
+				} else if (pVRegSPara->sid == backend::SId::stk) {
+					//  passing this parameter by stack
+					switch (pOperandArg->addrType) {
+						case ircode::AddrType::Var: {
+							auto * pVarArg
+								= dynamic_cast<ircode::AddrVariable *>(pOperandArg);
+							auto * pVRegArg = convertFloatVariable(pVarArg);
+							if (sId2StkOffset.find(pVRegArg->sid) != sId2StkOffset.end()) {
+								//  the value of this arg is saving on stk, not sreg
+								//  since sreg may have been covered.
+								genASMDerefStkPtrToSReg(
+									res, sId2StkOffset[pVRegArg->sid], backend::SId::lhs,
+									backend::RId::lhs
+								);
+								genASMSaveFromSRegToOffset(
+									res, backend::SId::lhs,
+									-backUpStkSize + pVRegSPara->offset, backend::RId::rhs
+								);
+							} else if (backend::isGPR(pVRegArg->sid)) {
+								//  the value of this arg is saving on sreg which does not
+								//  pass parameter.
+								genASMSaveFromSRegToOffset(
+									res, pVRegArg->sid, -backUpStkSize + pVRegSPara->offset,
+									backend::RId::rhs
+								);
+							} else if (pVRegArg->sid == backend::SId::stk) {
+								//  the value of this arg is saving on stk.
+								genASMDerefStkPtrToSReg(
+									res, pVRegArg->offset, backend::SId::lhs, backend::RId::lhs
+								);
+								genASMSaveFromSRegToOffset(
+									res, backend::SId::lhs,
+									-backUpStkSize + pVRegSPara->offset, backend::RId::rhs
+								);
+							} else { com::Throw("", CODEPOS); };
+							break;
+						}
+						case ircode::AddrType::LocalVar: {
+							com::TODO("", CODEPOS);
+							break;
+						}
+						case ircode::AddrType::GlobalVar: {
+							com::TODO("", CODEPOS);
+							break;
+						}
+						case ircode::AddrType::StaticValue: {
+							auto * pSVArg
+								= dynamic_cast<ircode::AddrStaticValue *>(pOperandArg);
+							auto val = dynamic_cast<const sup::FloatStaticValue &>(
+								pSVArg->getStaticValue()
+							).value;
+							genASMLoadFloat(res, val, backend::SId::lhs, backend::RId::lhs);
+							genASMSaveFromSRegToOffset(
+								res, backend::SId::lhs, -backUpStkSize + pVRegSPara->offset,
+								backend::RId::rhs
+							);
+							break;
+						}
+						default:com::Throw("", CODEPOS);
+					}
+				} else { com::Throw("", CODEPOS); }
 				break;
 			}
 			case backend::OpndType::VRegR: {
 				auto * pVRegRPara = dynamic_cast<backend::VRegR *>(pOpndPara);
 				if (backend::isGPR(pVRegRPara->rid)) {
-					auto ridToSave = pVRegRPara->rid;
+					//  passing this parameter by rreg
 					switch (pOperandArg->addrType) {
 						case ircode::AddrType::Var: {
 							auto * pVarArg
 								= dynamic_cast<ircode::AddrVariable *>(pOperandArg);
-							auto valOn = genASMGetVRegRVal(
-								res, convertIntVariable(pVarArg), ridToSave
-							);
-							if (valOn != ridToSave) {
-								res += backend::toASM("mov", ridToSave, valOn);
-							}
-							break;
-						}
-						case ircode::AddrType::ParaVar: {
-							com::TODO("", CODEPOS);
+							auto * pVRegArg = convertIntVariable(pVarArg);
+							if (rId2StkOffset.find(pVRegArg->rid) != rId2StkOffset.end()) {
+								//  the value of this arg is saving on stk, not rreg
+								//  since rreg may have been covered.
+								genASMDerefStkPtr(
+									res, rId2StkOffset[pVRegArg->rid], pVRegRPara->rid
+								);
+							} else if (backend::isGPR(pVRegArg->rid)) {
+								//  the value of this arg is saving on rreg which does not
+								//  pass parameter.
+								res += backend::toASM("mov", pVRegRPara->rid, pVRegArg->rid);
+							} else if (pVRegArg->rid == backend::RId::stk) {
+								//  the value of this arg is saving on stk.
+								genASMDerefStkPtr(res, pVRegArg->offset, pVRegRPara->rid);
+							} else { com::Throw("", CODEPOS); };
 							break;
 						}
 						case ircode::AddrType::LocalVar: {
@@ -68,26 +178,45 @@ std::string FuncInfo::toASM(ircode::InstrCall * pInstrCall) {
 							auto val = dynamic_cast<const sup::IntStaticValue &>(
 								pSVArg->getStaticValue()
 							).value;
-							genASMLoadNumber(res, val, ridToSave);
+							genASMLoadInt(res, val, pVRegRPara->rid);
 							break;
 						}
 						default:com::Throw("", CODEPOS);
 					}
 				} else if (pVRegRPara->rid == backend::RId::stk) {
+					//  passing this parameter by stack
 					switch (pOperandArg->addrType) {
 						case ircode::AddrType::Var: {
 							auto * pVarArg
 								= dynamic_cast<ircode::AddrVariable *>(pOperandArg);
-							auto valOn = genASMGetVRegRVal(
-								res, convertIntVariable(pVarArg), backend::RId::lhs
-							);
-							genASMSaveFromRRegToOffset(
-								res, valOn, pVRegRPara->offset, backend::RId::rhs
-							);
-							break;
-						}
-						case ircode::AddrType::ParaVar: {
-							com::TODO("", CODEPOS);
+							auto * pVRegArg = convertIntVariable(pVarArg);
+							if (rId2StkOffset.find(pVRegArg->rid) != rId2StkOffset.end()) {
+								//  the value of this arg is saving on stk, not rreg
+								//  since rreg may have been covered.
+								genASMDerefStkPtr(
+									res, rId2StkOffset[pVRegArg->rid], backend::RId::lhs
+								);
+								genASMSaveFromRRegToOffset(
+									res, backend::RId::lhs,
+									-backUpStkSize + pVRegRPara->offset, backend::RId::rhs
+								);
+							} else if (backend::isGPR(pVRegArg->rid)) {
+								//  the value of this arg is saving on rreg which does not
+								//  pass parameter.
+								genASMSaveFromRRegToOffset(
+									res, pVRegArg->rid, -backUpStkSize + pVRegRPara->offset,
+									backend::RId::rhs
+								);
+							} else if (pVRegArg->rid == backend::RId::stk) {
+								//  the value of this arg is saving on stk.
+								genASMDerefStkPtr(
+									res, pVRegArg->offset, backend::RId::lhs
+								);
+								genASMSaveFromRRegToOffset(
+									res, backend::RId::lhs,
+									-backUpStkSize + pVRegRPara->offset, backend::RId::rhs
+								);
+							} else { com::Throw("", CODEPOS); };
 							break;
 						}
 						case ircode::AddrType::LocalVar: {
@@ -102,11 +231,11 @@ std::string FuncInfo::toASM(ircode::InstrCall * pInstrCall) {
 							auto * pSVArg
 								= dynamic_cast<ircode::AddrStaticValue *>(pOperandArg);
 							auto val = dynamic_cast<const sup::IntStaticValue &>(
-								pSVArg->getType()
+								pSVArg->getStaticValue()
 							).value;
-							genASMLoadNumber(res, val, backend::RId::lhs);
+							genASMLoadInt(res, val, backend::RId::lhs);
 							genASMSaveFromRRegToOffset(
-								res, backend::RId::lhs, pVRegRPara->offset,
+								res, backend::RId::lhs, -backUpStkSize + pVRegRPara->offset,
 								backend::RId::rhs
 							);
 							break;
@@ -119,34 +248,52 @@ std::string FuncInfo::toASM(ircode::InstrCall * pInstrCall) {
 			default:com::Throw("", CODEPOS);
 		}
 	}
-	//  change sp NOW!
-	if (backUpStkSize) {
-		if (backend::Imm<backend::ImmType::Imm8m>::fitThis(backUpStkSize)) {
+	//  delete arguments field on calling next function
+	if (pFuncInfoToCall->argsStkSizeOnCallingThis + backUpStkSize) {
+		auto stkSizeArgs = pFuncInfoToCall->argsStkSizeOnCallingThis + backUpStkSize;
+		if (backend::Imm<backend::ImmType::Imm8m>::fitThis(stkSizeArgs)) {
 			res += backend::toASM(
-				"sub", backend::RId::sp, backend::RId::sp, backUpStkSize
+				"sub", backend::RId::sp, backend::RId::sp, stkSizeArgs
 			);
 		} else {
-			genASMLoadNumber(res, backUpStkSize, backend::RId::rhs);
+			genASMLoadInt(res, stkSizeArgs, backend::RId::lhs);
 			res += backend::toASM(
-				"sub", backend::RId::sp, backend::RId::sp, backend::RId::rhs
+				"sub", backend::RId::sp, backend::RId::sp, backend::RId::lhs
 			);
 		}
 	}
 	//  call
 	res += backend::toASM("bl", pFuncInfoToCall->pFuncLabel->labelStr);
+	//  restore arguments field on calling next function
+	if (pFuncInfoToCall->argsStkSizeOnCallingThis + backUpStkSize) {
+		auto stkSizeArgs = pFuncInfoToCall->argsStkSizeOnCallingThis + backUpStkSize;
+		if (backend::Imm<backend::ImmType::Imm8m>::fitThis(stkSizeArgs)) {
+			res += backend::toASM(
+				"add", backend::RId::sp, backend::RId::sp, stkSizeArgs
+			);
+		} else {
+			genASMLoadInt(res, stkSizeArgs, backend::RId::lhs);
+			res += backend::toASM(
+				"add", backend::RId::sp, backend::RId::sp, backend::RId::lhs
+			);
+		}
+	}
 	if (pInstrCall->retAddr) {
 		switch (pInstrCall->retAddr->addrType) {
 			case ircode::AddrType::Var: {
 				switch (pInstrCall->retAddr->getType().type) {
 					case sup::Type::Int_t: {
-						auto * pVRegR = convertIntVariable(pInstrCall->retAddr);
+						auto * pVRegRRet = convertIntVariable(pInstrCall->retAddr);
 						genASMSaveFromRRegToVRegR(
-							res, pVRegR, backend::RId::r0, backend::RId::lhs
+							res, pVRegRRet, backend::RId::r0, backend::RId::rhs
 						);
 						break;
 					}
 					case sup::Type::Float_t: {
-						com::TODO("", CODEPOS);
+						auto * pVRegSRet = convertFloatVariable(pInstrCall->retAddr);
+						genASMSaveFromSRegToVRegS(
+							res, pVRegSRet, backend::SId::s0, backend::RId::rhs
+						);
 						break;
 					}
 					default:com::Throw("", CODEPOS);
@@ -162,18 +309,6 @@ std::string FuncInfo::toASM(ircode::InstrCall * pInstrCall) {
 	}
 	for (auto [sId, offset]: sId2StkOffset) {
 		com::TODO("", CODEPOS);
-	}
-	if (backUpStkSize) {
-		if (backend::Imm<backend::ImmType::Imm8m>::fitThis(backUpStkSize)) {
-			res += backend::toASM(
-				"add", backend::RId::sp, backend::RId::sp, backUpStkSize
-			);
-		} else {
-			genASMLoadNumber(res, backUpStkSize, backend::RId::rhs);
-			res += backend::toASM(
-				"add", backend::RId::sp, backend::RId::sp, backend::RId::rhs
-			);
-		}
 	}
 	return res;
 }

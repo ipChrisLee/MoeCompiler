@@ -427,6 +427,7 @@ AddrLocalVariable::AddrLocalVariable(
 	uPtrStaticValue(
 		com::dynamic_cast_uPtr<StaticValue>(staticValue.cloneToUniquePtr())
 	) {
+	addrType=AddrType::LocalVar;
 }
 
 const sup::StaticValue & AddrLocalVariable::getStaticValue() const {
