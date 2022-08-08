@@ -77,7 +77,7 @@ bool IdxView::isAll0AfterNDim(int n) {
 
 std::list<ircode::IRInstr *> fromArrayItemsToInstrs(
 	ircode::IRModule & ir,
-	std::vector<ArrayItem<ircode::AddrOperand *>> && items,
+	std::set<ArrayItem<ircode::AddrOperand *>> && items,
 	const std::vector<int> & shape,
 	ircode::AddrVariable * varMemBaseAddr,
 	const TypeInfo & typeOfElement
@@ -87,7 +87,7 @@ std::list<ircode::IRInstr *> fromArrayItemsToInstrs(
 			items.size() == 1,
 			"Items should have only one item when defining scalar var.", CODEPOS
 		);
-		auto item = std::move(items[0]);
+		auto item = *items.begin();
 		items.clear();
 		auto instrs = std::move(item.instrsToInit);
 		auto [pConversionAddr, _, convertInstrs] = genAddrConversion(
@@ -124,7 +124,8 @@ std::list<ircode::IRInstr *> fromArrayItemsToInstrs(
 		)
 	);
 	for (auto & item: items) {
-		instrsRes.splice(instrsRes.end(), std::move(item.instrsToInit));
+		auto instrsToInit = item.instrsToInit;
+		instrsRes.splice(instrsRes.end(), std::move(instrsToInit));
 		//  type conversion
 		auto [pValAddr, type, conversionInstrs] =
 			genAddrConversion(ir, item.val, typeOfElement);
@@ -157,7 +158,7 @@ std::list<ircode::IRInstr *> fromArrayItemsToInstrs(
 
 std::unique_ptr<sup::StaticValue> fromArrayItemsToStaticValue(
 	ircode::IRModule & ir,
-	const std::vector<ArrayItem<std::unique_ptr<StaticValue>>> & items,
+	const std::set<ArrayItem<std::unique_ptr<StaticValue>>> & items,
 	const std::vector<int> & shape,
 	const TypeInfo & typeOfElement
 ) {
@@ -166,7 +167,7 @@ std::unique_ptr<sup::StaticValue> fromArrayItemsToStaticValue(
 			items.size() == 1, "There should be only one element when defining var.",
 			CODEPOS
 		);
-		return convertOnSV(*items[0].val, typeOfElement);
+		return convertOnSV(*items.begin()->val, typeOfElement);
 	}
 	std::vector<std::unique_ptr<StaticValue>> staticValueArray;
 	std::unique_ptr<StaticValue> defaultVal;

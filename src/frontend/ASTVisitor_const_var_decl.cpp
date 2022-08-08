@@ -21,7 +21,7 @@ antlrcpp::Any ASTVisitor::visitConstDecl(SysYParser::ConstDeclContext * ctx) {
 			son->accept(this);
 			instrsRes.splice(
 				instrsRes.end(),
-				retInstrs.restore < std::list < ircode::IRInstr * >> ()
+				retInstrs.restore<std::list<ircode::IRInstr * >>()
 			);
 		}
 		retInstrs.save(std::move(instrsRes));
@@ -38,7 +38,7 @@ antlrcpp::Any ASTVisitor::visitConstDef(SysYParser::ConstDefContext * ctx) {
 		auto ret = std::vector<int>();
 		for (auto son: ctx->constExp()) {
 			son->accept(this);
-			auto len = retVal.restore < std::unique_ptr < StaticValue >> ();
+			auto len = retVal.restore<std::unique_ptr<StaticValue >>();
 			ret.push_back(
 				com::dynamic_cast_uPtr_get<IntStaticValue>(len)->value
 			);
@@ -52,7 +52,8 @@ antlrcpp::Any ASTVisitor::visitConstDef(SysYParser::ConstDefContext * ctx) {
 	//  Get init val by visiting `constInitVal`.
 	setWithAutoRestorer(info.var.idxView, IdxView(info.var.shapeOfDefiningVar));
 	setWithAutoRestorer(info.var.ndim, -1);
-	setWithAutoRestorer(info.var.staticArrayItems, { });
+	setWithAutoRestorer(info.var.staticArrayItems, {});
+	setWithAutoRestorer(info.var.varNameDefining, std::string(varName));
 	ctx->constInitVal()->accept(this);
 	//  Create addr of static var.
 	auto pSV = fromArrayItemsToStaticValue(
@@ -100,8 +101,10 @@ antlrcpp::Any
 ASTVisitor::visitScalarConstInitVal(SysYParser::ScalarConstInitValContext * ctx) {
 	// constInitVal -> constExp # scalarConstInitVal
 	ctx->constExp()->accept(this);
-	info.var.staticArrayItems.emplace_back(
-		info.var.idxView.idx, retVal.restore < std::unique_ptr < StaticValue >> ()
+	info.var.staticArrayItems.insert(
+		ArrayItem<std::unique_ptr<sup::StaticValue>>(
+			info.var.idxView.idx, retVal.restore<std::unique_ptr<StaticValue >>()
+		)
 	);
 	if (info.var.definingArray()) {
 		info.var.idxView.addOnDimN(-1, 1);
@@ -122,9 +125,11 @@ ASTVisitor::visitListConstInitVal(SysYParser::ListConstInitValContext * ctx) {
 	}
 	--info.var.ndim;
 	while (!info.var.idxView.isAll0AfterNDim(info.var.ndim) || !added) {
-		info.var.staticArrayItems.emplace_back(
-			info.var.idxView.idx,
-			zeroExtensionValueOfType(*bTypeToTypeInfoUPtr(info.var.btype))
+		info.var.staticArrayItems.insert(
+			ArrayItem<std::unique_ptr<sup::StaticValue>>(
+				info.var.idxView.idx,
+				zeroExtensionValueOfType(*bTypeToTypeInfoUPtr(info.var.btype))
+			)
 		);
 		info.var.idxView.addOnDimN(-1, 1);
 		added = true;

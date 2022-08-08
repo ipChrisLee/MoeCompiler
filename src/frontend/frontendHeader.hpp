@@ -41,6 +41,11 @@ struct ArrayItem {
 	//  `T` is `std::unique_ptr<sup::StaticValue>` for const array and global array.
 	//  `T` is `ircode::AddrOperand *` for local non-const array.
 	std::vector<int> idx;
+
+	bool operator<(const ArrayItem & other) const {
+		return idx < other.idx;
+	}
+
 	T val;
 	/**
 	 * @brief Instructions to init value in position idx.
@@ -69,7 +74,7 @@ struct ArrayItem {
 
 std::list<ircode::IRInstr *> fromArrayItemsToInstrs(
 	ircode::IRModule & ir,
-	std::vector<ArrayItem<ircode::AddrOperand *>> && items,
+	std::set<ArrayItem<ircode::AddrOperand *>> && items,
 	const std::vector<int> & shape,
 	ircode::AddrVariable * varMemBaseAddr,
 	const sup::TypeInfo & typeOfElement
@@ -77,7 +82,7 @@ std::list<ircode::IRInstr *> fromArrayItemsToInstrs(
 
 std::unique_ptr<sup::StaticValue> fromArrayItemsToStaticValue(
 	ircode::IRModule & ir,
-	const std::vector<ArrayItem<std::unique_ptr<sup::StaticValue>>> & items,
+	const std::set<ArrayItem<std::unique_ptr<sup::StaticValue>>> & items,
 	const std::vector<int> & shape,
 	const sup::TypeInfo & typeOfElement
 );

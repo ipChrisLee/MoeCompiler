@@ -53,9 +53,11 @@ int main(int argc, char ** argv) {
 	int retval = 0;
 	try {
 		retval = Main(argc, argv);
+	} catch (const com::MException & e) {
+
 	} catch (const std::exception & e) {
 		com::ccerr.cprintLn(e.what());
-		retval = -1;
+		retval = e.;
 	}
 	if (SysY::options.showRuntimeWarnings) {
 		com::showAllRuntimeWarnings();

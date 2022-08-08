@@ -37,6 +37,7 @@ std::string concatToString(std::initializer_list<std::string> listOfStr);
 class MException : public std::exception {
   public:
 	std::string msg = std::string();
+	int exitCode = 0;
 
 	MException() = default;
 
@@ -288,10 +289,12 @@ class BiMap {
 	}
 
 	ST & getST(const FT & fT) { return f2s[fT]; }
+
 	FT & getFT(const ST & sT) { return s2f[sT]; }
 
 
 	const std::map<FT, ST> & getF2S() const { return f2s; }
+
 	const std::map<ST, FT> & getS2F() const { return s2f; }
 };
 }

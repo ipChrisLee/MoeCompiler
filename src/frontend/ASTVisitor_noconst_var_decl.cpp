@@ -121,17 +121,24 @@ ASTVisitor::visitScalarInitVal(SysYParser::ScalarInitValContext * ctx) {
 	// initVal -> exp # scalarInitVal
 	ctx->exp()->accept(this);
 	if (info.stat.inGlobal) {
-		info.var.staticArrayItems.emplace_back(
-			info.var.idxView.idx, retVal.restore<std::unique_ptr<StaticValue>>()
+		info.var.staticArrayItems.insert(
+			ArrayItem<std::unique_ptr<sup::StaticValue>>(
+				info.var.idxView.idx, retVal.restore<std::unique_ptr<StaticValue>>()
+			)
 		);
 	} else {
 		auto * pAddr = retVal.restore<ircode::AddrOperand *>();
 		auto instrs = retInstrs.restore<std::list<ircode::IRInstr *>>();
-		info.var.localArrayItems.emplace_back(
-			info.var.idxView.idx, std::move(pAddr), std::move(instrs)//NOLINT
+		info.var.localArrayItems.insert(
+			ArrayItem<ircode::AddrOperand *>(
+				info.var.idxView.idx, std::move(pAddr), std::move(instrs)//NOLINT
+			)
 		);
 	}
-	if (info.var.definingArray()) {
+
+	if (info.var.
+		definingArray()
+		) {
 		info.var.idxView.addOnDimN(-1, 1);
 	}
 	return nullptr;
@@ -153,8 +160,10 @@ antlrcpp::Any ASTVisitor::visitListInitval(SysYParser::ListInitvalContext * ctx)
 		auto * pZero = ir.addrPool.emplace_back(
 			ircode::AddrStaticValue(*upTypeInfo)
 		);
-		info.var.localArrayItems.emplace_back(
-			info.var.idxView.idx, pZero, std::list<ircode::IRInstr *>()
+		info.var.localArrayItems.insert(
+			ArrayItem<ircode::AddrOperand *>(
+				info.var.idxView.idx, pZero, std::list<ircode::IRInstr *>()
+			)
 		);
 		info.var.idxView.addOnDimN(-1, 1);
 		added = true;
