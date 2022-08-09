@@ -3,7 +3,7 @@ from llvm import Clang, Opt, LLC
 from Pi import Pi
 from settings import TestFilesSettings, BasicSettings, TimeoutSettings
 import argparse
-from case_and_case_set import TestCase, allTestCaseSet
+from case_and_case_set import TestCase
 import json
 from color import cprint, C
 
@@ -37,12 +37,6 @@ argParser.add_argument(
 	action='store_true',
 	dest='llvm',
 	help='Generate codes by using llvm tool-chain.'
-)
-argParser.add_argument(
-	'--llvm_all',
-	action='store_true',
-	dest='llvm_all',
-	help='Run llvm on all tests'
 )
 argParser.add_argument(
 	'--moe',
@@ -166,22 +160,6 @@ def test_llvm():
 	print(f'Result : {res["test_status"]}')
 
 
-def test_llvm_all():
-	for testCase in allTestCaseSet.caseSet:
-		Clang.compile_to_ass(
-			syFilePath=testCase.syFilePath,
-			sFilePath=testCase.msFilePath,
-			optiLevel=2
-		)
-		res = Pi.run_tester(
-			sFilePath=testCase.msFilePath,
-			inFilePath=testCase.inFilePath,
-			outFilePath=testCase.outFilePath,
-			resFilePath=TestFilesSettings.FilePath.testRes,
-		)
-		assert res['test_status'] == 'AC'
-
-
 def test_asm_run():
 	res = Pi.run_tester(
 		sFilePath=TestFilesSettings.FilePath.testS,
@@ -246,8 +224,6 @@ if __name__ == '__main__':
 		test_frontend()
 	elif args.llvm:
 		test_llvm()
-	elif args.llvm_all:
-		test_llvm_all()
 	elif args.moe:
 		test_moe()
 	elif args.asm_run:

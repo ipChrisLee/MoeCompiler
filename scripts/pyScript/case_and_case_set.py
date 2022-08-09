@@ -35,6 +35,7 @@ class TestCase:
 		self.year: int = year
 		self.testType: TestType = testType
 		self.msFilePath: str = str(Path(syFilePath).with_suffix(".ms"))
+		Path(self.msFilePath).touch()
 	
 	def __str__(self):
 		return str(self.year) + "::" + self.testType.name + "::" + self.testName
@@ -98,12 +99,6 @@ myFuncTestCaseSet = TestCaseSet(
 allFunctionTestsCaseSet = TestCaseSet(
 	set.union(
 		load_testcases_under_folder_path(
-			"testcases/SysYTestCase/function_test2020", 2020, TestType.Function
-		),
-		load_testcases_under_folder_path(
-			"testcases/SysYTestCase/function_test2021", 2021, TestType.Function
-		),
-		load_testcases_under_folder_path(
 			"testcases/SysYTestCase/function_test2022", 2022, TestType.Function
 		),
 		load_testcases_under_folder_path(
@@ -112,55 +107,18 @@ allFunctionTestsCaseSet = TestCaseSet(
 	), "function"
 )
 
-function2020TestCaseSet = TestCaseSet(
-	load_testcases_under_folder_path(
-		"testcases/SysYTestCase/function_test2020", 2020, TestType.Function
-	), "f2020"
-)
-
-function2021TestCaseSet = TestCaseSet(
-	load_testcases_under_folder_path(
-		"testcases/SysYTestCase/function_test2021", 2021, TestType.Function
-	), "f2021"
-)
-
 functionWithoutFloat = TestCaseSet(
 	set.union(
-		function2020TestCaseSet.caseSet,
-		function2021TestCaseSet.caseSet
-	), 'withoutFloat'
-)
-
-performance2021TestCaseSet = TestCaseSet(
-	set.union(
 		load_testcases_under_folder_path(
-			"testcases/SysYTestCase/performance_test2021-private", 2021,
-			TestType.Performance
+			"testcases/SysYTestCase/function_test2021", 2021, TestType.Function
 		),
 		load_testcases_under_folder_path(
-			"testcases/SysYTestCase/performance_test2021-public", 2021,
-			TestType.Performance
-		)
-	), "p2021"
-)
-
-allTestCaseSet = TestCaseSet(
-	set.union(
-		function2021TestCaseSet.caseSet,
-		function2020TestCaseSet.caseSet,
-		performance2021TestCaseSet.caseSet
-	), "all"
-)
-
-basicTestCaseSet = TestCaseSet(
-	load_testcases_under_folder_path(
-		'testcases/BasicTestCase', 2022, TestType.Basic
-	), "b2022"
+			"testcases/SysYTestCase/function_test2020", 2020, TestType.Function
+		),
+	), 'withoutFloat'
 )
 
 emptyTestCaseSet = TestCaseSet(set(), 'empty')
 
 if __name__ == '__main__':
-	for testCase in basicTestCaseSet.caseSet:
-		print(hash(testCase))
-		print(hash(testCase.syFilePath))
+	pass

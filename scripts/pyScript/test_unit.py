@@ -3,8 +3,8 @@ from case_and_case_set import TestCaseSet, TestCase
 from settings import TestUnitSettings, TestFilesSettings
 import actions
 import typing as typ
-from case_and_case_set import emptyTestCaseSet, basicTestCaseSet, \
-	function2020TestCaseSet, allFunctionTestsCaseSet, functionWithoutFloat
+from case_and_case_set import emptyTestCaseSet, allFunctionTestsCaseSet, \
+	functionWithoutFloat, myFuncTestCaseSet
 from subprocess import CalledProcessError
 from Bash import Bash
 
@@ -105,33 +105,6 @@ allTestUnits: typ.Dict[str, TestUnit] = dict(
 			]
 		),
 		TestUnit(
-			name='test_frontend',
-			testCaseSet=basicTestCaseSet,
-			terminalVerbose=True,
-			helpInfo='Test frontend.',
-			acts=[
-				actions.JustCompileToLLVMIR(optiLevel=0)
-			]
-		),
-		TestUnit(
-			name='test_frontend_with_llc',
-			testCaseSet=basicTestCaseSet,
-			terminalVerbose=True,
-			helpInfo='Test frontend.',
-			acts=[
-				actions.CompileToLLVMIRAndUseLLC(optiLevel=0)
-			]
-		),
-		TestUnit(
-			name='test_frontend_with_llc_on_std_test2020',
-			testCaseSet=function2020TestCaseSet,
-			terminalVerbose=True,
-			helpInfo='Test frontend with llc and on std_test 2020.',
-			acts=[
-				actions.CompileToLLVMIRAndUseLLC(optiLevel=0)
-			]
-		),
-		TestUnit(
 			name='test_frontend_with_llc_on_all_function_test_set',
 			testCaseSet=allFunctionTestsCaseSet,
 			terminalVerbose=True,
@@ -163,6 +136,15 @@ allTestUnits: typ.Dict[str, TestUnit] = dict(
 			testCaseSet=allFunctionTestsCaseSet,
 			terminalVerbose=True,
 			helpInfo='Test MoeCompiler for all function tests.',
+			acts=[
+				actions.CompileToASMAndRunOnPi(optiLevel=0)
+			]
+		),
+		TestUnit(
+			name='test_moe_on_my_function',
+			testCaseSet=myFuncTestCaseSet,
+			terminalVerbose=True,
+			helpInfo='Test MoeCompiler for my function test.',
 			acts=[
 				actions.CompileToASMAndRunOnPi(optiLevel=0)
 			]

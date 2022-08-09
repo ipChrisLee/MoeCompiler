@@ -1,0 +1,14 @@
+int main(){
+    int x=0;
+    x=x+1032;
+    putint(x);
+    x=x+516;
+    putint(x);
+    x=x-1032;
+    putint(x);
+    x=x-516;
+    putint(x);
+    x=x-65536;
+    float f=0;
+    return 0;
+}

@@ -109,7 +109,7 @@ class CompileToASMAndRunOnPi(ActionBasic):
 	def __call__(self, testCase, **kwargs):
 		Moe.compile(
 			syFilePath=testCase.syFilePath,
-			msFilePath=bufferTextFilePath,
+			msFilePath=testCase.msFilePath,
 			emit_llvm=False,
 			float_dec_format=False,
 			optiLevel=self.optiLevel

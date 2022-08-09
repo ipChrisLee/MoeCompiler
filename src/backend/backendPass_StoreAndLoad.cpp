@@ -322,9 +322,11 @@ std::string FuncInfo::toASM_Store_Int(ircode::InstrStore * pInstrStore) {
 			);
 			storeTo = "[" + to_asm(backend::RId::rhs) + ", " + backend::to_asm(0) + "]";
 		} else {
-			storeTo = "[" +
-				to_asm(genASMLoadInt(res, offset, backend::RId::rhs)) + ", " +
-				backend::to_asm(0) + "]";
+			genASMLoadInt(res, offset, backend::RId::rhs);
+			res += backend::toASM(
+				"add", backend::RId::rhs, backend::RId::rhs, backend::RId::sp
+			);
+			storeTo = "[" + to_asm(backend::RId::rhs) + ", " + backend::to_asm(0) + "]";
 		}
 	} else if (pTo->addrType == ircode::AddrType::GlobalVar) {
 		auto * pGVarAddrTo = dynamic_cast<ircode::AddrGlobalVariable *>(pTo);
@@ -341,6 +343,7 @@ std::string FuncInfo::toASM_Store_Int(ircode::InstrStore * pInstrStore) {
 		auto rIdVal = genASMGetVRegRVal(res, pVRegR, backend::RId::lhs);
 		storeFrom = backend::to_asm(rIdVal);
 	} else if (pFrom->addrType == ircode::AddrType::ParaVar) {
+		//  This is needed!
 		auto * pVarFrom = dynamic_cast<ircode::AddrPara *>(pFrom);
 		auto * pVRegR = convertThisIntArg(pVarFrom);
 		auto rIdVal = genASMGetVRegRVal(res, pVRegR, backend::RId::lhs);
@@ -427,9 +430,11 @@ std::string FuncInfo::toASM_Store_Float(ircode::InstrStore * pInstrStore) {
 			);
 			storeTo = "[" + to_asm(backend::RId::rhs) + ", " + backend::to_asm(0) + "]";
 		} else {
-			storeTo = "[" +
-				to_asm(genASMLoadInt(res, offset, backend::RId::rhs)) + ", " +
-				backend::to_asm(0) + "]";
+			genASMLoadInt(res, offset, backend::RId::rhs);
+			res += backend::toASM(
+				"add", backend::RId::rhs, backend::RId::rhs, backend::RId::sp
+			);
+			storeTo = "[" + to_asm(backend::RId::rhs) + ", " + backend::to_asm(0) + "]";
 		}
 	} else if (pTo->addrType == ircode::AddrType::GlobalVar) {
 		auto * pGVarAddrTo = dynamic_cast<ircode::AddrGlobalVariable *>(pTo);

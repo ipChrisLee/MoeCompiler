@@ -1,0 +1,37 @@
+int bit[32];
+
+void valToBit(int x) {
+	if (x < 0) {
+		int i = 0;
+		while (i < 32) {
+			bit[i] = x % 2;
+			x = (x - 1) / 2;
+			i = i + 1;
+		}
+	} else {
+		int i = 0;
+		while (i < 32) {
+			bit[i] = x % 2;
+			x = x / 2;
+			i = i + 1;
+		}
+	}
+}
+
+int bitToVal(int len) {
+	int i = 0, v = 1, res = 0;
+	while (i < len) {
+		if (bit[i]) {
+			res = res + v;
+		}
+		i = i + 1;
+		v = v * 2;
+	}
+	return res;
+}
+
+
+int main(){
+    return 0;
+}
+

@@ -240,7 +240,7 @@ FuncInfo::genASMSaveFromRRegToOffset(
 	std::string & res, backend::RId ridFrom, int offset, backend::RId scratchReg
 ) {
 	com::Assert(offset != INT_MIN, "", CODEPOS);
-	if (backend::Imm<backend::ImmType::Imm8m>::fitThis(offset)) {
+	if (backend::Imm<backend::ImmType::ImmOffset>::fitThis(offset)) {
 		auto to = "[sp, " + backend::to_asm(offset) + "]";
 		res += backend::toASM("str", ridFrom, to);
 	} else {
