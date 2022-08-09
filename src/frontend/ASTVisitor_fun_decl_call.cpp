@@ -38,7 +38,7 @@ antlrcpp::Any ASTVisitor::visitFuncDef(SysYParser::FuncDefContext * ctx) {
 			);
 			pRetvalMem = ir.addrPool.emplace_back(
 				ircode::AddrLocalVariable(
-					FloatType(), "retval"
+					FloatType(), "retval", false
 				)
 			);
 			break;
@@ -49,7 +49,7 @@ antlrcpp::Any ASTVisitor::visitFuncDef(SysYParser::FuncDefContext * ctx) {
 			);
 			pRetvalMem = ir.addrPool.emplace_back(
 				ircode::AddrLocalVariable(
-					IntType(), "retval"
+					IntType(), "retval", false
 				)
 			);
 			break;
@@ -65,7 +65,7 @@ antlrcpp::Any ASTVisitor::visitFuncDef(SysYParser::FuncDefContext * ctx) {
 	auto funcDef = ircode::IRFuncDef(pAddrFun);
 	for (const auto & pAddrPara: params) {
 		auto pParaMemAddr = ir.addrPool.emplace_back(
-			ircode::AddrLocalVariable(pAddrPara->getType(), pAddrPara->getName())
+			ircode::AddrLocalVariable(pAddrPara->getType(), pAddrPara->getName(), false)
 		);
 		symbolTable.pScopeNow->bindDominateVar(
 			pAddrPara->getName(), IdType::ParameterName, pParaMemAddr

@@ -56,10 +56,6 @@ struct ArrayItem {
 	) : idx(std::move(idx)), val(std::move(val)),
 	    instrsToInit(std::move(instrsToInit)) {
 	}
-
-	int getPos(const sup::VI & shape) const {
-		return sup::idxToPos(idx, shape);
-	}
 };
 
 

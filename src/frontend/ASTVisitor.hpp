@@ -74,10 +74,10 @@ class ASTVisitor : public SysYBaseVisitor {
 			std::vector<int> shapeOfDefiningVar;
 			IdxView idxView;    //  Used on defining array.
 			int ndim = -1;           //  Used on defining array.
+			ircode::AddrGlobalVariable * pAddrGlobalVarDefining = nullptr;
+			ircode::AddrLocalVariable * pAddrLocalVarDefining = nullptr;
 			std::set<ArrayItem<std::unique_ptr<sup::StaticValue>>> staticArrayItems;
 			std::set<ArrayItem<ircode::AddrOperand *>> localArrayItems;
-			//  var name of defining
-			std::string varNameDefining;
 
 			bool definingArray() const { return !shapeOfDefiningVar.empty(); }
 

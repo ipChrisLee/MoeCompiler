@@ -256,6 +256,10 @@ StaticValue::calc(const std::string & op) const {
 	com::Throw("This method should not be invoked.", CODEPOS);
 }
 
+void StaticValue::insertValue(const VI & idx, StaticValue & staticValue) {
+	com::Throw("This override should not be called.", CODEPOS);
+}
+
 std::unique_ptr<moeconcept::Cloneable>
 FloatStaticValue::_cloneToUniquePtr() const {
 	return std::make_unique<FloatStaticValue>(*this);
@@ -456,8 +460,9 @@ FloatArrayStaticValue::FloatArrayStaticValue(std::vector<int> _shape) :
 	StaticValue(sup::FloatArrayType(_shape)), shape(std::move(_shape)) {
 }
 
-void FloatArrayStaticValue::insertValue(const VI & idx, FloatStaticValue & floatStaticValue) {
-	value.emplace(idx, floatStaticValue);
+void FloatArrayStaticValue::insertValue(const VI & idx, StaticValue & staticValue) {
+	auto pSV = com::dynamic_cast_uPtr<FloatStaticValue>(convertOnSV(staticValue, FloatType()));
+	value.emplace(idx, std::move(*pSV));
 }
 
 std::unique_ptr<moeconcept::Cutable>
@@ -529,7 +534,7 @@ IntArrayStaticValue::getValue(const VI & ind) const {
 	}
 }
 
-IntArrayStaticValue::IntArrayStaticValue(std::vector<int> _shape) :
+IntArrayStaticValue::IntArrayStaticValue(VI _shape) :
 	StaticValue(sup::IntArrayType(_shape)), shape(std::move(_shape)) {
 }
 
@@ -537,9 +542,10 @@ std::unique_ptr<moeconcept::Cutable> IntArrayStaticValue::_cutToUniquePtr() {
 	return std::make_unique<IntArrayStaticValue>(std::move(*this));
 }
 
-void IntArrayStaticValue::insertValue(const VI & idx, IntStaticValue & intStaticValue) {
+void IntArrayStaticValue::insertValue(const VI & idx, StaticValue & staticValue) {
 	com::Assert(idx.size() == shape.size(), "", CODEPOS);
-	value.emplace(idx, intStaticValue);
+	auto pSV = com::dynamic_cast_uPtr<IntStaticValue>(convertOnSV(staticValue, IntType()));
+	value.emplace(idx, std::move(*pSV));
 }
 
 std::unique_ptr<moeconcept::Cloneable>
@@ -690,4 +696,27 @@ CalcOnStaticValue::operator()(
 
 CalcOnStaticValue calcOnSV;
 
+std::unique_ptr<StaticValue>
+fromTypeInfoToStaticValue(const TypeInfo & typeInfo) {
+	switch (typeInfo.type) {
+		case Type::Int_t: {
+			return std::make_unique<IntStaticValue>();
+		}
+		case Type::Float_t: {
+			return std::make_unique<FloatStaticValue>();
+		}
+		case Type::IntArray_t: {
+			auto viTypeInfo = dynamic_cast<const IntArrayType &>(typeInfo);
+			return std::make_unique<IntArrayStaticValue>(viTypeInfo.shape);
+		}
+		case Type::FloatArray_t: {
+			auto vfTypeInfo = dynamic_cast<const FloatArrayType &>(typeInfo);
+			return std::make_unique<FloatArrayStaticValue>(vfTypeInfo.shape);
+		}
+		case Type::Bool_t: {
+			return std::make_unique<BoolStaticValue>();
+		}
+		default: com::Throw("", CODEPOS);
+	}
+}
 }

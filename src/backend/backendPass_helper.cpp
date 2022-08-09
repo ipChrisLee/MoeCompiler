@@ -329,44 +329,54 @@ std::string ToASM::declGVar(ircode::AddrGlobalVariable * pGVarAddr) {
 			break;
 		}
 		case sup::Type::IntArray_t: {
-			auto vecValue = dynamic_cast<const sup::IntArrayStaticValue &>(
+			const auto & viTypeInfo =
+				dynamic_cast<const sup::IntArrayType &>(
+					pGVarAddr->uPtrStaticValue->getType()
+				);
+			const auto & vecValue = dynamic_cast<const sup::IntArrayStaticValue &>(
 				pGVarAddr->getStaticValue()
 			).value;
 			res += pLabel->labelStr + ":\n";
-			auto space = 0;
+			auto posNow = 0;
+			auto iPos = 0;
 			for (auto valPair: vecValue) {
-				if (space) {
-					res += "\t.space\t" + hexFormOf(space) + "\n";
-					space = 0;
-					auto & value = valPair.second;
-					res += "\t.long\t" + hexFormOf(value.value) + "\n";
-				} else {
-					space += 4;
+				posNow = sup::idxToPos(valPair.first, viTypeInfo.shape) * 4;
+				if (posNow - iPos) {
+					res += "\t.space\t" + hexFormOf(posNow - iPos) + "\n";
 				}
+				auto & value = valPair.second;
+				res += "\t.long\t" + hexFormOf(value.value) + "\n";
+				iPos = posNow + 4;
 			}
-			if (space) {
-				res += "\t.space\t" + hexFormOf(space) + "\n";
+			posNow = sup::idxToPos(viTypeInfo.shape, viTypeInfo.shape);
+			if (posNow - iPos) {
+				res += "\t.space\t" + hexFormOf(posNow - iPos) + "\n";
 			}
 			break;
 		}
 		case sup::Type::FloatArray_t: {
-			auto vecValue = dynamic_cast<const sup::FloatArrayStaticValue &>(
+			const auto & vfTypeInfo =
+				dynamic_cast<const sup::FloatArrayType &>(
+					pGVarAddr->uPtrStaticValue->getType()
+				);
+			const auto & vecValue = dynamic_cast<const sup::FloatArrayStaticValue &>(
 				pGVarAddr->getStaticValue()
 			).value;
 			res += pLabel->labelStr + ":\n";
-			auto space = 0;
+			auto posNow = 0;
+			auto iPos = 0;
 			for (auto valPair: vecValue) {
-				if (space) {
-					res += "\t.space\t" + hexFormOf(space) + "\n";
-					space = 0;
-					auto & value = valPair.second;
-					res += "\t.long\t" + hexFormOf(value.value) + "\n";
-				} else {
-					space += 4;
+				posNow = sup::idxToPos(valPair.first, vfTypeInfo.shape) * 4;
+				if (posNow - iPos) {
+					res += "\t.space\t" + hexFormOf(posNow - iPos) + "\n";
 				}
+				auto & value = valPair.second;
+				res += "\t.long\t" + hexFormOf(value.value) + "\n";
+				iPos = posNow + 4;
 			}
-			if (space) {
-				res += "\t.space\t" + hexFormOf(space) + "\n";
+			posNow = sup::idxToPos(vfTypeInfo.shape, vfTypeInfo.shape);
+			if (posNow - iPos) {
+				res += "\t.space\t" + hexFormOf(posNow - iPos) + "\n";
 			}
 			break;
 		}

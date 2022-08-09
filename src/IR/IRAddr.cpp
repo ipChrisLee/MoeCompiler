@@ -191,8 +191,7 @@ AddrFunction::AddrFunction(
 	std::string name, std::vector<AddrPara *> vecPara,
 	const TypeInfo & retType
 ) :
-	uPtrReturnTypeInfo(
-		com::dynamic_cast_uPtr<TypeInfo>(retType.cloneToUniquePtr())),
+	uPtrReturnTypeInfo(com::dynamic_cast_uPtr<TypeInfo>(retType.cloneToUniquePtr())),
 	vecPtrAddrPara(std::move(vecPara)),
 	name(convertLongName(std::move(name))) {
 	addrType = AddrType::Func;
@@ -266,37 +265,10 @@ AddrVariable::AddrVariable(sup::Type type, std::string _name) :
 }
 
 AddrGlobalVariable::AddrGlobalVariable(
-	const TypeInfo & typeInfo, std::string name,
-	const StaticValue & staticValue, bool isConst
-) :
-	AddrVariable(
-		PointerType(typeInfo),
-		convertLongName(std::move(name))
-	),
-	uPtrStaticValue(
-		com::dynamic_cast_uPtr<StaticValue>(
-			staticValue
-				.cloneToUniquePtr())
-	),
-	isConst(isConst) {
-	addrType = AddrType::GlobalVar;
-	com::Assert(
-		staticValue.getType() == typeInfo,
-		"Type of static value and type of variable should be same.",
-		CODEPOS
-	);
-}
-
-AddrGlobalVariable::AddrGlobalVariable(
 	const TypeInfo & typeInfo, std::string name, bool isConst
 ) :
-	AddrVariable(
-		PointerType(typeInfo),
-		convertLongName(std::move(name))
-	),
-	uPtrStaticValue(
-		zeroExtensionValueOfType(typeInfo)
-	),
+	AddrVariable(PointerType(typeInfo), convertLongName(std::move(name))),
+	uPtrStaticValue(fromTypeInfoToStaticValue(typeInfo)),
 	isConst(isConst) {
 	addrType = AddrType::GlobalVar;
 }
@@ -367,15 +339,13 @@ std::unique_ptr<moeconcept::Cutable> AddrStaticValue::_cutToUniquePtr() {
 
 AddrStaticValue::AddrStaticValue(const StaticValue & staticValue) :
 	AddrOperand(staticValue.getType()),
-	uPtrStaticValue(
-		com::dynamic_cast_uPtr<StaticValue>(staticValue.cloneToUniquePtr())
-	) {
+	uPtrStaticValue(com::dynamic_cast_uPtr<StaticValue>(staticValue.cloneToUniquePtr())) {
 	addrType = AddrType::StaticValue;
 }
 
 AddrStaticValue::AddrStaticValue(const TypeInfo & typeInfo) :
 	AddrOperand(typeInfo),
-	uPtrStaticValue(zeroExtensionValueOfType(typeInfo)) {
+	uPtrStaticValue(fromTypeInfoToStaticValue(typeInfo)) {
 	addrType = AddrType::StaticValue;
 }
 
@@ -401,10 +371,10 @@ AddrOperand::AddrOperand(std::unique_ptr<sup::TypeInfo> && uPtrTypeInfo) :
 }
 
 AddrLocalVariable::AddrLocalVariable(
-	const TypeInfo & typeInfo, std::string name
+	const TypeInfo & typeInfo, std::string name, bool isConst
 ) :
 	AddrVariable(PointerType(typeInfo), convertLongName(std::move(name))),
-	isConst(false), uPtrStaticValue(nullptr) {
+	isConst(isConst), uPtrStaticValue(fromTypeInfoToStaticValue(typeInfo)) {
 	addrType = AddrType::LocalVar;
 }
 
@@ -414,20 +384,8 @@ std::string AddrLocalVariable::toLLVMIR() const {
 }
 
 AddrLocalVariable::AddrLocalVariable(const AddrLocalVariable & addr) :
-	AddrVariable(addr),
-	isConst(addr.isConst),
+	AddrVariable(addr), isConst(addr.isConst),
 	uPtrStaticValue(com::dynamic_cast_uPtr<StaticValue>(addr.cloneToUniquePtr())) {
-}
-
-AddrLocalVariable::AddrLocalVariable(
-	const TypeInfo & typeInfo, std::string name, const StaticValue & staticValue
-) :
-	AddrVariable(PointerType(typeInfo), convertLongName(std::move(name))),
-	isConst(true),
-	uPtrStaticValue(
-		com::dynamic_cast_uPtr<StaticValue>(staticValue.cloneToUniquePtr())
-	) {
-	addrType=AddrType::LocalVar;
 }
 
 const sup::StaticValue & AddrLocalVariable::getStaticValue() const {

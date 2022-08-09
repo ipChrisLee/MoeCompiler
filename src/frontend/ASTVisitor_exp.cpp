@@ -251,7 +251,8 @@ antlrcpp::Any ASTVisitor::visitLVal(SysYParser::LValContext * ctx) {
 				auto * pAddr
 					= dynamic_cast<ircode::AddrGlobalVariable *>(pIDVarAddr);
 				com::Assert(
-					pAddr->isConstVar(), "Addr of var should be const.", CODEPOS
+					pAddr->isConstVar() || pAddr == info.var.pAddrGlobalVarDefining,
+					"Addr of var should be const.", CODEPOS
 				);
 				retVal.save(pAddr->getStaticValue().getValue(idxs));
 				break;
@@ -483,8 +484,9 @@ antlrcpp::Any ASTVisitor::visitLOr2(SysYParser::LOr2Context * ctx) {
 		ircode::AddrJumpLabel("lor.lhs.false")
 	);
 	{
-		setWithAutoRestorer(info.cond.jumpLabelFalse,
-		                    std::move(pLabelLeftFalse));//NOLINT
+		setWithAutoRestorer(
+			info.cond.jumpLabelFalse,
+			std::move(pLabelLeftFalse));//NOLINT
 		ctx->lOrExp()->accept(this);
 		instrsRes.splice(
 			instrsRes.end(), retInstrs.restore<std::list<ircode::IRInstr *>>()
@@ -531,8 +533,9 @@ antlrcpp::Any ASTVisitor::visitLAnd2(SysYParser::LAnd2Context * ctx) {
 		ircode::AddrJumpLabel("land.lhs.true")
 	);
 	{
-		setWithAutoRestorer(info.cond.jumpLabelTrue,
-		                    std::move(pLabelLeftTrue));//NOLINT
+		setWithAutoRestorer(
+			info.cond.jumpLabelTrue,
+			std::move(pLabelLeftTrue));//NOLINT
 		ctx->lAndExp()->accept(this);
 		instrsRes.splice(
 			instrsRes.end(), retInstrs.restore<std::list<ircode::IRInstr *>>()

@@ -115,7 +115,33 @@ std::list<ircode::IRInstr *> fromArrayItemsToInstrs(
 			ircode::InstrGetelementptr(pBegin, varMemBaseAddr, std::move(idx0))
 		)
 	);
+	auto iPos = 0;
+	auto posNow = 0;
 	for (auto & item: items) {
+		posNow = sup::idxToPos(item.idx, shape);
+		for (; iPos < posNow; iPos++) {
+			auto * pValAddr = ir.addrPool.emplace_back(
+				ircode::AddrStaticValue(typeOfElement)
+			);
+			auto pValMem = ir.addrPool.emplace_back(
+				ircode::AddrVariable(PointerType(typeOfElement))
+			);
+			auto bias = static_cast<ircode::AddrOperand *>(ir.addrPool.emplace_back(
+				ircode::AddrStaticValue(
+					IntType(), IntStaticValue(iPos)
+				)
+			));
+			instrsRes.emplace_back(
+				ir.instrPool.emplace_back(
+					ircode::InstrGetelementptr(pValMem, pBegin, {bias})
+				)
+			);
+			instrsRes.emplace_back(
+				ir.instrPool.emplace_back(
+					ircode::InstrStore(pValAddr, pValMem)
+				)
+			);
+		}
 		auto instrsToInit = item.instrsToInit;
 		instrsRes.splice(instrsRes.end(), std::move(instrsToInit));
 		//  type conversion
@@ -127,7 +153,7 @@ std::list<ircode::IRInstr *> fromArrayItemsToInstrs(
 		);
 		auto bias = static_cast<ircode::AddrOperand *>(ir.addrPool.emplace_back(
 			ircode::AddrStaticValue(
-				IntType(), IntStaticValue(item.getPos(shape))
+				IntType(), IntStaticValue(posNow)
 			)
 		));
 		instrsRes.emplace_back(
@@ -140,6 +166,7 @@ std::list<ircode::IRInstr *> fromArrayItemsToInstrs(
 				ircode::InstrStore(pValAddr, pValMem)
 			)
 		);
+		iPos = posNow + 1;
 	}
 	com::addRuntimeWarning(
 		"Initialization of array can be optimized on frontend.", CODEPOS, true

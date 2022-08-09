@@ -189,21 +189,9 @@ class AddrGlobalVariable :
 	std::unique_ptr<Cutable> _cutToUniquePtr() override;
 
 	//  For every global variable, it has its own static init value!
+  public:
 	std::unique_ptr<sup::StaticValue> uPtrStaticValue;
 	bool isConst;
-  public:
-	/**
-	 * @brief Create new addr for variable from source code.
-	 * @param typeInfo type from source code. (no need to be pointer type.)
-	 * @param name name from source code.
-	 * @param staticValue static value from source code.
-	 * @param isConst if the variable in source code const.
-	 * @note The @c typeInfo should be same as @c staticValue.
-	 */
-	AddrGlobalVariable(
-		const sup::TypeInfo & typeInfo, std::string name,
-		const sup::StaticValue & staticValue, bool isConst = false
-	);
 
 	/**
 	 * @brief Create new addr for global variable with default static value.
@@ -211,7 +199,7 @@ class AddrGlobalVariable :
 	 * @param name name from source code.
 	 */
 	AddrGlobalVariable(
-		const sup::TypeInfo & typeInfo, std::string name, bool isConst = false
+		const sup::TypeInfo & typeInfo, std::string name, bool isConst
 	);
 
 	AddrGlobalVariable(const AddrGlobalVariable &);
@@ -237,15 +225,11 @@ class AddrLocalVariable :
 
 	std::unique_ptr<Cutable> _cutToUniquePtr() override CUTABLE_DEFAULT_IMPLEMENT;
 
+  public:
 	bool isConst;
 	std::unique_ptr<sup::StaticValue> uPtrStaticValue;
-  public:
-	AddrLocalVariable(const sup::TypeInfo & typeInfo, std::string name);
 
-	AddrLocalVariable(
-		const sup::TypeInfo & typeInfo, std::string name,
-		const sup::StaticValue & staticValue
-	);
+	AddrLocalVariable(const sup::TypeInfo & typeInfo, std::string name, bool isConst);
 
 	AddrLocalVariable(const AddrLocalVariable &);
 

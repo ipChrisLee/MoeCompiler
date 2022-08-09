@@ -59,6 +59,8 @@ class StaticValue
 
 	[[nodiscard]] virtual std::unique_ptr<StaticValue>
 	getValue(const VI &) const = 0;
+
+	virtual void insertValue(const VI & idx, StaticValue & staticValue);
 };
 
 class FloatStaticValue
@@ -190,7 +192,7 @@ class FloatArrayStaticValue
 	[[nodiscard]] std::unique_ptr<StaticValue>
 	getValue(const VI & ind) const override;
 
-	void insertValue(const VI & idx, FloatStaticValue & floatStaticValue);
+	void insertValue(const VI & idx, StaticValue & staticValue) override;
 };
 
 class IntArrayStaticValue
@@ -207,7 +209,6 @@ class IntArrayStaticValue
 	std::vector<int> shape;
 	IntStaticValue zero;
 
-	//  Use default value.
 	explicit IntArrayStaticValue(VI shape);
 
 	IntArrayStaticValue(const IntArrayStaticValue &) = default;
@@ -221,7 +222,7 @@ class IntArrayStaticValue
 	[[nodiscard]] std::unique_ptr<StaticValue>
 	getValue(const VI & ind) const override;
 
-	void insertValue(const VI & idx, IntStaticValue & intStaticValue);
+	void insertValue(const VI & idx, StaticValue & staticValue) override;
 };
 
 //  If `op` is "!", `fr` is ignored.
@@ -237,7 +238,7 @@ std::unique_ptr<StaticValue>
 calcOfBool(bool bl, bool br, const std::string & op);
 
 std::unique_ptr<StaticValue>
-zeroExtensionValueOfType(const TypeInfo & typeInfo);
+fromTypeInfoToStaticValue(const TypeInfo & typeInfo);
 
 //  Static value conversion
 std::unique_ptr<StaticValue>
