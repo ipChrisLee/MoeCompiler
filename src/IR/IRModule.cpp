@@ -1,7 +1,3 @@
-//
-// Created by lee on 6/21/22.
-//
-
 #include "IRModule.hpp"
 #include "IR/IRAddr.hpp"
 
@@ -15,6 +11,7 @@ IRAddrPool::IRAddrPool() : pool() {
 		}
 	};
 }
+
 
 std::string IRAddrPool::toLLVMIR() const {
 	std::string res;
