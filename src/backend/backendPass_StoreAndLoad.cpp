@@ -376,8 +376,9 @@ std::string FuncInfo::toASM_Store_IntArray(ircode::InstrStore * pInstrStore) {
 	const auto & vecStaticValue = dynamic_cast<const sup::IntArrayStaticValue &>(
 		pSVAddrFrom->getStaticValue()
 	).value;
-	for (const auto & staticValue: vecStaticValue) {
-		genASMLoadInt(res, staticValue.value, backend::RId::rhs);
+	for (const auto & valuePair: vecStaticValue) {
+		const auto & val = valuePair.second;
+		genASMLoadInt(res, val.value, backend::RId::rhs);
 		auto saveTo = "[" + backend::to_asm(backend::RId::lhs) + ", " +
 			backend::to_asm(0) + "]";
 		res += backend::toASM("str", backend::RId::rhs, saveTo);
@@ -472,8 +473,9 @@ std::string FuncInfo::toASM_Store_FloatArray(ircode::InstrStore * pInstrStore) {
 	const auto & vecStaticValue = dynamic_cast<const sup::FloatArrayStaticValue &>(
 		pSVAddrFrom->getStaticValue()
 	).value;
-	for (const auto & staticValue: vecStaticValue) {
-		genASMLoadFloat(res, staticValue.value, backend::SId::rhs, backend::RId::rhs);
+	for (const auto & valPair: vecStaticValue) {
+		const auto & val = valPair.second;
+		genASMLoadFloat(res, val.value, backend::SId::rhs, backend::RId::rhs);
 		auto saveTo = "[" + backend::to_asm(backend::RId::lhs) + ", " +
 			backend::to_asm(0) + "]";
 		res += backend::toASM("vstr", backend::SId::rhs, saveTo);

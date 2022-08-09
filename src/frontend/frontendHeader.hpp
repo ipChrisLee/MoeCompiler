@@ -7,6 +7,7 @@
 
 #include "IR/IRInstr.hpp"
 #include "IR/IRModule.hpp"
+#include "support/Idx.hpp"
 
 
 namespace frontend {
@@ -24,16 +25,11 @@ struct IdxView {
 	IdxView & operator=(IdxView && idxView) = default;
 
 	void addOnDimN(int n, int a = 1);
-
 	void set0AfterNDim(int n);
-
+	void set0AfterNDimAndCarry(int n);
 	bool isAll0AfterNDim(int n);
-
 	int getPos() const;
-
 	int getStride() const;
-
-	std::string idxToStr() const;
 };
 
 template<typename T>
@@ -58,16 +54,11 @@ struct ArrayItem {
 		std::vector<int> idx, T && val,
 		std::list<ircode::IRInstr *> instrsToInit = { }
 	) : idx(std::move(idx)), val(std::move(val)),
-	    instrsToInit(std::move(instrsToInit)) {}
+	    instrsToInit(std::move(instrsToInit)) {
+	}
 
-	int getPos(const std::vector<int> & shape) const {
-		int step = 1, pos = 0;
-		for (auto iIdx = idx.rbegin(), iShape = shape.rbegin(); iIdx != idx.rend();
-		     ++iIdx, ++iShape) {
-			pos += *iIdx * step;
-			step *= *iShape;
-		}
-		return pos;
+	int getPos(const sup::VI & shape) const {
+		return sup::idxToPos(idx, shape);
 	}
 };
 

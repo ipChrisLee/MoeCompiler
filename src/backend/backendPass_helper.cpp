@@ -334,14 +334,12 @@ std::string ToASM::declGVar(ircode::AddrGlobalVariable * pGVarAddr) {
 			).value;
 			res += pLabel->labelStr + ":\n";
 			auto space = 0;
-			for (auto intStaticValue: vecValue) {
-				auto value = intStaticValue.value;
-				if (value) {
-					if (space) {
-						res += "\t.space\t" + hexFormOf(space) + "\n";
-						space = 0;
-					}
-					res += "\t.long\t" + hexFormOf(value) + "\n";
+			for (auto valPair: vecValue) {
+				if (space) {
+					res += "\t.space\t" + hexFormOf(space) + "\n";
+					space = 0;
+					auto & value = valPair.second;
+					res += "\t.long\t" + hexFormOf(value.value) + "\n";
 				} else {
 					space += 4;
 				}
@@ -357,14 +355,12 @@ std::string ToASM::declGVar(ircode::AddrGlobalVariable * pGVarAddr) {
 			).value;
 			res += pLabel->labelStr + ":\n";
 			auto space = 0;
-			for (auto floatStaticValue: vecValue) {
-				auto value = floatStaticValue.value;
-				if (value != 0) {
-					if (space) {
-						res += "\t.space\t" + hexFormOf(space) + "\n";
-						space = 0;
-					}
-					res += "\t.long\t" + hexFormOf(value) + "\n";
+			for (auto valPair: vecValue) {
+				if (space) {
+					res += "\t.space\t" + hexFormOf(space) + "\n";
+					space = 0;
+					auto & value = valPair.second;
+					res += "\t.long\t" + hexFormOf(value.value) + "\n";
 				} else {
 					space += 4;
 				}

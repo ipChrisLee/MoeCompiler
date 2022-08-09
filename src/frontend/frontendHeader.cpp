@@ -43,27 +43,19 @@ void IdxView::set0AfterNDim(int n) {
 	}
 }
 
+void IdxView::set0AfterNDimAndCarry(int n) {
+	for (int i = n + 1; i < int(idx.size()); ++i) {
+		idx[i] = 0;
+	}
+	addOnDimN(n);
+}
+
 int IdxView::getStride() const {
 	return std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<>());
 }
 
 int IdxView::getPos() const {
-	int step = 1, pos = 0;
-	for (auto iIdx = idx.rbegin(), iShape = shape.rbegin();
-	     iIdx != idx.rend(); ++iIdx
-		) {
-		pos += *iIdx * step;
-		step *= *iShape;
-	}
-	return pos;
-}
-
-std::string IdxView::idxToStr() const {
-	auto _ = std::string();
-	std::for_each(
-		idx.begin(), idx.end(), [&_](int x) { _ += to_string(x); }
-	);
-	return _;
+	return sup::idxToPos(idx, shape);
 }
 
 bool IdxView::isAll0AfterNDim(int n) {
@@ -170,57 +162,32 @@ std::unique_ptr<sup::StaticValue> fromArrayItemsToStaticValue(
 		return convertOnSV(*items.begin()->val, typeOfElement);
 	}
 	std::vector<std::unique_ptr<StaticValue>> staticValueArray;
-	std::unique_ptr<StaticValue> defaultVal;
-	std::unique_ptr<StaticValue> res;
 	switch (typeOfElement.type) {
 		case Type::Int_t: {
-			defaultVal = std::make_unique<IntStaticValue>(0);
-			break;
+			auto res = std::make_unique<IntArrayStaticValue>(shape);
+			for (auto & item: items) {
+				auto * pVal = com::dynamic_cast_uPtr_get<IntStaticValue>(item.val);
+				if (pVal->value) {
+					res->insertValue(item.idx, *pVal);
+				}
+			}
+			return res;
 		}
 		case Type::Float_t: {
-			defaultVal = std::make_unique<FloatStaticValue>(0);
-			break;
-		}
-		case Type::Bool_t: {
-			defaultVal = std::make_unique<BoolStaticValue>(false);
-			break;
-		}
-		default: com::Throw("type should be one of int, float, bool.", CODEPOS);
-	}
-	int iPos = 0;
-	for (auto & item: items) {
-		int n = item.getPos(shape) - iPos;
-		while (n--) {
-			staticValueArray.emplace_back(
-				com::dynamic_cast_uPtr<StaticValue>(defaultVal->cloneToUniquePtr())
-			);
-		}
-		staticValueArray.emplace_back(
-			com::dynamic_cast_uPtr<StaticValue>(item.val->cloneToUniquePtr())
-		);
-		iPos = item.getPos(shape) + 1;
-	}
-	int n = shapeToStride(shape) - iPos;
-	while (n--) {
-		staticValueArray.emplace_back(
-			com::dynamic_cast_uPtr<StaticValue>(defaultVal->cloneToUniquePtr())
-		);
-	}
-	switch (typeOfElement.type) {
-		case Type::Int_t: {
-			res = std::make_unique<IntArrayStaticValue>(shape, staticValueArray);
-			break;
-		}
-		case Type::Float_t: {
-			res = std::make_unique<FloatArrayStaticValue>(shape, staticValueArray);
-			break;
+			auto res = std::make_unique<FloatArrayStaticValue>(shape);
+			for (auto & item: items) {
+				auto * pVal = com::dynamic_cast_uPtr_get<FloatStaticValue>(item.val);
+				if (bool(pVal->value)) {
+					res->insertValue(item.idx, *pVal);
+				}
+			}
+			return res;
 		}
 		case Type::Bool_t: {
 			com::Throw("bool not supported.", CODEPOS);
 		}
 		default: com::Throw("type should be one of int, float, bool.", CODEPOS);
 	}
-	return res;
 }
 
 

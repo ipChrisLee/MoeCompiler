@@ -37,7 +37,7 @@ std::string concatToString(std::initializer_list<std::string> listOfStr);
 class MException : public std::exception {
   public:
 	std::string msg = std::string();
-	int exitCode = 0;
+	int exitCode = -1;
 
 	MException() = default;
 
@@ -156,6 +156,11 @@ std::unique_ptr<To> dynamic_cast_uPtr(std::unique_ptr<From> && fromP) {
  */
 template<typename To, typename From>
 To * dynamic_cast_uPtr_get(std::unique_ptr<From> & fromP) {
+	return dynamic_cast<To *>(fromP.get());
+}
+
+template<typename To, typename From>
+To * dynamic_cast_uPtr_get(const std::unique_ptr<From> & fromP) {
 	return dynamic_cast<To *>(fromP.get());
 }
 

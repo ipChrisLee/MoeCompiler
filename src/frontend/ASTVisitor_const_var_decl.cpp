@@ -124,15 +124,8 @@ ASTVisitor::visitListConstInitVal(SysYParser::ListConstInitValContext * ctx) {
 		added = true;
 	}
 	--info.var.ndim;
-	while (!info.var.idxView.isAll0AfterNDim(info.var.ndim) || !added) {
-		info.var.staticArrayItems.insert(
-			ArrayItem<std::unique_ptr<sup::StaticValue>>(
-				info.var.idxView.idx,
-				zeroExtensionValueOfType(*bTypeToTypeInfoUPtr(info.var.btype))
-			)
-		);
-		info.var.idxView.addOnDimN(-1, 1);
-		added = true;
+	if (!info.var.idxView.isAll0AfterNDim(info.var.ndim) || !added) {
+		info.var.idxView.set0AfterNDimAndCarry(info.var.ndim);
 	}
 	return nullptr;
 }

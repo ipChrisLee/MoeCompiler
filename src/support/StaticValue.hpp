@@ -8,6 +8,7 @@
 #include "TypeInfo.hpp"
 #include "support/support-common.hpp"
 #include "support/TypeInfo.hpp"
+#include "support/Idx.hpp"
 
 
 namespace sup {
@@ -57,7 +58,7 @@ class StaticValue
 	~StaticValue() override = default;
 
 	[[nodiscard]] virtual std::unique_ptr<StaticValue>
-	getValue(const std::vector<int> &) const = 0;
+	getValue(const VI &) const = 0;
 };
 
 class FloatStaticValue
@@ -91,7 +92,7 @@ class FloatStaticValue
 	[[nodiscard]] std::string toLLVMIR() const override;
 
 	[[nodiscard]] std::unique_ptr<StaticValue>
-	getValue(const std::vector<int> &) const override;
+	getValue(const VI &) const override;
 };
 
 class IntStaticValue : public StaticValue {
@@ -124,8 +125,7 @@ class IntStaticValue : public StaticValue {
 	[[nodiscard]] std::string toLLVMIR() const override;
 
 	[[nodiscard]] std::unique_ptr<StaticValue>
-	getValue(const std::vector<int> &) const override;
-
+	getValue(const VI &) const override;
 };
 
 class BoolStaticValue : public StaticValue {
@@ -158,7 +158,7 @@ class BoolStaticValue : public StaticValue {
 	[[nodiscard]] std::string toLLVMIR() const override;
 
 	[[nodiscard]] std::unique_ptr<StaticValue>
-	getValue(const std::vector<int> &) const override;
+	getValue(const VI &) const override;
 
 };
 
@@ -172,31 +172,25 @@ class FloatArrayStaticValue
 	std::unique_ptr<Cutable> _cutToUniquePtr() override;
 
   public:
+	std::map<VI, FloatStaticValue> value;
 	std::vector<int> shape;
-	std::vector<FloatStaticValue> value;
+	FloatStaticValue zero;
 
 	FloatArrayStaticValue() = delete;
 
 	//  Init with default values.
 	explicit FloatArrayStaticValue(std::vector<int> shape);
 
-	//  staticValueArray.size() should equals to shape.
-	//  Conversion is automatically done.
-	FloatArrayStaticValue(
-		std::vector<int> shape,
-		std::vector<std::unique_ptr<StaticValue>> & staticValueArray
-	);
-
 	FloatArrayStaticValue(const FloatArrayStaticValue &) = default;
 
 	FloatArrayStaticValue(FloatArrayStaticValue &&) = default;
 
-	~FloatArrayStaticValue() override = default;
-
 	[[nodiscard]] std::string toLLVMIR() const override;
 
 	[[nodiscard]] std::unique_ptr<StaticValue>
-	getValue(const std::vector<int> & ind) const override;
+	getValue(const VI & ind) const override;
+
+	void insertValue(const VI & idx, FloatStaticValue & floatStaticValue);
 };
 
 class IntArrayStaticValue
@@ -209,16 +203,12 @@ class IntArrayStaticValue
 	std::unique_ptr<Cutable> _cutToUniquePtr() override;
 
   public:
+	std::map<VI, IntStaticValue> value;
 	std::vector<int> shape;
-	std::vector<IntStaticValue> value;
+	IntStaticValue zero;
 
 	//  Use default value.
-	explicit IntArrayStaticValue(std::vector<int> shape);
-
-	IntArrayStaticValue(
-		std::vector<int> shape,
-		std::vector<std::unique_ptr<StaticValue>> & staticValueArray
-	);
+	explicit IntArrayStaticValue(VI shape);
 
 	IntArrayStaticValue(const IntArrayStaticValue &) = default;
 
@@ -229,7 +219,9 @@ class IntArrayStaticValue
 	[[nodiscard]] std::string toLLVMIR() const override;
 
 	[[nodiscard]] std::unique_ptr<StaticValue>
-	getValue(const std::vector<int> & ind) const override;
+	getValue(const VI & ind) const override;
+
+	void insertValue(const VI & idx, IntStaticValue & intStaticValue);
 };
 
 //  If `op` is "!", `fr` is ignored.

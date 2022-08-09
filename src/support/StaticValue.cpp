@@ -1,6 +1,5 @@
 #include "StaticValue.hpp"
 
-#include <cmath>
 #include <numeric>
 
 #include <stlpro.hpp>
@@ -263,7 +262,7 @@ FloatStaticValue::_cloneToUniquePtr() const {
 }
 
 FloatStaticValue::FloatStaticValue(const std::string & literal)
-	: StaticValue(FloatType()), value(std::stof(literal)) {
+	: StaticValue(FloatType()), value(literalToFloat(literal)) {
 }
 
 std::string FloatStaticValue::toLLVMIR() const {
@@ -271,7 +270,7 @@ std::string FloatStaticValue::toLLVMIR() const {
 }
 
 std::unique_ptr<StaticValue>
-FloatStaticValue::getValue(const std::vector<int> &) const {
+FloatStaticValue::getValue(const VI &) const {
 	return com::dynamic_cast_uPtr<StaticValue>(cloneToUniquePtr());
 }
 
@@ -336,7 +335,7 @@ std::string IntStaticValue::toLLVMIR() const {
 }
 
 std::unique_ptr<StaticValue>
-IntStaticValue::getValue(const std::vector<int> &) const {
+IntStaticValue::getValue(const VI &) const {
 	return com::dynamic_cast_uPtr<StaticValue>(cloneToUniquePtr());
 }
 
@@ -392,14 +391,22 @@ FloatArrayStaticValue::_cloneToUniquePtr() const {
 }
 
 std::string FloatArrayStaticValue::toLLVMIR() const {
-	std::function<std::string(int, int, int)> fun = [&](
+	auto floatStaticValue = FloatStaticValue(0);
+	std::function<std::string(int, int, int)> fun = [&, this](
 		int from, int to, int dim
 	) -> std::string {
 		if (dim == int(shape.size())) {
 			std::string buf;
 			for (int i = from; i < to; ++i) {
-				buf +=
-					value[i].getType().toLLVMIR() + " " + value[i].toLLVMIR() + ", ";
+				auto idx = posToIdx(i, shape);
+				auto pVal = value.find(idx);
+				if (pVal == value.end()) {
+					buf += floatStaticValue.getType().toLLVMIR() + " " +
+						floatStaticValue.toLLVMIR() + ", ";
+				} else {
+					buf += pVal->second.getType().toLLVMIR() + " " +
+						pVal->second.toLLVMIR() + ", ";
+				}
 			}
 			buf.pop_back();
 			buf.pop_back();
@@ -432,48 +439,30 @@ std::string FloatArrayStaticValue::toLLVMIR() const {
 }
 
 [[nodiscard]] std::unique_ptr<StaticValue>
-FloatArrayStaticValue::getValue(const std::vector<int> & ind) const {
+FloatArrayStaticValue::getValue(const VI & ind) const {
 	if (ind.size() == shape.size()) {
-		size_t idx = 0, stride = 1;
-		for (auto itInd = ind.rbegin(), itShape = shape.rbegin();
-		     itInd != ind.rend(); ++itInd, ++itShape
-			) {
-			idx += *itInd * stride;
-			stride *= *itShape;
+		auto p = value.find(ind);
+		if (p == value.end()) {
+			return zero.getValue({ });
+		} else {
+			return p->second.getValue({ });
 		}
-		return com::dynamic_cast_uPtr<StaticValue>(value[idx].cloneToUniquePtr());
 	} else {
 		com::TODO("Maybe do not need this.", CODEPOS);
 	}
 }
 
-FloatArrayStaticValue::FloatArrayStaticValue(std::vector<int> _shape)
-	: StaticValue(sup::FloatArrayType(_shape)), shape(std::move(_shape)),
-	  value(
-		  std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<>()),
-		  FloatStaticValue()
-	  ) {
+FloatArrayStaticValue::FloatArrayStaticValue(std::vector<int> _shape) :
+	StaticValue(sup::FloatArrayType(_shape)), shape(std::move(_shape)) {
+}
+
+void FloatArrayStaticValue::insertValue(const VI & idx, FloatStaticValue & floatStaticValue) {
+	value.emplace(idx, floatStaticValue);
 }
 
 std::unique_ptr<moeconcept::Cutable>
 FloatArrayStaticValue::_cutToUniquePtr() {
 	return std::make_unique<FloatArrayStaticValue>(std::move(*this));
-}
-
-FloatArrayStaticValue::FloatArrayStaticValue(
-	std::vector<int> _shape,
-	std::vector<std::unique_ptr<StaticValue>> & staticValueArray
-) : StaticValue(sup::FloatArrayType(_shape)), shape(std::move(_shape)) {
-	com::Assert(
-		std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<>()) ==
-			int(staticValueArray.size()),
-		"size of staticValueArray should equal to mul of shape.", CODEPOS
-	);
-	for (auto & p: staticValueArray) {
-		auto pVal =
-			com::dynamic_cast_uPtr<FloatStaticValue>(convertOnSV(*p, FloatType()));
-		value.emplace_back(std::move(*pVal));
-	}
 }
 
 std::unique_ptr<moeconcept::Cloneable>
@@ -488,8 +477,14 @@ std::string IntArrayStaticValue::toLLVMIR() const {
 		if (dim == int(shape.size())) {
 			std::string buf;
 			for (int i = from; i < to; ++i) {
-				buf += value[i].getType().toLLVMIR() +
-					" " + value[i].toLLVMIR() + ", ";
+				auto ind = posToIdx(i, shape);
+				auto p = value.find(ind);
+				if (p == value.end()) {
+					buf += zero.getType().toLLVMIR() + " " + zero.toLLVMIR() + ", ";
+				} else {
+					buf += p->second.getType().toLLVMIR() +
+						" " + p->second.toLLVMIR() + ", ";
+				}
 			}
 			buf.pop_back();
 			buf.pop_back();
@@ -521,47 +516,30 @@ std::string IntArrayStaticValue::toLLVMIR() const {
 }
 
 std::unique_ptr<StaticValue>
-IntArrayStaticValue::getValue(const std::vector<int> & ind) const {
+IntArrayStaticValue::getValue(const VI & ind) const {
 	if (ind.size() == shape.size()) {
-		size_t idx = 0, stride = 1;
-		for (auto itInd = ind.rbegin(), itShape = shape.rbegin();
-		     itInd != ind.rend(); ++itInd, ++itShape
-			) {
-			idx += *itInd * stride;
-			stride *= *itShape;
+		auto p = value.find(ind);
+		if (p == value.end()) {
+			return zero.getValue({ });
+		} else {
+			return p->second.getValue({ });
 		}
-		return com::dynamic_cast_uPtr<StaticValue>(value[idx].cloneToUniquePtr());
 	} else {
 		com::TODO("Maybe do not need this.", CODEPOS);
 	}
 }
 
-IntArrayStaticValue::IntArrayStaticValue(std::vector<int> _shape)
-	: StaticValue(sup::IntArrayType(_shape)), shape(std::move(_shape)),
-	  value(
-		  std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<>()),
-		  IntStaticValue()
-	  ) {
+IntArrayStaticValue::IntArrayStaticValue(std::vector<int> _shape) :
+	StaticValue(sup::IntArrayType(_shape)), shape(std::move(_shape)) {
 }
 
 std::unique_ptr<moeconcept::Cutable> IntArrayStaticValue::_cutToUniquePtr() {
 	return std::make_unique<IntArrayStaticValue>(std::move(*this));
 }
 
-IntArrayStaticValue::IntArrayStaticValue(
-	std::vector<int> _shape,
-	std::vector<std::unique_ptr<StaticValue>> & staticValueArray
-) : StaticValue(sup::IntArrayType(_shape)), shape(std::move(_shape)) {
-	com::Assert(
-		std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<>()) ==
-			int(staticValueArray.size()),
-		"size of staticValueArray should equal to mul of shape.", CODEPOS
-	);
-	for (auto & p: staticValueArray) {
-		auto pVal =
-			com::dynamic_cast_uPtr<IntStaticValue>(convertOnSV(*p, IntType()));
-		value.emplace_back(std::move(*pVal));
-	}
+void IntArrayStaticValue::insertValue(const VI & idx, IntStaticValue & intStaticValue) {
+	com::Assert(idx.size() == shape.size(), "", CODEPOS);
+	value.emplace(idx, intStaticValue);
 }
 
 std::unique_ptr<moeconcept::Cloneable>
@@ -583,7 +561,7 @@ std::string BoolStaticValue::toLLVMIR() const {
 
 
 [[nodiscard]] std::unique_ptr<StaticValue>
-BoolStaticValue::getValue(const std::vector<int> &) const {
+BoolStaticValue::getValue(const VI &) const {
 	return com::dynamic_cast_uPtr<StaticValue>(cloneToUniquePtr());
 }
 
@@ -711,4 +689,5 @@ CalcOnStaticValue::operator()(
 }
 
 CalcOnStaticValue calcOnSV;
+
 }
