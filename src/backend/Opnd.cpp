@@ -1,3 +1,6 @@
+#include <bit>
+#include <bitset>
+
 #include "Opnd.hpp"
 
 
@@ -101,19 +104,16 @@ bool Imm<ImmType::ImmOffset>::fitThis(int32_t x) {
 
 template<>
 bool Imm<ImmType::Imm8m>::fitThis(int32_t x) {
-	uint64_t u = x;
-	u = (u << 32) + u;
-	std::bitset<64> b(u);
-	int s0mxLen = 0, len = 0;
-	for (int i = 0; i < 64; ++i) {
-		if (b[i]) {
-			len = 0;
-		} else {
-			len = len + 1;
+	auto u = (uint32_t) x;
+	auto mask = ~(uint32_t) 0xFF;
+
+	for (int i = 0; i < 32; i = i + 2) {
+		if (!(u & mask)) {
+			return true;
 		}
-		s0mxLen = std::max(s0mxLen, len);
+		u = (u >> 2) | ((u & 0x00000003) << 30);
 	}
-	return s0mxLen >= 32 - 8;
+	return false;
 }
 
 template<>
