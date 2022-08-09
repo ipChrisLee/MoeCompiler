@@ -1,0 +1,13 @@
+int sum(int ar[],int n){
+    int i=0,s=0;
+    while(i<n){
+        s=s+ar[i];
+        i=i+1;
+    }
+    return s;
+}
+
+int main(){
+    int ar[6]={0,1,2,3,4,5};
+    return sum(ar,6);
+}
