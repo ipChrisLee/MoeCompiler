@@ -884,7 +884,7 @@ std::string FuncInfo::toASM(ircode::InstrSitofp * pInstrSitofp) {
 		auto strTo = std::string();
 		if (backend::Imm<backend::ImmType::Immed>::fitThis(offset)) {
 			strTo = "[sp, " + backend::to_asm(offset) + "]";
-		} else if (backend::Imm<backend::ImmType::ImmOffset>::fitThis(offset)) {
+		} else if (backend::Imm<backend::ImmType::Imm8m>::fitThis(offset)) {
 			res += backend::toASM("add", backend::RId::rhs, backend::RId::rhs, offset);
 			strTo = "[" + backend::to_asm(backend::RId::rhs) + ", " + backend::to_asm(0) + "]";
 		} else {
@@ -930,7 +930,7 @@ std::string FuncInfo::toASM(ircode::InstrFptosi * pInstrFptosi) {
 		auto strTo = std::string();
 		if (backend::Imm<backend::ImmType::Immed>::fitThis(offset)) {
 			strTo = "[sp, " + backend::to_asm(offset) + "]";
-		} else if (backend::Imm<backend::ImmType::ImmOffset>::fitThis(offset)) {
+		} else if (backend::Imm<backend::ImmType::Imm8m>::fitThis(offset)) {
 			res += backend::toASM("add", backend::RId::rhs, backend::RId::rhs, offset);
 			strTo = "[" + backend::to_asm(backend::RId::rhs) + ", " + backend::to_asm(0) + "]";
 		} else {

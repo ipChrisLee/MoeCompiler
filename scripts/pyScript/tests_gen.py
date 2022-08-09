@@ -185,17 +185,23 @@ def test_llvmir_run():
 
 
 def test_difftest():
-	Moe.compile(
+	res = Moe.compile(
 		syFilePath=TestFilesSettings.FilePath.testSy,
 		msFilePath=TestFilesSettings.FilePath.testMLL,
 		optiLevel=args.moeOpti, timeout=TimeoutSettings.moe, emit_llvm=True,
 		float_dec_format=False
-	).check_returncode()
-	Clang.compile_to_ass(
+	)
+	if res.returncode != 0:
+		cprint(res.stderr, color=C.WA)
+		res.check_returncode()
+	res = Clang.compile_to_ass(
 		syFilePath=TestFilesSettings.FilePath.testSy,
 		sFilePath=TestFilesSettings.FilePath.testS,
 		optiLevel=0
-	).check_returncode()
+	)
+	if res.returncode != 0:
+		cprint(res.stderr, color=C.WA)
+		res.check_returncode()
 	Pi.run_tester(
 		sFilePath=TestFilesSettings.FilePath.testS,
 		inFilePath=TestFilesSettings.FilePath.testIn,
@@ -203,12 +209,15 @@ def test_difftest():
 		resFilePath=TestFilesSettings.FilePath.testRes
 	)
 	Pi.get_from_pi('.tmp/buffer.txt', TestFilesSettings.FilePath.testOut)
-	Moe.compile(
+	res = Moe.compile(
 		syFilePath=TestFilesSettings.FilePath.testSy,
 		msFilePath=TestFilesSettings.FilePath.testMS,
 		optiLevel=args.moeOpti, timeout=TimeoutSettings.moe, emit_llvm=False,
 		float_dec_format=False
-	).check_returncode()
+	)
+	if res.returncode != 0:
+		cprint(res.stderr, color=C.WA)
+		res.check_returncode()
 	res = Pi.run_tester(
 		sFilePath=TestFilesSettings.FilePath.testMS,
 		inFilePath=TestFilesSettings.FilePath.testIn,
