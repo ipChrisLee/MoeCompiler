@@ -325,6 +325,11 @@ std::unique_ptr<moeconcept::Cutable> FloatStaticValue::_cutToUniquePtr() {
 	return std::make_unique<FloatStaticValue>(std::move(*this));
 }
 
+void FloatStaticValue::insertValue(const VI & idx, StaticValue & staticValue) {
+	auto pSV = com::dynamic_cast_uPtr<FloatStaticValue>(convertOnSV(staticValue, FloatType()));
+	value = pSV->value;
+}
+
 std::unique_ptr<moeconcept::Cloneable>
 IntStaticValue::_cloneToUniquePtr() const {
 	return std::make_unique<IntStaticValue>(*this);
@@ -387,6 +392,11 @@ IntStaticValue::calc(const std::string & op) const {
 
 std::unique_ptr<moeconcept::Cutable> IntStaticValue::_cutToUniquePtr() {
 	return std::make_unique<IntStaticValue>(std::move(*this));
+}
+
+void IntStaticValue::insertValue(const VI & idx, StaticValue & staticValue) {
+	auto pSV = com::dynamic_cast_uPtr<IntStaticValue>(convertOnSV(staticValue, IntType()));
+	value = pSV->value;
 }
 
 std::unique_ptr<moeconcept::Cloneable>
@@ -571,6 +581,11 @@ BoolStaticValue::getValue(const VI &) const {
 	return com::dynamic_cast_uPtr<StaticValue>(cloneToUniquePtr());
 }
 
+void BoolStaticValue::insertValue(const sup::VI & idx, sup::StaticValue & staticValue) {
+	auto pSV = com::dynamic_cast_uPtr<BoolStaticValue>(convertOnSV(staticValue, BoolType()));
+	value = pSV->value;
+}
+
 std::unique_ptr<StaticValue> BoolStaticValue::calc(
 	const std::string & op, const StaticValue & oVal
 ) const {
@@ -715,6 +730,9 @@ fromTypeInfoToStaticValue(const TypeInfo & typeInfo) {
 		}
 		case Type::Bool_t: {
 			return std::make_unique<BoolStaticValue>();
+		}
+		case Type::Pointer_t: {
+			return nullptr;
 		}
 		default: com::Throw("", CODEPOS);
 	}

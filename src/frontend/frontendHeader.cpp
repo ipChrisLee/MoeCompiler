@@ -168,7 +168,7 @@ std::list<ircode::IRInstr *> fromArrayItemsToInstrs(
 		);
 		iPos = posNow + 1;
 	}
-	posNow = sup::idxToPos(shape, shape);
+	posNow = sup::lastPosOfShape(shape);
 	for (; iPos < posNow; iPos++) {
 		auto * pValAddr = ir.addrPool.emplace_back(
 			ircode::AddrStaticValue(typeOfElement)

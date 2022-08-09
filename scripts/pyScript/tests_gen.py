@@ -5,6 +5,7 @@ from settings import TestFilesSettings, BasicSettings, TimeoutSettings
 import argparse
 from case_and_case_set import TestCase, allTestCaseSet
 import json
+from color import cprint, C
 
 argParser = argparse.ArgumentParser(
 	description='Use clang and moe compile SysY.',
@@ -140,10 +141,13 @@ def test_moe():
 
 
 def test_llvm():
-	Clang.compile_to_llvmir(
+	res = Clang.compile_to_llvmir(
 		syFilePath=TestFilesSettings.FilePath.testSy,
 		llFilePath=TestFilesSettings.FilePath.testLL
-	).check_returncode()
+	)
+	if res.returncode != 0:
+		cprint(res.stderr, color=C.WA)
+		exit(1)
 	Opt.opt(
 		llFilePath=TestFilesSettings.FilePath.testLL,
 		newLLFilePath=TestFilesSettings.FilePath.testOptLL,

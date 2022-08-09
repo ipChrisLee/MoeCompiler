@@ -12,7 +12,6 @@ IRAddrPool::IRAddrPool() : pool() {
 	};
 }
 
-
 std::string IRAddrPool::toLLVMIR() const {
 	std::string res;
 	for (auto & pAddr: globalVars) {

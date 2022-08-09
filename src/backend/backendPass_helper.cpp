@@ -357,7 +357,7 @@ std::string ToASM::declGVar(ircode::AddrGlobalVariable * pGVarAddr) {
 				res += "\t.long\t" + hexFormOf(value.value) + "\n";
 				iPos = posNow + 4;
 			}
-			posNow = sup::idxToPos(viTypeInfo.shape, viTypeInfo.shape);
+			posNow = sup::lastPosOfShape(viTypeInfo.shape) * 4;
 			if (posNow - iPos) {
 				res += "\t.space\t" + hexFormOf(posNow - iPos) + "\n";
 			}
@@ -383,7 +383,7 @@ std::string ToASM::declGVar(ircode::AddrGlobalVariable * pGVarAddr) {
 				res += "\t.long\t" + hexFormOf(value.value) + "\n";
 				iPos = posNow + 4;
 			}
-			posNow = sup::idxToPos(vfTypeInfo.shape, vfTypeInfo.shape);
+			posNow = sup::lastPosOfShape(vfTypeInfo.shape) * 4;
 			if (posNow - iPos) {
 				res += "\t.space\t" + hexFormOf(posNow - iPos) + "\n";
 			}

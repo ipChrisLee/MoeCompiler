@@ -395,7 +395,6 @@ std::string FuncInfo::toASM_Store_IntArray(ircode::InstrStore * pInstrStore) {
 			backend::to_asm(0) + "]";
 		res += backend::toASM("str", backend::RId::rhs, saveTo);
 		res += backend::toASM("add", backend::RId::lhs, backend::RId::lhs, 4);
-
 	}
 	return res;
 }

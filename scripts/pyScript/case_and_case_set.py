@@ -89,6 +89,12 @@ def load_testcases_under_folder_path(
 	return res
 
 
+myFuncTestCaseSet = TestCaseSet(
+	load_testcases_under_folder_path(
+		'testcases/my_function_test', 2022, TestType.Function
+	), "m2022"
+)
+
 allFunctionTestsCaseSet = TestCaseSet(
 	set.union(
 		load_testcases_under_folder_path(
@@ -99,7 +105,10 @@ allFunctionTestsCaseSet = TestCaseSet(
 		),
 		load_testcases_under_folder_path(
 			"testcases/SysYTestCase/function_test2022", 2022, TestType.Function
-		)
+		),
+		load_testcases_under_folder_path(
+			'testcases/my_function_test', 2022, TestType.Function
+		),
 	), "function"
 )
 

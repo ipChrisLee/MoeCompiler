@@ -13,11 +13,16 @@ VI posToIdx(int pos, const VI & shape) {
 	return res;
 }
 
+int lastPosOfShape(const VI & shape) {
+	return std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<>());
+}
+
 int idxToPos(const VI & idx, const VI & shape) {
 	com::Assert(idx.size() == shape.size(), "", CODEPOS);
 	auto n = int(idx.size());
 	auto pos = 0;
 	for (auto i = n - 1; i >= 0; --i) {
+		com::Assert(idx[i] < shape[i], "", CODEPOS);
 		pos += std::accumulate(
 			shape.begin() + i + 1, shape.end(), idx[i], std::multiplies<>()
 		);

@@ -3,6 +3,6 @@
     "info": "Test passed!",
     "test_status": "AC",
     "stderr": "TOTAL: 0H-0M-0S-0us\n",
-    "out": "25",
-    "time_now": "07:29:56"
+    "out": "1024\n0",
+    "time_now": "19:25:56"
 }

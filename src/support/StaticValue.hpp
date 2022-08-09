@@ -95,6 +95,8 @@ class FloatStaticValue
 
 	[[nodiscard]] std::unique_ptr<StaticValue>
 	getValue(const VI &) const override;
+
+	void insertValue(const sup::VI & idx, sup::StaticValue & staticValue) override;
 };
 
 class IntStaticValue : public StaticValue {
@@ -128,6 +130,8 @@ class IntStaticValue : public StaticValue {
 
 	[[nodiscard]] std::unique_ptr<StaticValue>
 	getValue(const VI &) const override;
+
+	void insertValue(const sup::VI & idx, sup::StaticValue & staticValue) override;
 };
 
 class BoolStaticValue : public StaticValue {
@@ -161,6 +165,8 @@ class BoolStaticValue : public StaticValue {
 
 	[[nodiscard]] std::unique_ptr<StaticValue>
 	getValue(const VI &) const override;
+
+	void insertValue(const sup::VI & idx, sup::StaticValue & staticValue) override;
 
 };
 
