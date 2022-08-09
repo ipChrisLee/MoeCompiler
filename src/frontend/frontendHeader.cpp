@@ -168,6 +168,30 @@ std::list<ircode::IRInstr *> fromArrayItemsToInstrs(
 		);
 		iPos = posNow + 1;
 	}
+	posNow = sup::idxToPos(shape, shape);
+	for (; iPos < posNow; iPos++) {
+		auto * pValAddr = ir.addrPool.emplace_back(
+			ircode::AddrStaticValue(typeOfElement)
+		);
+		auto pValMem = ir.addrPool.emplace_back(
+			ircode::AddrVariable(PointerType(typeOfElement))
+		);
+		auto bias = static_cast<ircode::AddrOperand *>(ir.addrPool.emplace_back(
+			ircode::AddrStaticValue(
+				IntType(), IntStaticValue(iPos)
+			)
+		));
+		instrsRes.emplace_back(
+			ir.instrPool.emplace_back(
+				ircode::InstrGetelementptr(pValMem, pBegin, {bias})
+			)
+		);
+		instrsRes.emplace_back(
+			ir.instrPool.emplace_back(
+				ircode::InstrStore(pValAddr, pValMem)
+			)
+		);
+	}
 	com::addRuntimeWarning(
 		"Initialization of array can be optimized on frontend.", CODEPOS, true
 	);

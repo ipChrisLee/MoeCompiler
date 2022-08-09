@@ -27,6 +27,15 @@ FuncInfo::genASMLoadFloat(
 }
 
 backend::RId
+FuncInfo::genASMLoadFloatToRReg(std::string & res, float val, backend::RId ridDest) {
+	res += "@\t" + to_string(val) + "\n";
+	auto [highVal, lowVal] = backend::splitNumber(val);
+	res += backend::toASM("movw", ridDest, lowVal);
+	if (highVal) { res += backend::toASM("movt", ridDest, highVal); }
+	return ridDest;
+}
+
+backend::RId
 FuncInfo::genASMLoadLabel(
 	std::string & res, backend::Label * pLabel, backend::RId to
 ) {

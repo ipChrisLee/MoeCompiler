@@ -140,6 +140,9 @@ class FuncInfo {
 	genASMLoadFloat(std::string & res, float val, backend::SId to, backend::RId scratchRId);
 
 	static backend::RId
+	genASMLoadFloatToRReg(std::string & res, float val, backend::RId ridDest);
+
+	static backend::RId
 	genASMLoadLabel(std::string & res, backend::Label * pLabel, backend::RId to);
 
 	static void

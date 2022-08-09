@@ -209,6 +209,7 @@ int FuncInfo::run(ircode::InstrStore * pInstrStore) {
 		case sup::Type::Int_t: {
 			return run_Store_Int(pInstrStore);
 		}
+		case sup::Type::FloatArray_t:
 		case sup::Type::Float_t: {
 			return run_Store_Float(pInstrStore);
 		}
@@ -285,6 +286,9 @@ std::string FuncInfo::toASM(ircode::InstrStore * pInstrStore) {
 		}
 		case sup::Type::IntArray_t: {
 			return toASM_Store_IntArray(pInstrStore);
+		}
+		case sup::Type::FloatArray_t: {
+			return toASM_Store_FloatArray(pInstrStore);
 		}
 		default:com::Throw("", CODEPOS);
 	}
@@ -373,16 +377,25 @@ std::string FuncInfo::toASM_Store_IntArray(ircode::InstrStore * pInstrStore) {
 			"add", backend::RId::lhs, backend::RId::sp, backend::RId::lhs
 		);
 	}
+	auto & shape = dynamic_cast<const sup::IntArrayStaticValue &>(
+		pSVAddrFrom->getStaticValue()
+	).shape;
 	const auto & vecStaticValue = dynamic_cast<const sup::IntArrayStaticValue &>(
 		pSVAddrFrom->getStaticValue()
 	).value;
-	for (const auto & valuePair: vecStaticValue) {
-		const auto & val = valuePair.second;
-		genASMLoadInt(res, val.value, backend::RId::rhs);
+	auto step = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<>());
+	for (auto i = 0; i < step; ++i) {
+		auto value = 0;
+		auto p = vecStaticValue.find(sup::posToIdx(i, shape));
+		if (p != vecStaticValue.end()) {
+			value = p->second.value;
+		}
+		genASMLoadInt(res, value, backend::RId::rhs);
 		auto saveTo = "[" + backend::to_asm(backend::RId::lhs) + ", " +
 			backend::to_asm(0) + "]";
 		res += backend::toASM("str", backend::RId::rhs, saveTo);
 		res += backend::toASM("add", backend::RId::lhs, backend::RId::lhs, 4);
+
 	}
 	return res;
 }
@@ -470,16 +483,25 @@ std::string FuncInfo::toASM_Store_FloatArray(ircode::InstrStore * pInstrStore) {
 			"add", backend::RId::lhs, backend::RId::sp, backend::RId::lhs
 		);
 	}
+	auto & shape = dynamic_cast<const sup::FloatArrayStaticValue &>(
+		pSVAddrFrom->getStaticValue()
+	).shape;
 	const auto & vecStaticValue = dynamic_cast<const sup::FloatArrayStaticValue &>(
 		pSVAddrFrom->getStaticValue()
 	).value;
-	for (const auto & valPair: vecStaticValue) {
-		const auto & val = valPair.second;
-		genASMLoadFloat(res, val.value, backend::SId::rhs, backend::RId::rhs);
+	auto step = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<>());
+	for (auto i = 0; i < step; ++i) {
+		auto value = 0.0f;
+		auto p = vecStaticValue.find(sup::posToIdx(i, shape));
+		if (p != vecStaticValue.end()) {
+			value = p->second.value;
+		}
+		genASMLoadFloatToRReg(res, value, backend::RId::rhs);
 		auto saveTo = "[" + backend::to_asm(backend::RId::lhs) + ", " +
 			backend::to_asm(0) + "]";
-		res += backend::toASM("vstr", backend::SId::rhs, saveTo);
+		res += backend::toASM("str", backend::RId::rhs, saveTo);
 		res += backend::toASM("add", backend::RId::lhs, backend::RId::lhs, 4);
+
 	}
 	return res;
 }
