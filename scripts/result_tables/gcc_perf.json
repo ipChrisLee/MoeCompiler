@@ -1,0 +1,474 @@
+{
+    "gameoflife-oscillator": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0095-0106: 0H-0M-6S-564883us\nTOTAL: 0H-0M-6S-564883us\n",
+        "time_now": "01:25:56",
+        "time_cost": 6.564883
+    },
+    "dead-code-elimination-1": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@100016-100032: 0H-0M-0S-2us\nTOTAL: 0H-0M-0S-2us\n",
+        "time_now": "01:25:58",
+        "time_cost": 0.2
+    },
+    "sl2": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0013-0053: 0H-0M-3S-599247us\nTOTAL: 0H-0M-3S-599247us\n",
+        "time_now": "01:26:02",
+        "time_cost": 3.599247
+    },
+    "sl1": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0013-0053: 0H-0M-9S-411721us\nTOTAL: 0H-0M-9S-411721us\n",
+        "time_now": "01:26:12",
+        "time_cost": 9.411721
+    },
+    "transpose2": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0028-0047: 0H-0M-9S-302596us\nTOTAL: 0H-0M-9S-302596us\n",
+        "time_now": "01:26:22",
+        "time_cost": 9.302596
+    },
+    "02_mv2": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0059-0067: 0H-0M-1S-365119us\nTOTAL: 0H-0M-1S-365119us\n",
+        "time_now": "01:26:28",
+        "time_cost": 1.365119
+    },
+    "fft0": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0060-0079: 0H-0M-4S-116276us\nTOTAL: 0H-0M-4S-116276us\n",
+        "time_now": "01:26:33",
+        "time_cost": 4.116276
+    },
+    "gameoflife-gosper": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0095-0106: 0H-0M-7S-495571us\nTOTAL: 0H-0M-7S-495571us\n",
+        "time_now": "01:26:41",
+        "time_cost": 7.495571
+    },
+    "integer-divide-optimization-3": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@1016-1031: 0H-0M-1S-715238us\nTOTAL: 0H-0M-1S-715238us\n",
+        "time_now": "01:26:46",
+        "time_cost": 1.715238
+    },
+    "crypto-3": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0161-0184: 0H-0M-0S-782768us\nTOTAL: 0H-0M-0S-782768us\n",
+        "time_now": "01:26:47",
+        "time_cost": 0.782768
+    },
+    "dead-code-elimination-3": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@100016-100032: 0H-0M-0S-10981us\nTOTAL: 0H-0M-0S-10981us\n",
+        "time_now": "01:26:49",
+        "time_cost": 0.10981
+    },
+    "brainfuck-pi-nerf": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0116-0118: 0H-0M-1S-264197us\nTOTAL: 0H-0M-1S-264197us\n",
+        "time_now": "01:26:50",
+        "time_cost": 1.264197
+    },
+    "floyd-0": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0062-0064: 0H-0M-0S-29us\nTOTAL: 0H-0M-0S-29us\n",
+        "time_now": "01:26:51",
+        "time_cost": 0.29
+    },
+    "transpose1": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0028-0047: 0H-0M-2S-123211us\nTOTAL: 0H-0M-2S-123211us\n",
+        "time_now": "01:26:54",
+        "time_cost": 2.123211
+    },
+    "dead-code-elimination-2": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@100016-100032: 0H-0M-0S-110us\nTOTAL: 0H-0M-0S-110us\n",
+        "time_now": "01:26:55",
+        "time_cost": 0.11
+    },
+    "crypto-1": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0161-0184: 0H-0M-0S-662163us\nTOTAL: 0H-0M-0S-662163us\n",
+        "time_now": "01:26:57",
+        "time_cost": 0.662163
+    },
+    "floyd-1": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0062-0064: 0H-0M-0S-4455us\nTOTAL: 0H-0M-0S-4455us\n",
+        "time_now": "01:26:57",
+        "time_cost": 0.4455
+    },
+    "03_sort3": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0090-0102: 0H-0M-2S-141041us\nTOTAL: 0H-0M-2S-141041us\n",
+        "time_now": "01:27:07",
+        "time_cost": 2.141041
+    },
+    "instruction-combining-1": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@10015-10030: 0H-0M-0S-2us\nTOTAL: 0H-0M-0S-2us\n",
+        "time_now": "01:27:08",
+        "time_cost": 0.2
+    },
+    "crypto-2": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0161-0184: 0H-0M-0S-546821us\nTOTAL: 0H-0M-0S-546821us\n",
+        "time_now": "01:27:09",
+        "time_cost": 0.546821
+    },
+    "hoist-3": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0121-0123: 0H-0M-5S-62618us\nTOTAL: 0H-0M-5S-62618us\n",
+        "time_now": "01:27:14",
+        "time_cost": 5.62618
+    },
+    "00_bitset1": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0056-0064: 0H-0M-1S-62920us\nTOTAL: 0H-0M-1S-62920us\n",
+        "time_now": "01:27:16",
+        "time_cost": 1.6292
+    },
+    "fft1": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0060-0079: 0H-0M-8S-727317us\nTOTAL: 0H-0M-8S-727317us\n",
+        "time_now": "01:27:26",
+        "time_cost": 8.727317
+    },
+    "04_spmv2": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0039-0047: 0H-0M-1S-623291us\nTOTAL: 0H-0M-1S-623291us\n",
+        "time_now": "01:27:30",
+        "time_cost": 1.623291
+    },
+    "brainfuck-bootstrap": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0116-0118: 0H-0M-6S-189325us\nTOTAL: 0H-0M-6S-189325us\n",
+        "time_now": "01:27:37",
+        "time_cost": 6.189325
+    },
+    "integer-divide-optimization-1": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@1016-1031: 0H-0M-0S-215us\nTOTAL: 0H-0M-0S-215us\n",
+        "time_now": "01:27:39",
+        "time_cost": 0.215
+    },
+    "integer-divide-optimization-2": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@1016-1031: 0H-0M-0S-106697us\nTOTAL: 0H-0M-0S-106697us\n",
+        "time_now": "01:27:42",
+        "time_cost": 0.106697
+    },
+    "floyd-2": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0062-0064: 0H-0M-1S-996826us\nTOTAL: 0H-0M-1S-996826us\n",
+        "time_now": "01:27:45",
+        "time_cost": 1.996826
+    },
+    "02_mv1": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0059-0067: 0H-0M-2S-994513us\nTOTAL: 0H-0M-2S-994513us\n",
+        "time_now": "01:27:50",
+        "time_cost": 2.994513
+    },
+    "conv1": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0109-0116: 0H-0M-18S-73890us\nTOTAL: 0H-0M-18S-73890us\n",
+        "time_now": "01:28:13",
+        "time_cost": 18.7389
+    },
+    "01_mm2": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0065-0084: 0H-0M-4S-985669us\nTOTAL: 0H-0M-4S-985669us\n",
+        "time_now": "01:28:19",
+        "time_cost": 4.985669
+    },
+    "shuffle2": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0078-0090: 0H-0M-3S-763045us\nTOTAL: 0H-0M-3S-763045us\n",
+        "time_now": "01:28:57",
+        "time_cost": 3.763045
+    },
+    "01_mm1": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0065-0084: 0H-0M-4S-919493us\nTOTAL: 0H-0M-4S-919493us\n",
+        "time_now": "01:29:03",
+        "time_cost": 4.919493
+    },
+    "hoist-2": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0121-0123: 0H-0M-0S-500548us\nTOTAL: 0H-0M-0S-500548us\n",
+        "time_now": "01:29:04",
+        "time_cost": 0.500548
+    },
+    "conv0": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0109-0116: 0H-0M-11S-579920us\nTOTAL: 0H-0M-11S-579920us\n",
+        "time_now": "01:29:17",
+        "time_cost": 11.57992
+    },
+    "hoist-1": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0121-0123: 0H-0M-0S-501us\nTOTAL: 0H-0M-0S-501us\n",
+        "time_now": "01:29:18",
+        "time_cost": 0.501
+    },
+    "00_bitset3": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0056-0064: 0H-0M-3S-127924us\nTOTAL: 0H-0M-3S-127924us\n",
+        "time_now": "01:29:22",
+        "time_cost": 3.127924
+    },
+    "median1": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0059-0061: 0H-0M-0S-1681us\nTOTAL: 0H-0M-0S-1681us\n",
+        "time_now": "01:29:22",
+        "time_cost": 0.1681
+    },
+    "median2": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0059-0061: 0H-0M-15S-782877us\nTOTAL: 0H-0M-15S-782877us\n",
+        "time_now": "01:29:39",
+        "time_cost": 15.782877
+    },
+    "shuffle1": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0078-0090: 0H-0M-10S-623461us\nTOTAL: 0H-0M-10S-623461us\n",
+        "time_now": "01:29:53",
+        "time_cost": 10.623461
+    },
+    "01_mm3": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0065-0084: 0H-0M-3S-834481us\nTOTAL: 0H-0M-3S-834481us\n",
+        "time_now": "01:29:58",
+        "time_cost": 3.8344810000000003
+    },
+    "brainfuck-mandelbrot-nerf": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0116-0118: 0H-0M-20S-834179us\nTOTAL: 0H-0M-20S-834179us\n",
+        "time_now": "01:30:19",
+        "time_cost": 20.834179
+    },
+    "03_sort1": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0090-0102: 0H-0M-0S-869560us\nTOTAL: 0H-0M-0S-869560us\n",
+        "time_now": "01:30:23",
+        "time_cost": 0.86956
+    },
+    "02_mv3": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0059-0067: 0H-0M-2S-36754us\nTOTAL: 0H-0M-2S-36754us\n",
+        "time_now": "01:30:28",
+        "time_cost": 2.36754
+    },
+    "shuffle0": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0078-0090: 0H-0M-5S-371162us\nTOTAL: 0H-0M-5S-371162us\n",
+        "time_now": "01:30:34",
+        "time_cost": 5.371162
+    },
+    "instruction-combining-2": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@10015-10030: 0H-0M-0S-219us\nTOTAL: 0H-0M-0S-219us\n",
+        "time_now": "01:30:36",
+        "time_cost": 0.219
+    },
+    "gameoflife-p61glidergun": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0095-0106: 0H-0M-6S-630145us\nTOTAL: 0H-0M-6S-630145us\n",
+        "time_now": "01:30:43",
+        "time_cost": 6.630145
+    },
+    "conv2": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0109-0116: 0H-0M-11S-690496us\nTOTAL: 0H-0M-11S-690496us\n",
+        "time_now": "01:31:00",
+        "time_cost": 11.690496
+    },
+    "00_bitset2": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0056-0064: 0H-0M-2S-118686us\nTOTAL: 0H-0M-2S-118686us\n",
+        "time_now": "01:31:03",
+        "time_cost": 2.118686
+    },
+    "median0": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0059-0061: 0H-0M-3S-831681us\nTOTAL: 0H-0M-3S-831681us\n",
+        "time_now": "01:31:08",
+        "time_cost": 3.831681
+    },
+    "04_spmv3": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0039-0047: 0H-0M-1S-122731us\nTOTAL: 0H-0M-1S-122731us\n",
+        "time_now": "01:31:11",
+        "time_cost": 1.122731
+    },
+    "04_spmv1": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0039-0047: 0H-0M-2S-407803us\nTOTAL: 0H-0M-2S-407803us\n",
+        "time_now": "01:31:16",
+        "time_cost": 2.407803
+    },
+    "sl3": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0013-0053: 0H-0M-1S-705554us\nTOTAL: 0H-0M-1S-705554us\n",
+        "time_now": "01:31:18",
+        "time_cost": 1.705554
+    },
+    "03_sort2": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0090-0102: 0H-0M-11S-172153us\nTOTAL: 0H-0M-11S-172153us\n",
+        "time_now": "01:32:01",
+        "time_cost": 11.172153
+    },
+    "instruction-combining-3": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@10015-10030: 0H-0M-0S-220us\nTOTAL: 0H-0M-0S-220us\n",
+        "time_now": "01:32:01",
+        "time_cost": 0.22
+    },
+    "fft2": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0060-0079: 0H-0M-8S-557501us\nTOTAL: 0H-0M-8S-557501us\n",
+        "time_now": "01:32:11",
+        "time_cost": 8.557501
+    },
+    "stencil0": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0023-0059: 0H-0M-0S-39505us\nTOTAL: 0H-0M-0S-39505us\n",
+        "time_now": "01:32:13",
+        "time_cost": 0.39505
+    },
+    "transpose0": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0028-0047: 0H-0M-2S-865876us\nTOTAL: 0H-0M-2S-865876us\n",
+        "time_now": "01:32:16",
+        "time_cost": 2.865876
+    },
+    "stencil1": {
+        "exit_code": 0,
+        "info": "Test passed!",
+        "test_status": "AC",
+        "stderr": "Timer@0023-0059: 0H-0M-0S-89325us\nTOTAL: 0H-0M-0S-89325us\n",
+        "time_now": "01:32:18",
+        "time_cost": 0.89325
+    }
+}

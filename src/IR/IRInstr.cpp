@@ -102,6 +102,10 @@ InstrStore::InstrStore(AddrOperand * from, AddrVariable * to) :
 	);
 }
 
+std::vector<IRAddr *> InstrStore::getOperands() const {
+	return {from};
+}
+
 
 InstrRet::InstrRet(AddrOperand * pAddr) :
 	IRInstr(InstrType::Ret), retAddr(pAddr) {
@@ -126,6 +130,10 @@ std::string InstrRet::toLLVMIR() const {
 	}
 }
 
+std::vector<IRAddr *> InstrRet::getOperands() const {
+	return {retAddr};
+}
+
 InstrBinaryOp::InstrBinaryOp(
 	AddrOperand * left, AddrOperand * right, AddrVariable * res,
 	InstrType instrType
@@ -136,6 +144,10 @@ InstrBinaryOp::InstrBinaryOp(
 		"Type of operand and result should be same!",
 		CODEPOS
 	);
+}
+
+std::vector<IRAddr *> InstrBinaryOp::getOperands() const {
+	return {left, right};
 }
 
 InstrAdd::InstrAdd(AddrOperand * left, AddrOperand * right, AddrVariable * res) :
@@ -234,6 +246,10 @@ std::string InstrLoad::toLLVMIR() const {
 		+ from->getType().toLLVMIR() + " " + from->toLLVMIR() + ", align 4";
 }
 
+std::vector<IRAddr *> InstrLoad::getOperands() const {
+	return {from};
+}
+
 std::string InstrBr::toLLVMIR() const {
 	if (pCond) {
 		return
@@ -265,6 +281,10 @@ InstrBr::InstrBr(
 	com::Assert(
 		pCond->getType().type == Type::Bool_t, "cond should be bool.", CODEPOS
 	);
+}
+
+std::vector<IRAddr *> InstrBr::getOperands() const {
+	return {pCond};
 }
 
 InstrMul::InstrMul(AddrOperand * left, AddrOperand * right, AddrVariable * res) :
@@ -626,5 +646,10 @@ std::string InstrZExt::toLLVMIR() const {
 		to->toLLVMIR() + " = zext " + from->getType().toLLVMIR() + " " +
 		from->toLLVMIR() + " to " + to->getType().toLLVMIR();
 }
+
+std::vector<IRAddr *> IRInstr::getOperands() const {
+	return { };
+}
+
 }
 

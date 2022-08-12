@@ -1,3 +1,5 @@
+const int N=100;
+int ar[N]={1,2,3};
 int main(){
     int x=0;
     x=x+1032;

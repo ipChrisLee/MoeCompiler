@@ -1,7 +1,3 @@
-//
-// Created by lee on 7/18/22.
-//
-
 #include <common.hpp>
 
 #include "pass-common.hpp"

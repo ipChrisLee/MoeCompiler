@@ -1,7 +1,7 @@
-from settings import BasicSettings
-from command_line_tool import run_command, TimeoutSettings
+from scripts.pyScript.helper.settings import BasicSettings
+from scripts.pyScript.helper.command_line_tool import run_command, TimeoutSettings
 import subprocess
-from py_tools import classproperty
+from scripts.pyScript.py_tools import classproperty
 
 
 class Moe:

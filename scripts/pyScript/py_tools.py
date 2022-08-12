@@ -1,4 +1,4 @@
-from color import C, cprint
+from scripts.pyScript.helper.color import C, cprint
 import typing as typ
 
 

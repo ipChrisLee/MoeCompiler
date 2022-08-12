@@ -4,8 +4,9 @@ import paramiko
 import os
 import atexit
 from pathlib import Path
-from settings import TestFilesSettings, TimeoutSettings
+from scripts.pyScript.helper.settings import TimeoutSettings
 import json
+from scripts.piScripts.test_info import RunningInfo, TestStatus
 
 
 class Pi:
@@ -19,10 +20,14 @@ class Pi:
 	piResultFilePath: str = f'{projPathOnPi}/result.json'
 	piTestPyFilePath: str = f'{projPathOnPi}/test.py'
 	piALibFilePath: str = f'{projPathOnPi}/libsysy.a'
+	piMySysYLibFilePath: str = f'{projPathOnPi}/mySyLib.s'
 	_piFiles: typ.Dict[str, str] = {
 		'scripts/piScripts/test.py': f'{projPathOnPi}/test.py',
 		'scripts/piScripts/runpy.sh': f'{projPathOnPi}/runpy.sh',
-		'scripts/piScripts/compile_run.sh': f'{projPathOnPi}/compile_run.sh'
+		'scripts/piScripts/compile_run.sh': f'{projPathOnPi}/compile_run.sh',
+		'scripts/piScripts/m_compile_run.sh': f'{projPathOnPi}/m_compile_run.sh',
+		'scripts/piScripts/test_info.py': f'{projPathOnPi}/test_info.py',
+		'scripts/piScripts/mySyLib.s': piMySysYLibFilePath
 	}
 	commandToRunPiTester: typ.List[str] = [
 		'python', f'{piTestPyFilePath}',
@@ -31,6 +36,14 @@ class Pi:
 		'--out', f'{piTestOutFilePath}',
 		'--res', f'{piResultFilePath}',
 		'--alib', f'{piALibFilePath}',
+	]
+	commandToRunPiTesterWithMySysYLib: typ.List[str] = [
+		'python', f'{piTestPyFilePath}',
+		'--ms', f'{piTestSFilePath}',
+		'--in', f'{piTestInFilePath}',
+		'--out', f'{piTestOutFilePath}',
+		'--res', f'{piResultFilePath}',
+		'--alib', f'{piMySysYLibFilePath}',
 	]
 	piSSH = paramiko.SSHClient()
 	
@@ -69,7 +82,7 @@ class Pi:
 			Pi.send_to_pi(localFilePath=localFilePath, piFilePath=piFilePath)
 	
 	@staticmethod
-	def run(args: typ.List[str]):
+	def run(args: typ.List[str]) -> RunningInfo:
 		"""
 		Blocking call commands. Kill this program if failed.
 		"""
@@ -77,34 +90,45 @@ class Pi:
 			= Pi.piSSH.exec_command(sp.list2cmdline(args),
 			                        timeout=TimeoutSettings.run)
 		exitStatus = stdout.channel.recv_exit_status()
-		return {
-			'exit_status': exitStatus,
-			'info': stderr.readlines()
-		}
+		if exitStatus != 0:
+			return RunningInfo(
+				exit_code=exitStatus, stderr=stderr.read().decode('utf-8'),
+				test_status=TestStatus.CE,
+				info='Failed to run command on pi.'
+			)
+		else:
+			return RunningInfo(
+				exit_code=exitStatus, stderr=stderr.read().decode('utf-8'),
+				test_status=TestStatus.AC,
+				info='Successfully running commands on pi'
+			)
 	
 	@staticmethod
 	def run_tester(
-		sFilePath: str, inFilePath: str, outFilePath: str, resFilePath: str
-	):
+		sFilePath: str, inFilePath: str, outFilePath: str, resFilePath: str,
+		mySysYLib: bool = False
+	) -> RunningInfo:
 		"""
 		:param sFilePath: sy file path on local;
 		:param inFilePath: in file path on local;
 		:param outFilePath: out file path on local;
 		:param resFilePath: file path to save res on local.
-		:return res json
 		"""
 		Pi.send_to_pi(sFilePath, piFilePath=Pi.piTestSFilePath)
 		Pi.send_to_pi(inFilePath, piFilePath=Pi.piTestInFilePath)
 		Pi.send_to_pi(outFilePath, piFilePath=Pi.piTestOutFilePath)
-		res = Pi.run(Pi.commandToRunPiTester)
+		if mySysYLib:
+			res = Pi.run(Pi.commandToRunPiTesterWithMySysYLib)
+		else:
+			res = Pi.run(Pi.commandToRunPiTester)
+		if not res.accepted():
+			return res
 		Pi.get_from_pi(
 			piFilePath=Pi.piResultFilePath, localFilePath=resFilePath
 		)
-		if res['exit_status'] != 0:
-			return res
 		with open(resFilePath, 'r') as fp:
 			res = json.load(fp)
-		return res
+		return RunningInfo.new_from_dict(res)
 
 
 Pi.piSSH.load_host_keys(

@@ -1,23 +1,22 @@
-from Moe import Moe
-from llvm import Clang, Opt, LLC
-from Pi import Pi
-from settings import TestFilesSettings, BasicSettings, TimeoutSettings
+from scripts.pyScript.entities.Moe import Moe
+from scripts.pyScript.entities.llvm import Clang, Opt, LLC
+from scripts.pyScript.entities.Pi import Pi
+from scripts.pyScript.entities.gcc import GCC
+from scripts.pyScript.case_and_case_set import allPerformanceTestsCaseSet, \
+	myFuncTestCaseSet
+from scripts.pyScript.helper.settings import TestFilesSettings, TimeoutSettings, \
+	bufferTextFilePath, JudgmentSettings
+from scripts.piScripts.test_info import RunningInfo
 import argparse
-from case_and_case_set import TestCase
+from scripts.pyScript.helper.color import cprint, C
 import json
-from color import cprint, C
+import tabulate
+import typing as typ
 
 argParser = argparse.ArgumentParser(
 	description='Use clang and moe compile SysY.',
 	add_help=True
 )
-
-# argParser.add_argument(
-# 	'--release',
-# 	action='store_true',
-# 	dest='release',
-# 	help='Use release version of MoeCompiler.'
-# )
 argParser.add_argument(
 	'--moeOpti',
 	action='store',
@@ -68,6 +67,12 @@ argParser.add_argument(
 	dest='backend',
 	help='Test backend (almost test moe).'
 )
+argParser.add_argument(
+	'--gcc_table',
+	action='store_true',
+	dest='gcc_table',
+	help='Generate gcc table.'
+)
 
 
 def test_frontend():
@@ -87,29 +92,7 @@ def test_frontend():
 		outFilePath=TestFilesSettings.FilePath.testOut,
 		resFilePath=TestFilesSettings.FilePath.testRes
 	)
-	print(f'Result : {res["test_status"]}')
-
-
-def test_backend():
-	Moe.compile(
-		syFilePath=TestFilesSettings.FilePath.testSy,
-		msFilePath=TestFilesSettings.FilePath.testMLL,
-		optiLevel=args.moeOpti, timeout=TimeoutSettings.moe, emit_llvm=True,
-		float_dec_format=False
-	).check_returncode()
-	Moe.compile(
-		syFilePath=TestFilesSettings.FilePath.testSy,
-		msFilePath=TestFilesSettings.FilePath.testMS,
-		optiLevel=args.moeOpti, timeout=TimeoutSettings.moe, emit_llvm=False,
-		float_dec_format=False
-	).check_returncode()
-	res = Pi.run_tester(
-		sFilePath=TestFilesSettings.FilePath.testMS,
-		inFilePath=TestFilesSettings.FilePath.testIn,
-		outFilePath=TestFilesSettings.FilePath.testOut,
-		resFilePath=TestFilesSettings.FilePath.testRes
-	)
-	print(f'Result : {res["test_status"]}')
+	print(f'Result : {res.test_status.value}')
 
 
 def test_moe():
@@ -131,7 +114,7 @@ def test_moe():
 		outFilePath=TestFilesSettings.FilePath.testOut,
 		resFilePath=TestFilesSettings.FilePath.testRes
 	)
-	print(f'Result : {res["test_status"]}')
+	print(f'Result : {res.test_status.value}')
 
 
 def test_llvm():
@@ -157,7 +140,7 @@ def test_llvm():
 		outFilePath=TestFilesSettings.FilePath.testOut,
 		resFilePath=TestFilesSettings.FilePath.testRes
 	)
-	print(f'Result : {res["test_status"]}')
+	print(f'Result : {res.test_status.value}')
 
 
 def test_asm_run():
@@ -167,7 +150,7 @@ def test_asm_run():
 		outFilePath=TestFilesSettings.FilePath.testOut,
 		resFilePath=TestFilesSettings.FilePath.testRes
 	)
-	print(f'Result : {res["test_status"]}')
+	print(f'Result : {res.test_status.value}')
 
 
 def test_llvmir_run():
@@ -181,7 +164,7 @@ def test_llvmir_run():
 		outFilePath=TestFilesSettings.FilePath.testOut,
 		resFilePath=TestFilesSettings.FilePath.testRes,
 	)
-	print(f'Result : {res["test_status"]}')
+	print(f'Result : {res.test_status.value}')
 
 
 def test_difftest():
@@ -224,7 +207,44 @@ def test_difftest():
 		outFilePath=TestFilesSettings.FilePath.testOut,
 		resFilePath=TestFilesSettings.FilePath.testRes
 	)
-	print(f'Result : {res["test_status"]}')
+	print(f'Result : {res.test_status.value}')
+
+
+def test_gcc_table():
+	data: typ.Dict[str, dict] = {}
+	table: typ.List = []
+	for testCase in allPerformanceTestsCaseSet.caseSet:
+		res = GCC.compile_to_ass(
+			syFilePath=testCase.syFilePath,
+			sFilePath=testCase.msFilePath,
+			optiLevel=2
+		)
+		if res.returncode != 0:
+			cprint(f'ErrInfo: {res.stderr}', color=C.ERR)
+			exit(1)
+		res = Pi.run_tester(
+			sFilePath=testCase.msFilePath,
+			inFilePath=testCase.inFilePath,
+			outFilePath=testCase.outFilePath,
+			resFilePath=bufferTextFilePath,
+			mySysYLib=True
+		)
+		if res.exit_code != 0:
+			cprint(f'ErrInfo: {res.stderr}', color=C.ERR)
+			exit(1)
+		data[testCase.testName] = res.to_dict()
+		row = res.to_list_info()
+		row.insert(0, testCase.testName)
+		row.append(1)
+		table.append(row)
+	with open(str(JudgmentSettings.gccPerfDataFilePath), 'w') as fp:
+		fp.write(json.dumps(data, indent=4))
+	with open(str(JudgmentSettings.gccPerfTableFilePath), 'w') as fp:
+		fp.write(
+			tabulate.tabulate(
+				table, headers=RunningInfo.header, tablefmt='fancy_grid'
+			)
+		)
 
 
 if __name__ == '__main__':
@@ -237,9 +257,9 @@ if __name__ == '__main__':
 		test_moe()
 	elif args.asm_run:
 		test_asm_run()
-	elif args.backend:
-		test_backend()
 	elif args.llvmir_run:
 		test_llvmir_run()
 	elif args.difftest:
 		test_difftest()
+	elif args.gcc_table:
+		test_gcc_table()

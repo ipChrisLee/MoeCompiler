@@ -1,12 +1,12 @@
-from color import C, cprint, cprint_separate_line
+from scripts.pyScript.helper.color import C, cprint, cprint_separate_line
 from case_and_case_set import TestCaseSet, TestCase
-from settings import TestUnitSettings, TestFilesSettings
+from scripts.pyScript.helper.settings import TestUnitSettings
 import actions
 import typing as typ
 from case_and_case_set import emptyTestCaseSet, allFunctionTestsCaseSet, \
 	functionWithoutFloat, myFuncTestCaseSet
-from subprocess import CalledProcessError
-from Bash import Bash
+from scripts.pyScript.helper.settings import SysYSettings
+from pathlib import Path
 
 
 class TestUnit:
@@ -35,7 +35,8 @@ class TestUnit:
 	def do_this_test(
 		self,
 		saveToTable: typ.Optional[bool],
-		copyFailedTestCaseToTestSy: typ.Optional[bool]
+		copyFailedTestCaseToTestSy: typ.Optional[bool],
+		termIfFailed=True
 	):
 		if saveToTable is None:
 			saveToTable = False
@@ -52,14 +53,16 @@ class TestUnit:
 		)
 		action: actions.ActionBasic
 		for action in self.actions:
-			cprint(f'\t\t{action.get_config()} = \n'
-			       f'\t\t\tconfig = {action.get_config()}',
+			cprint(f'\t\t{action.config} = \n'
+			       f'\t\t\tconfig = {action.config}',
 			       color=C.INFO)
 		cprint(
 			f'Test result will {"" if saveToTable else "NOT"}be saved on '
-			f'[{TestUnitSettings.tablesFolderPath}/{self.name}.table] .',
+			f'[{TestUnitSettings.tablesFolderPath}/*.table] .',
 			color=C.INFO
 		)
+		if termIfFailed:
+			cprint(f'Test unit will be terminated once error occurs.', color=C.INFO)
 		
 		cprint(f'Have a nice play!', color=C.INFO)
 		cprint_separate_line(f'Test info end', color=C.INFO,
@@ -69,17 +72,14 @@ class TestUnit:
 		                     fill_len_indent=4)
 		failedTestCase: typ.Optional[TestCase] = None
 		for action in self.actions:
-			cprint_separate_line(f'For action [{action.get_name()}]',
+			cprint_separate_line(f'For action [{action.name}]',
 			                     color=C.INFO, fill_len_indent=8)
 			for testCase in self.testCaseSet.caseSet:
-				try:
-					action(testCase=testCase)
-				except Exception as e:
-					cprint(f'Exception from action: [{str(e)}]', color=C.ERR)
+				res = action(testCase=testCase)
+				if not res.accepted():
 					failedTestCase = testCase
-					break
-			if failedTestCase is not None:
-				cprint(f'Failed action [{action.get_name()}] on testCase '
+			if failedTestCase is not None and termIfFailed:
+				cprint(f'Failed action [{action.name}] on testCase '
 				       f'[{failedTestCase}] ',
 				       color=C.WA)
 				if copyFailedTestCaseToTestSy:
@@ -87,7 +87,7 @@ class TestUnit:
 					cprint(f'Failed test SysY file has been copied.',
 					       color=C.WA)
 			else:
-				cprint(f'All testCases are passed in action [{action.get_name()}]! '
+				cprint(f'All testCases are passed in action [{action.name}]! '
 				       f'Congratulation!',
 				       color=C.AC
 				       )
@@ -102,33 +102,6 @@ allTestUnits: typ.Dict[str, TestUnit] = dict(
 			helpInfo='Just an empty test unit.',
 			acts=[
 				actions.ActionBasic()
-			]
-		),
-		TestUnit(
-			name='test_frontend_with_llc_on_all_function_test_set',
-			testCaseSet=allFunctionTestsCaseSet,
-			terminalVerbose=True,
-			helpInfo='Test frontend with llc on functional tests.',
-			acts=[
-				actions.CompileToLLVMIRAndUseLLC(optiLevel=0)
-			]
-		),
-		TestUnit(
-			name='test_frontend_on_running',
-			testCaseSet=allFunctionTestsCaseSet,
-			terminalVerbose=True,
-			helpInfo='Test frontend with llc, and run on pi.',
-			acts=[
-				actions.CompileToLLVMIRAndUseLLCAndRunOnPi(optiLevel=0)
-			]
-		),
-		TestUnit(
-			name='test_moe_function_without_float_test',
-			testCaseSet=functionWithoutFloat,
-			terminalVerbose=True,
-			helpInfo='Test MoeCompiler for all function test without float.',
-			acts=[
-				actions.CompileToASMAndRunOnPi(optiLevel=0)
 			]
 		),
 		TestUnit(
@@ -164,7 +137,7 @@ def list_all_tests():
 		cprint(f'\ttestActions = ', color=C.INFO)
 		action: actions.ActionBasic
 		for action in testUnit.actions:
-			cprint(f'\t\t{action.get_name()} : {action.get_config()}', color=C.INFO)
+			cprint(f'\t\t{action.name} : {action.config}', color=C.INFO)
 	cprint_separate_line(f'End of list', color=C.INFO, new_line=True)
 
 

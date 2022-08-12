@@ -6,6 +6,9 @@ from pathlib import Path
 from datetime import datetime
 import atexit
 from enum import Enum
+from test_info import TestStatus, RunningInfo
+import typing as typ
+from datetime import datetime
 
 argParser = argparse.ArgumentParser(
 	description='Tester arguments.'
@@ -35,18 +38,6 @@ argParser.add_argument(
 	type=str,
 )
 argParser.add_argument(
-	'--perf',
-	help='This is a performance test.',
-	action='store_true',
-	dest='perf'
-)
-argParser.add_argument(
-	'--func',
-	help='This is a functional test.',
-	action='store_true',
-	dest='func'
-)
-argParser.add_argument(
 	'--res',
 	help='Where to save result.',
 	action='store',
@@ -68,70 +59,38 @@ assert (args.msFilePath is not None) and \
        (args.syOutPath is not None) and \
        (args.resPath is not None) and \
        (args.aLibPath is not None)
-# (args.func ^ args.perf) and \
 
 exeFilePath = str(Path.home() / '.tmp/main')
 bufferFilePath = str(Path.home() / '.tmp/buffer.txt')
-runningInfo = dict()
 
-
-class TestStatus(Enum):
-	AC = 'AC'
-	WA = 'WA'
-	TLE = 'TLE'
-	CE = 'CE'
-
-
-"""
-	exit_status:
-		Status when leaving test.py .
-	info:
-		Information of exit_status test.py .
-	message:
-		[optional]
-		Other messages except info.
-	out:
-		[optional]
-		Stdout of executable main file and its return code.
-	stderr:
-		[optional]
-		Stderr of executable main file.
-	test_status:
-		Value:
-			{CE} if something happened before running main.
-			{AC,WA,TLE} otherwise.
-		Status of test.
-	time_now:
-		Time when leaving test.py .
-"""
+runningInfo: typ.Optional[RunningInfo] = None
 
 
 def saving_running_info_to_file():
-	if not runningInfo:
-		runningInfo['exit_status'] = 255
-		runningInfo['info'] = 'Exit out of expectation when running test.py .'
-		runningInfo['test_status'] = TestStatus.CE.value
-	runningInfo['time_now'] = str(datetime.now().strftime("%H:%M:%S"))
+	global runningInfo
+	if runningInfo is None:
+		runningInfo = RunningInfo(
+			exit_code=255,
+			info='Exit out of expectation when running test.py .',
+			test_status=TestStatus.CE
+		)
+	runningInfo.time_now = str(datetime.now().strftime("%H:%M:%S"))
 	with open(args.resPath, 'w') as fp:
-		fp.write(json.dumps(runningInfo, indent=4))
+		fp.write(json.dumps(runningInfo.to_dict(), indent=4))
 
 
 atexit.register(saving_running_info_to_file)
 
 
-def finish_and_dump_json(exitStatus: int, info: str, testStatus: TestStatus,
-                         message: str = None, stderr: str = None, out: str = None
-                         ):
-	runningInfo['exit_status'] = exitStatus
-	runningInfo['info'] = info
-	runningInfo['test_status'] = testStatus.value
-	if message is not None:
-		runningInfo['message'] = message
-	if stderr is not None:
-		runningInfo['stderr'] = stderr
-	if out is not None:
-		runningInfo['out'] = out
-	exit(exitStatus)
+def finish_and_dump_json(
+	exitCode: int, info: str, testStatus: TestStatus,
+	message: str = None, stderr: str = None, out: str = None, time_cost=None
+):
+	global runningInfo
+	runningInfo = RunningInfo(
+		exit_code=exitCode, info=info, test_status=testStatus,
+		message=message, out=out, stderr=stderr, time_cost=time_cost)
+	exit(0)
 
 
 with open(bufferFilePath, 'w') as _:
@@ -145,9 +104,11 @@ _ = subprocess.run(
 	stderr=subprocess.PIPE, text=str, encoding='utf-8'
 )
 if _.returncode != 0:
-	finish_and_dump_json(exitStatus=_.returncode & 0xFF,
-	                     info='Assemble or Link Error!', testStatus=TestStatus.CE,
-	                     message=_.stderr)
+	finish_and_dump_json(
+		exitCode=_.returncode & 0xFF,
+		info='Assemble or Link Error!', testStatus=TestStatus.CE,
+		stderr=_.stderr
+	)
 
 
 def diff_test_pass(out: str, ans: str):
@@ -171,34 +132,52 @@ def diff_message(out: str, ans: str):
 	       [-1] if len(out) != len(ans) else []
 
 
+def from_stderr_to_time_cost(s: str):
+	s = s.splitlines()[-1]
+	d = datetime.strptime(s, "TOTAL: %HH-%MM-%SS-%fus")
+	t = d.minute * 60 + d.second + d.microsecond / 1000000
+	if t == 0.0:
+		return -1
+	else:
+		return t
+
+
 def test_main():
 	syInStream = open(args.syInPath, 'r')
-	runMain = subprocess.run(
-		[exeFilePath],
-		stdin=syInStream, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-		text=str, encoding='utf-8', timeout=300
-	)
-	syInStream.close()
-	retCode: int = int(runMain.returncode & 0xFF)
-	out = runMain.stdout + \
-	      ('\n' if len(runMain.stdout) > 0 and runMain.stdout[-1] != '\n' else '') + \
-	      f'{retCode}\n'
-	with open(args.syOutPath, 'r') as fp:
-		ans = str(fp.read())
-	out, ans = diff_test_pass(out, ans)
-	with open(bufferFilePath, 'w') as fp:
-		fp.write(out)
-	if out == ans:
-		return finish_and_dump_json(
-			exitStatus=0, info='Test passed!',
-			testStatus=TestStatus.AC,
-			stderr=runMain.stderr, out=out
+	try:
+		runMain = subprocess.run(
+			[exeFilePath],
+			stdin=syInStream, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+			text=str, encoding='utf-8', timeout=300
 		)
-	else:
+		syInStream.close()
+		retCode: int = int(runMain.returncode & 0xFF)
+		out = runMain.stdout + \
+		      ('\n' if len(runMain.stdout) > 0 and
+		               runMain.stdout[-1] != '\n' else '') + f'{retCode}\n'
+		with open(args.syOutPath, 'r') as fp:
+			ans = str(fp.read())
+		out, ans = diff_test_pass(out, ans)
+		with open(bufferFilePath, 'w') as fp:
+			fp.write(out)
+		if out == ans:
+			t = from_stderr_to_time_cost(runMain.stderr)
+			return finish_and_dump_json(
+				exitCode=0, info='Test passed!',
+				testStatus=TestStatus.AC,
+				stderr=runMain.stderr, time_cost=t
+			)
+		else:
+			return finish_and_dump_json(
+				exitCode=runMain.returncode,
+				info='Test failed! Either program exit abnormally or different on output.',
+				testStatus=TestStatus.WA, message=str(diff_message(out, ans)),
+				stderr=runMain.stderr, out=out
+			)
+	except subprocess.TimeoutExpired as e:
 		return finish_and_dump_json(
-			exitStatus=255, info='Test failed!',
-			testStatus=TestStatus.WA, message=str(diff_message(out, ans)),
-			stderr=runMain.stderr, out=out
+			exitCode=-1, info='Time out for running exe file.',
+			stderr=e.stderr, out=e.stdout, testStatus=TestStatus.TLE
 		)
 
 

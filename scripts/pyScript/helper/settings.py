@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 
@@ -11,9 +12,10 @@ class TimeoutSettings:
 	cmake: float = 20
 	compileMoe: float = 80
 	clang: float = 40
+	gcc: float = 40
 	opt: float = 20
 	llc: float = 20
-	run: float = 20
+	run: float = 300
 	moe: float = 90
 
 
@@ -28,8 +30,8 @@ class Commands:
 
 
 class TestUnitSettings:
-	tablesFolderPath: str = 'scripts/pyScript/tables_of_testunit'
-	syPathForFailedTest: str = 'testDir/testSyFile/test.sy'
+	tablesFolderPath: Path = Path('scripts/result_tables/')
+	syPathForFailedTest: Path = Path('testDir/testSyFile/test.sy')
 
 
 class TestFilesSettings:
@@ -48,6 +50,14 @@ class TestFilesSettings:
 
 class SysYSettings:
 	syLibHeaderPath: str = 'support/syLibFiles/sylib.h'
+	mySyLibHeaderPath: str = 'support/syLibFiles/mySyLib.h'
+
+
+class JudgmentSettings:
+	gccPerfDataFilePath: Path = Path('scripts/result_tables/gcc_perf.json')
+	assert gccPerfDataFilePath.exists()
+	gccPerfTableFilePath: Path = Path('scripts/result_tables/gcc_perf.table')
+	assert gccPerfTableFilePath.exists()
 
 
 assert (Path(TestUnitSettings.syPathForFailedTest).exists())

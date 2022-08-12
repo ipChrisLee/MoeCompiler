@@ -58,6 +58,8 @@ class IRInstr
 	[[nodiscard]] std::string toLLVMIR() const override = 0;
 
 	~IRInstr() override = default;
+
+	virtual std::vector<IRAddr *> getOperands() const;
 };
 
 class InstrAlloca : public IRInstr {
@@ -102,6 +104,8 @@ class InstrStore : public IRInstr {
 	InstrStore(InstrStore &&) = default;
 
 	[[nodiscard]] std::string toLLVMIR() const override;
+
+	[[nodiscard]] std::vector<IRAddr *> getOperands() const override;
 };
 
 class InstrLoad : public IRInstr {
@@ -120,6 +124,8 @@ class InstrLoad : public IRInstr {
 	InstrLoad(InstrLoad &&) = default;
 
 	[[nodiscard]] std::string toLLVMIR() const override;
+
+	[[nodiscard]] std::vector<IRAddr *> getOperands() const override;
 };
 
 class InstrLabel : public IRInstr {
@@ -160,6 +166,8 @@ class InstrBr : public IRInstr {
 	InstrBr(InstrBr &&) = default;
 
 	[[nodiscard]] std::string toLLVMIR() const override;
+
+	[[nodiscard]] std::vector<IRAddr *> getOperands() const override;
 };
 
 class InstrRet : public IRInstr {
@@ -178,6 +186,8 @@ class InstrRet : public IRInstr {
 	InstrRet(InstrRet &&) = default;
 
 	[[nodiscard]] std::string toLLVMIR() const override;
+
+	[[nodiscard]] std::vector<IRAddr *> getOperands() const override;
 };
 
 class InstrBinaryOp : public IRInstr {
@@ -201,6 +211,8 @@ class InstrBinaryOp : public IRInstr {
 	InstrBinaryOp(InstrBinaryOp &&) = default;
 
 	[[nodiscard]] std::string toLLVMIR() const override = 0;
+
+	[[nodiscard]] std::vector<IRAddr *> getOperands() const override;
 };
 
 class InstrConversionOp : public IRInstr {
@@ -218,7 +230,6 @@ class InstrConversionOp : public IRInstr {
 	InstrConversionOp(const InstrConversionOp &) = default;
 
 	InstrConversionOp(InstrConversionOp &&) = default;
-
 
 	[[nodiscard]] std::string toLLVMIR() const override = 0;
 };

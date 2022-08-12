@@ -2,8 +2,9 @@ from os import walk
 from pathlib import Path
 from enum import Enum
 import typing as typ
-from settings import nullDev, emptyTextFilePath, TestFilesSettings
-from Bash import Bash
+from scripts.pyScript.helper.settings import nullDev, emptyTextFilePath, \
+	TestFilesSettings
+from scripts.pyScript.entities.Bash import Bash
 
 
 class TestType(Enum):
@@ -14,9 +15,6 @@ class TestType(Enum):
 
 class TestCase:
 	info: typ.Dict[str, str] = dict()
-	"""
-	What to return after action? : (exit_code,syFilePath)
-	"""
 	
 	def __init__(
 		self,
@@ -102,9 +100,17 @@ allFunctionTestsCaseSet = TestCaseSet(
 			"testcases/SysYTestCase/function_test2022", 2022, TestType.Function
 		),
 		load_testcases_under_folder_path(
-			'testcases/my_function_test', 2022, TestType.Function
-		),
+			"testcases/SysYTestCase/function_test2022_hidden", 2022,
+			TestType.Function
+		)
 	), "function"
+)
+
+allPerformanceTestsCaseSet = TestCaseSet(
+	load_testcases_under_folder_path(
+		'testcases/SysYTestCase/performance_test2022',
+		2022, TestType.Performance
+	), 'performance'
 )
 
 functionWithoutFloat = TestCaseSet(

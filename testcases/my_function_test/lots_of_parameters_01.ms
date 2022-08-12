@@ -1,210 +1,68 @@
-.arch armv7ve
-.arm
-
-
-.global main 
-.section .text
-
-
-@	define dso_local i32 @F.sum(i32* %P24.ar, i32 %P25.n) #0 
+	.arch armv7-a
+	.eabi_attribute 28, 1
+	.eabi_attribute 20, 1
+	.eabi_attribute 21, 1
+	.eabi_attribute 23, 3
+	.eabi_attribute 24, 1
+	.eabi_attribute 25, 1
+	.eabi_attribute 26, 2
+	.eabi_attribute 30, 2
+	.eabi_attribute 34, 1
+	.eabi_attribute 18, 4
+	.file	"lots_of_parameters_01.sy"
+	.text
+	.align	1
+	.p2align 2,,3
+	.global	sum
+	.arch armv7-a
+	.syntax unified
+	.thumb
+	.thumb_func
+	.fpu vfpv3-d16
+	.type	sum, %function
 sum:
-push {lr}
-sub sp,sp,#68
-@ L107.Entry: 
-L27.Entry:
-@ 	%LV29.ar = alloca i32*, align 4 
-@ 	%LV30.n = alloca i32, align 4 
-@ 	%LV28.retval = alloca i32, align 4 
-@ 	%LV31.i = alloca i32, align 4 
-@ 	%LV34.s = alloca i32, align 4 
-@ 	store i32* %P24.ar, i32** %LV29.ar, align 4 
-str r0,[sp, #64]
-@ 	store i32 %P25.n, i32* %LV30.n, align 4 
-str r1,[sp, #60]
-@ 	store i32 0, i32* %LV31.i, align 4 
-movw r12,#0
-str r12,[sp, #56]
-@ 	store i32 0, i32* %LV34.s, align 4 
-movw r12,#0
-str r12,[sp, #48]
-@ 	br label %L39.while_cond 
-b L33.while_cond
-@ L39.while_cond: 
-L33.while_cond:
-@ 	%T40 = load i32, i32* %LV31.i, align 4 
-ldr r12,[sp, #56]
-str r12,[sp, #44]
-@ 	%T41 = load i32, i32* %LV30.n, align 4 
-ldr r12,[sp, #60]
-str r12,[sp, #28]
-@ 	%T42 = icmp slt i32 %T40, %T41 
-ldr r12,[sp, #44]
-ldr lr,[sp, #28]
-cmp r12,lr
-@ 	br i1 %T42, label %L37.while_body, label %L38.while_end 
-blt L36.while_body
-b L37.while_end
-@ L37.while_body: 
-L36.while_body:
-@ 	%T43 = load i32, i32* %LV34.s, align 4 
-ldr r12,[sp, #48]
-str r12,[sp, #40]
-@ 	%T44 = load i32, i32* %LV31.i, align 4 
-ldr r12,[sp, #56]
-str r12,[sp, #20]
-@ 	%T45 = load i32*, i32** %LV29.ar, align 4 
-ldr r12,[sp, #64]
-str r12,[sp, #36]
-@ 	%T47 = getelementptr i32, i32* %T45, i32 %T44 
-ldr r12,[sp, #20]
-movw lr,#4
-mul r12,r12,lr
-str r12,[sp, #-4]
-movw r12,#0
-ldr lr,[sp, #-4]
-add r12,r12,lr
-ldr lr,[sp, #36]
-add r12,r12,lr
-str r12,[sp, #24]
-@ 	%T46 = load i32, i32* %T47, align 4 
-ldr r12,[sp, #24]
-ldr r12,[r12, #0]
-str r12,[sp, #12]
-@ 	%T48 = add i32 %T43, %T46 
-ldr r12,[sp, #40]
-ldr lr,[sp, #12]
-add r12,r12,lr
-str r12,[sp, #8]
-@ 	store i32 %T48, i32* %LV34.s, align 4 
-ldr r12,[sp, #8]
-str r12,[sp, #48]
-@ 	%T49 = load i32, i32* %LV31.i, align 4 
-ldr r12,[sp, #56]
-str r12,[sp, #4]
-@ 	%T52 = add i32 %T49, 1 
-ldr r12,[sp, #4]
-add r12,r12,#1
-str r12,[sp, #0]
-@ 	store i32 %T52, i32* %LV31.i, align 4 
-ldr r12,[sp, #0]
-str r12,[sp, #56]
-@ 	br label %L39.while_cond 
-b L33.while_cond
-@ L38.while_end: 
-L37.while_end:
-@ 	%T53 = load i32, i32* %LV34.s, align 4 
-ldr r12,[sp, #48]
-str r12,[sp, #16]
-@ 	store i32 %T53, i32* %LV28.retval, align 4 
-ldr r12,[sp, #16]
-str r12,[sp, #52]
-@ 	br label %L26.return 
-b L47.return
-@ L26.return: 
-L47.return:
-@ 	%T54 = load i32, i32* %LV28.retval, align 4 
-ldr r12,[sp, #52]
-str r12,[sp, #32]
-@ 	ret i32 %T54 
-ldr r0,[sp, #32]
-add sp,sp,#68
-pop {pc}
-
-@	define dso_local i32 @main() #0 
+	@ args = 0, pretend = 0, frame = 0
+	@ frame_needed = 0, uses_anonymous_args = 0
+	@ link register save eliminated.
+	cmp	r1, #0
+	ble	.L4
+	add	r1, r0, r1, lsl #2
+	mov	r3, r0
+	movs	r0, #0
+.L3:
+	ldr	r2, [r3], #4
+	cmp	r3, r1
+	add	r0, r0, r2
+	bne	.L3
+	bx	lr
+.L4:
+	movs	r0, #0
+	bx	lr
+	.size	sum, .-sum
+	.section	.text.startup,"ax",%progbits
+	.align	1
+	.p2align 2,,3
+	.global	main
+	.syntax unified
+	.thumb
+	.thumb_func
+	.fpu vfpv3-d16
+	.type	main, %function
 main:
-push {lr}
-sub sp,sp,#76
-@ L108.Entry: 
-L50.Entry:
-@ 	%LV57.retval = alloca i32, align 4 
-@ 	%LV58.ar = alloca [6 x i32], align 4 
-@ 	%T65 = getelementptr [6 x i32], [6 x i32]* %LV58.ar, i32 0, i32 0 
-movw r12,#0
-add lr,sp,#44
-add r12,r12,lr
-str r12,[sp, #40]
-@ 	%T69 = getelementptr i32, i32* %T65, i32 0 
-movw r12,#0
-ldr lr,[sp, #40]
-add r12,r12,lr
-str r12,[sp, #32]
-@ 	store i32 0, i32* %T69, align 4 
-ldr lr,[sp, #32]
-movw r12,#0
-str r12,[lr, #0]
-@ 	%T72 = getelementptr i32, i32* %T65, i32 1 
-movw r12,#4
-ldr lr,[sp, #40]
-add r12,r12,lr
-str r12,[sp, #24]
-@ 	store i32 1, i32* %T72, align 4 
-ldr lr,[sp, #24]
-movw r12,#1
-str r12,[lr, #0]
-@ 	%T75 = getelementptr i32, i32* %T65, i32 2 
-movw r12,#8
-ldr lr,[sp, #40]
-add r12,r12,lr
-str r12,[sp, #20]
-@ 	store i32 2, i32* %T75, align 4 
-ldr lr,[sp, #20]
-movw r12,#2
-str r12,[lr, #0]
-@ 	%T78 = getelementptr i32, i32* %T65, i32 3 
-movw r12,#12
-ldr lr,[sp, #40]
-add r12,r12,lr
-str r12,[sp, #12]
-@ 	store i32 3, i32* %T78, align 4 
-ldr lr,[sp, #12]
-movw r12,#3
-str r12,[lr, #0]
-@ 	%T81 = getelementptr i32, i32* %T65, i32 4 
-movw r12,#16
-ldr lr,[sp, #40]
-add r12,r12,lr
-str r12,[sp, #4]
-@ 	store i32 4, i32* %T81, align 4 
-ldr lr,[sp, #4]
-movw r12,#4
-str r12,[lr, #0]
-@ 	%T84 = getelementptr i32, i32* %T65, i32 5 
-movw r12,#20
-ldr lr,[sp, #40]
-add r12,r12,lr
-str r12,[sp, #0]
-@ 	store i32 5, i32* %T84, align 4 
-ldr lr,[sp, #0]
-movw r12,#5
-str r12,[lr, #0]
-@ 	%T86 = getelementptr [6 x i32], [6 x i32]* %LV58.ar, i32 0, i32 0 
-movw r12,#0
-add lr,sp,#44
-add r12,r12,lr
-str r12,[sp, #36]
-@ 	%T89 = getelementptr i32, i32* %T86, i32 0 
-movw r12,#0
-ldr lr,[sp, #36]
-add r12,r12,lr
-str r12,[sp, #28]
-@ 	%T93 = call i32 @F.sum(i32* %T89, i32 6) 
-ldr r0,[sp, #28]
-movw r1,#6
-bl sum
-str r0,[sp, #8]
-@ 	store i32 %T93, i32* %LV57.retval, align 4 
-ldr r12,[sp, #8]
-str r12,[sp, #68]
-@ 	br label %L55.return 
-b L63.return
-@ L55.return: 
-L63.return:
-@ 	%T94 = load i32, i32* %LV57.retval, align 4 
-ldr r12,[sp, #68]
-str r12,[sp, #16]
-@ 	ret i32 %T94 
-ldr r0,[sp, #16]
-add sp,sp,#76
-pop {pc}
-
-
+	@ args = 0, pretend = 0, frame = 0
+	@ frame_needed = 0, uses_anonymous_args = 0
+	@ link register save eliminated.
+	movs	r0, #15
+	bx	lr
+	.size	main, .-main
+	.comm	_sysy_idx,4,4
+	.comm	_sysy_us,4096,4
+	.comm	_sysy_s,4096,4
+	.comm	_sysy_m,4096,4
+	.comm	_sysy_h,4096,4
+	.comm	_sysy_l2,4096,4
+	.comm	_sysy_l1,4096,4
+	.comm	_sysy_end,8,4
+	.comm	_sysy_start,8,4
+	.ident	"GCC: (Ubuntu 9.4.0-1ubuntu1~20.04.1) 9.4.0"
+	.section	.note.GNU-stack,"",%progbits

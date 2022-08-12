@@ -1,7 +1,6 @@
 import subprocess
-import time
-from color import C, cprint
-from settings import TimeoutSettings, CommandLineSettings
+from scripts.pyScript.helper.color import C, cprint
+from scripts.pyScript.helper.settings import TimeoutSettings, CommandLineSettings
 import typing as typ
 
 

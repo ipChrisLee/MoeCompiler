@@ -1,7 +1,7 @@
 from test_unit import list_all_tests, allTestUnits
 import argparse
-from settings import TestUnitSettings, bufferTextFilePath
-from color import cprint, C
+from scripts.pyScript.helper.settings import TestUnitSettings
+from scripts.pyScript.helper.color import cprint, C
 
 argParser = argparse.ArgumentParser(
 	description='Tester arguments.'
@@ -32,6 +32,11 @@ argParser.add_argument(
 	action='store_true'
 )
 argParser.add_argument(
+	'--term_if_failed',
+	help=f'Once a testcase failed, term tester.',
+	action='store_true'
+)
+argParser.add_argument(
 	'--verbose_of_terminal',
 	help=f'Show every command tester runs.',
 	action='store_true'
@@ -47,6 +52,7 @@ if __name__ == '__main__':
 		else:
 			allTestUnits[clArgs.testName].do_this_test(
 				saveToTable=clArgs.save_result_to_table,
-				copyFailedTestCaseToTestSy=clArgs.copy_failed_test_sy
+				copyFailedTestCaseToTestSy=clArgs.copy_failed_test_sy,
+				termIfFailed=clArgs.term_if_failed
 			)
 	cprint(f'Tester Finished!', color=C.FIN)

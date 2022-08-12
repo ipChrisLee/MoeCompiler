@@ -1,6 +1,5 @@
-from command_line_tool import run_command
-from settings import TimeoutSettings, SysYSettings
-import typing as typ
+from scripts.pyScript.helper.command_line_tool import run_command
+from scripts.pyScript.helper.settings import TimeoutSettings, SysYSettings
 
 
 class LLC:
