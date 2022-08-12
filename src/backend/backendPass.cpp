@@ -18,7 +18,7 @@ int ToASM::run() {
 		auto * pFuncInfo = funcInfoPool.emplace_back(
 			FuncInfo(
 				opndPool, pFuncDef, addrToFuncInfo, gVarToLabel,
-				std::make_unique<backend::AllOnStkAllocator>(opndPool)
+				std::make_unique<backend::LinearScanAllocator>(opndPool)
 			)
 		);
 		addrToFuncInfo[pFuncDef->pAddrFun] = pFuncInfo;
@@ -79,10 +79,12 @@ FuncInfo::FuncInfo(
 					);
 					argsStkSizeOnCallingThis += 4;
 				}
-				argsInfoOnCallingThis[pAddrPara] = opndPara;
-				m_AddrArg_VRegR[pAddrPara] = opndPool.emplace_back(
+				paramsInfoOnCallingThis[pAddrPara] = opndPara;
+				auto * opndArg = opndPool.emplace_back(
 					backend::VRegR(*opndPara)
 				);
+				m_AddrArg_VRegR.emplace(pAddrPara, opndArg);
+				defineUseTimelineVRegR[opndArg].emplace_back(0);
 				break;
 			}
 			case sup::Type::Float_t: {
@@ -100,10 +102,12 @@ FuncInfo::FuncInfo(
 					);
 					argsStkSizeOnCallingThis += 4;
 				}
-				argsInfoOnCallingThis[pAddrPara] = opndPara;
-				m_AddrArg_VRegS[pAddrPara] = opndPool.emplace_back(
+				paramsInfoOnCallingThis[pAddrPara] = opndPara;
+				auto * opndArg = opndPool.emplace_back(
 					backend::VRegS(*opndPara)
 				);
+				m_AddrArg_VRegS.emplace(pAddrPara, opndArg);
+				defineUseTimelineVRegS[opndArg].emplace_back(0);
 				break;
 			}
 			default:com::Throw("", CODEPOS);
@@ -163,8 +167,8 @@ int FuncInfo::run() {
 	}
 	com::Assert(regAllocator.get(), "", CODEPOS);
 	regAllocator->set(
-		allUsedVRegR, allUsedVRegS, allStkPtr, defineUseTimelineVRegR,
-		defineUseTimelineVRegS, tim, argsInfoOnCallingThis, argsStkSizeOnCallingThis,
+		allVarVRegR, allVarVRegS, allVarStkPtr, defineUseTimelineVRegR,
+		defineUseTimelineVRegS, tim, paramsInfoOnCallingThis, argsStkSizeOnCallingThis,
 		m_AddrArg_VRegR, m_AddrArg_VRegS
 	);
 	regAllocator->getRes();
@@ -337,7 +341,7 @@ std::string FuncInfo::toASM_Ret_Int(ircode::InstrRet * pRet) {
 		case ircode::AddrType::Var: {
 			auto * pRetVarAddr = dynamic_cast<ircode::AddrVariable *>(pRetAddr);
 			auto * pVRegRRet = convertIntVariable(pRetVarAddr);
-			genASMGetVRegRVal(res, pVRegRRet, backend::RId::r0);
+			genASMSaveFromVRegRToRReg(res, pVRegRRet, backend::RId::r0);
 			break;
 		}
 		case ircode::AddrType::StaticValue: {
@@ -360,7 +364,7 @@ std::string FuncInfo::toASM_Ret_Float(ircode::InstrRet * pRet) {
 		case ircode::AddrType::Var: {
 			auto * pRetVarAddr = dynamic_cast<ircode::AddrVariable *>(pRetAddr);
 			auto * pVRegSRet = convertFloatVariable(pRetVarAddr);
-			genASMGetVRegSVal(res, pVRegSRet, backend::SId::s0, backend::RId::lhs);
+			genASMSaveFromVRegSToSReg(res,pVRegSRet,backend::SId::s0,backend::RId::lhs);
 			break;
 		}
 		case ircode::AddrType::StaticValue: {

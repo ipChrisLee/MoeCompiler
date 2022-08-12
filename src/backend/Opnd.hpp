@@ -41,7 +41,9 @@ enum class RId : int {
 	mem,
 };
 
-static int mxRIdForParameters = 3;
+static const int mxRIdForParameters = 3;
+
+static const int ridCnt = 31;
 
 bool isGPR(RId rid);    //  is general purpose register (r0-r11)
 bool isCallerSave(RId rid);
@@ -69,7 +71,9 @@ enum class SId : int {
 	mem,
 };
 
-static int mxSIdForParameters = 13;
+static const int mxSIdForParameters = 13;
+
+static const int sidCnt = 32;
 
 bool isGPR(SId sid);    //  is general purpose register. (s0-s13 s16-s31)
 bool isCallerSave(SId sid);

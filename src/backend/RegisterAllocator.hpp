@@ -2,37 +2,39 @@
 
 #include <map>
 #include <unordered_set>
+#include <queue>
+#include <random>
 
 #include "backend/Opnd.hpp"
 
 
 namespace backend {
 
+using pii = std::pair<int, int>;
 
 class RegisterAllocator {
   protected:
 	virtual int run() = 0;
 	backend::OpndPool & opndPool;
 
-	using pii = std::pair<int, int>;
-	//  all VRegR and VRegS used in func
-	std::unordered_set<backend::VRegR *> allUsedVRegR;  //  all VRegR used in func
-	std::unordered_set<backend::VRegS *> allUsedVRegS;  //  all VRegS used in func
-	std::unordered_set<backend::StkPtr *> allStkPtr;    //  all StkPtr used in func
-	//  VRegR(unk) and VRegS(unk) define-use timeline
+	//==Information got from backendPass
+	//  all VRegR and VRegS and StkPtr used in func. EXCLUDE para.
+	std::unordered_set<backend::VRegR *> allVarVRegR;
+	std::unordered_set<backend::VRegS *> allVarVRegS;
+	std::unordered_set<backend::StkPtr *> allVarStkPtr;
+	//  VRegR(unk) and VRegS(unk) define-use timeline. INCLUDE para.
 	std::map<backend::VRegR *, std::vector<int>> defineUseTimelineVRegR;
 	std::map<backend::VRegS *, std::vector<int>> defineUseTimelineVRegS;
-	//  Interval of regs
-	std::map<backend::VRegR *, pii> intervalOfVRegR;
-	std::map<backend::VRegS *, pii> intervalOfVRegS;
-	//  time counter
+	//  time counter. From 1 to totalTim.
 	int totalTim = 0;
 	//  AddrPara information when calling this function.
 	//  backendOpnd * : VRegR(rx), VRegR(stk, -bias), VRegS(sx), VRegS(stk, -bias)
-	std::map<ircode::AddrPara *, backend::Opnd *> argsOnCallingThis;
+	std::map<ircode::AddrPara *, backend::Opnd *> paramsOnCallingThis;
+
   public:
 	explicit RegisterAllocator(OpndPool & opndPool) : opndPool(opndPool) {}
 
+	//==Information generated after allocation.
 	//  StkSize for spilled registers.
 	int spilledStkSize = 0;
 	//  backup of callee saved registers. Alignment is in consideration.
@@ -45,13 +47,16 @@ class RegisterAllocator {
 	std::set<SId> callerSaveSReg;
 	//  Stack size of arguments calling this function (alignment 8)
 	int argsStkSizeOnCallingThis = 0;
+
+	//==Changed from backendPass.
 	//  get mapping of arguments to call this and bias of sp@function-runtime
 	std::map<ircode::AddrPara *, backend::VRegR *> m_AddrArg_VRegR;
 	std::map<ircode::AddrPara *, backend::VRegS *> m_AddrArg_VRegS;
+
 	void set(
-		std::unordered_set<backend::VRegR *> & _allUsedVRegR,
-		std::unordered_set<backend::VRegS *> & _allUsedVRegS,
-		std::unordered_set<backend::StkPtr *> & _allStkPtr,
+		std::unordered_set<backend::VRegR *> & _allVarVRegR,
+		std::unordered_set<backend::VRegS *> & _allVarVRegS,
+		std::unordered_set<backend::StkPtr *> & _allVarStkPtr,
 		std::map<backend::VRegR *, std::vector<int>> & _defineUseTimelineVRegR,
 		std::map<backend::VRegS *, std::vector<int>> & _defineUseTimelineVRegS,
 		int _totalTim,
@@ -60,6 +65,9 @@ class RegisterAllocator {
 		std::map<ircode::AddrPara *, backend::VRegR *> & m_AddrArg_VRegR,
 		std::map<ircode::AddrPara *, backend::VRegS *> & m_AddrArg_VRegS
 	);
+
+	//  Call run() first, do allocate, and analyze result.
+	//  Then generate result on public properties.
 	int getRes();
 	virtual ~RegisterAllocator() = default;
 };
@@ -69,6 +77,38 @@ class AllOnStkAllocator : public RegisterAllocator {
 	int run() override;
   public:
 	explicit AllOnStkAllocator(OpndPool & opndPool) : RegisterAllocator(opndPool) {}
+};
+
+class LinearScanAllocator : public RegisterAllocator {
+  protected:
+	//==Information generated and used by Allocator
+	//  Interval of regs. [def-time, last-use-time]
+	//  def-time is equal to last-use-time if defined but not used.
+	std::map<backend::VRegR *, pii> intervalOfVRegR;
+	std::map<backend::VRegS *, pii> intervalOfVRegS;
+	std::map<int, std::vector<backend::VRegR *>> defVRegRAt;
+	std::map<int, std::vector<backend::VRegS *>> defVRegSAt;
+	std::map<int, std::vector<backend::VRegR *>> lstUseVRegRAt;
+	std::map<int, std::vector<backend::VRegS *>> lstUseVRegSAt;
+	std::set<backend::RId, std::greater<>> freeRIds;
+	std::set<backend::SId, std::greater<>> freeSIds;
+	//  rid -> VRegR // sid -> VRegS | rid and sid is GPR
+	std::map<backend::RId, backend::VRegR *, std::greater<>> livingVRegR;   //  include param
+	std::map<backend::SId, backend::VRegS *, std::greater<>> livingVRegS;   //  include param
+
+	RId chooseWhereToSpillRReg();
+	SId chooseWhereToSpillSReg();
+
+	void prepare();
+	void linear_scan();
+
+	int run() override;
+
+	std::random_device _rd;
+	std::mt19937 _g;
+  public:
+	explicit LinearScanAllocator(OpndPool & opndPool) :
+		RegisterAllocator(opndPool), _rd(), _g(_rd()) {}
 
 };
 

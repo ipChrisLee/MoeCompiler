@@ -40,7 +40,6 @@ add_link_options(-lpthread -lm -v -pthread)
 
 #   Library Subdirectories
 add_subdirectory(src/mlib)                      #   moe lib
-add_subdirectory(src/third_party/Google_Test)   #   Google-Test
 add_subdirectory(src/third_party/antlr4-runtime)
 
 #   Target of compiler

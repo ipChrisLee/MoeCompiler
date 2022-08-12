@@ -12,7 +12,7 @@ std::string FuncInfo::toASM(ircode::InstrCall * pInstrCall) {
 	auto backUpStkSize = 0;
 	for (auto rId: pFuncInfoToCall->callerSaveRReg) {
 		rId2StkOffset[rId] = -backUpStkSize - 4;
-		genASMSaveFromRRegToOffset(res, rId, -backupStkSize - 4, backend::RId::lhs);
+		genASMSaveFromRRegToOffset(res, rId, -backUpStkSize - 4, backend::RId::lhs);
 		backUpStkSize += 4;
 	}
 	for (auto sId: pFuncInfoToCall->callerSaveSReg) {
@@ -26,7 +26,7 @@ std::string FuncInfo::toASM(ircode::InstrCall * pInstrCall) {
 	auto cntArg = (int) pFuncInfoToCall->pFuncDef->pAddrFun->vecPtrAddrPara.size();
 	for (; iArg < cntArg; ++iArg) {
 		auto * pParaAddr = pFuncInfoToCall->pFuncDef->pAddrFun->vecPtrAddrPara[iArg];
-		auto * pOpndPara = pFuncInfoToCall->argsInfoOnCallingThis[pParaAddr];
+		auto * pOpndPara = pFuncInfoToCall->paramsInfoOnCallingThis[pParaAddr];
 		auto * pOperandArg = pInstrCall->paramsPassing[iArg];
 		switch (pOpndPara->getOpndType()) {
 			case backend::OpndType::VRegS: {
@@ -48,7 +48,7 @@ std::string FuncInfo::toASM(ircode::InstrCall * pInstrCall) {
 							} else if (backend::isGPR(pVRegArg->sid)) {
 								//  the value of this arg is saving on sreg which does not
 								//  pass parameter.
-								res += backend::toASM("mov", pVRegSPara->sid, pVRegArg->sid);
+								res += backend::toASM("vmov", pVRegSPara->sid, pVRegArg->sid);
 							} else if (pVRegArg->sid == backend::SId::stk) {
 								//  the value of this arg is saving on stk.
 								genASMDerefStkPtrToSReg(
@@ -285,6 +285,8 @@ std::string FuncInfo::toASM(ircode::InstrCall * pInstrCall) {
 			);
 		}
 	}
+	auto ridRet = backend::RId::err;
+	auto sidRet = backend::SId::err;
 	if (pInstrCall->retAddr) {
 		switch (pInstrCall->retAddr->addrType) {
 			case ircode::AddrType::Var: {
@@ -294,6 +296,7 @@ std::string FuncInfo::toASM(ircode::InstrCall * pInstrCall) {
 						genASMSaveFromRRegToVRegR(
 							res, pVRegRRet, backend::RId::r0, backend::RId::rhs
 						);
+						ridRet = pVRegRRet->rid;
 						break;
 					}
 					case sup::Type::Float_t: {
@@ -301,6 +304,7 @@ std::string FuncInfo::toASM(ircode::InstrCall * pInstrCall) {
 						genASMSaveFromSRegToVRegS(
 							res, pVRegSRet, backend::SId::s0, backend::RId::rhs
 						);
+						sidRet = pVRegSRet->sid;
 						break;
 					}
 					default:com::Throw("", CODEPOS);
@@ -312,10 +316,14 @@ std::string FuncInfo::toASM(ircode::InstrCall * pInstrCall) {
 	}
 	//  restore from back-up
 	for (auto [rId, offset]: rId2StkOffset) {
-		genASMDerefStkPtr(res, offset, rId);
+		if (rId != ridRet) {
+			genASMDerefStkPtr(res, offset, rId);
+		}
 	}
 	for (auto [sId, offset]: sId2StkOffset) {
-		com::TODO("", CODEPOS);
+		if (sId != sidRet) {
+			genASMDerefStkPtrToSReg(res, offset, sId, backend::RId::rhs);
+		}
 	}
 	return res;
 }

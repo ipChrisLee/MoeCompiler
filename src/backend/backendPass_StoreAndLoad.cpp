@@ -127,12 +127,41 @@ std::string FuncInfo::toASM_Load_Int(ircode::InstrLoad * pInstrLoad) {
 					res += backend::toASM("str", backend::RId::lhs, loadTo);
 					break;
 				}
-				default : {
-					com::Throw("", CODEPOS);
-				}
+				default : com::Throw("", CODEPOS);
 			}
 		} else if (backend::isGPR(pVRegRTo->rid)) {
-			com::TODO("", CODEPOS);
+			auto pFrom = pInstrLoad->from;
+			switch (pFrom->addrType) {
+				case ircode::AddrType::Var: {
+					auto rIdFrom = genASMGetVRegRVal(
+						res, convertIntVariable(pFrom), backend::RId::lhs
+					);
+					auto valFrom = "[" + backend::to_asm(rIdFrom) + ", " + backend::to_asm(0) +
+						"]";
+					res += backend::toASM("ldr", pVRegRTo->rid, valFrom);
+					break;
+				}
+				case ircode::AddrType::LocalVar: {
+					auto * pLVarAddr
+						= dynamic_cast<ircode::AddrLocalVariable *>(pFrom);
+					auto * pStkPtrLVal = convertLocalVar(pLVarAddr);
+					com::Assert(pStkPtrLVal->offset != INT_MIN, "", CODEPOS);
+					genASMDerefStkPtr(res, pStkPtrLVal->offset, pVRegRTo->rid);
+					break;
+				}
+				case ircode::AddrType::GlobalVar: {
+					auto * pGVarAddr
+						= dynamic_cast<ircode::AddrGlobalVariable *>(pFrom);
+					genASMLoadLabel(
+						res, convertGlobalVar(pGVarAddr), backend::RId::lhs
+					);
+					auto loadFrom = "[" + backend::to_asm(backend::RId::lhs) + ", " +
+						backend::to_asm(0) + "]";
+					res += backend::toASM("ldr", pVRegRTo->rid, loadFrom);
+					break;
+				}
+				default:com::Throw("", CODEPOS);
+			}
 		} else {
 			com::Throw("", CODEPOS);
 		}
@@ -187,12 +216,41 @@ std::string FuncInfo::toASM_Load_Float(ircode::InstrLoad * pInstrLoad) {
 					res += backend::toASM("vstr", backend::SId::lhs, loadTo);
 					break;
 				}
-				default : {
-					com::Throw("", CODEPOS);
-				}
+				default : com::Throw("", CODEPOS);
 			}
 		} else if (backend::isGPR(pVRegSTo->sid)) {
-			com::TODO("", CODEPOS);
+			auto * pFrom = pInstrLoad->from;
+			switch (pFrom->addrType) {
+				case ircode::AddrType::Var: {
+					auto sIdFrom = genASMGetVRegSVal(
+						res, convertFloatVariable(pFrom), backend::SId::lhs, backend::RId::lhs
+					);
+					res += backend::toASM("vmov", pVRegSTo->sid, sIdFrom);
+					break;
+				}
+				case ircode::AddrType::LocalVar: {
+					auto * pLVarAddr
+						= dynamic_cast<ircode::AddrLocalVariable *>(pFrom);
+					auto * pStkPtrLVal = convertLocalVar(pLVarAddr);
+					com::Assert(pStkPtrLVal->offset != INT_MIN, "", CODEPOS);
+					genASMDerefStkPtrToSReg(
+						res, pStkPtrLVal->offset, pVRegSTo->sid, backend::RId::lhs
+					);
+					break;
+				}
+				case ircode::AddrType::GlobalVar: {
+					auto * pGVarAddr
+						= dynamic_cast<ircode::AddrGlobalVariable *>(pFrom);
+					genASMLoadLabel(
+						res, convertGlobalVar(pGVarAddr), backend::RId::lhs
+					);
+					auto loadFrom = "[" + backend::to_asm(backend::RId::lhs) + ", " +
+						backend::to_asm(0) + "]";
+					res += backend::toASM("vldr", pVRegSTo->sid, loadFrom);
+					break;
+				}
+				default:com::Throw("", CODEPOS);
+			}
 		} else {
 			com::Throw("", CODEPOS);
 		}

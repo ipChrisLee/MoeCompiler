@@ -16,7 +16,7 @@ FuncInfo::convertLocalVar(ircode::AddrLocalVariable * pAddrLocalVar) {
 	auto sz = pTypeInfoPtrTo.pointTo->getSize();
 	auto * pStkPtr = opndPool.emplace_back(backend::StkPtr(-1, sz));
 	m_AddrLocalVar_StkPtr[pAddrLocalVar] = pStkPtr;
-	allStkPtr.insert(pStkPtr);
+	allVarStkPtr.insert(pStkPtr);
 	return pStkPtr;
 }
 
@@ -43,7 +43,7 @@ backend::VRegR * FuncInfo::convertIntVariable(ircode::AddrVariable * pAddrVar) {
 		backend::VRegR(backend::RId::unk)
 	);
 	m_AddrVar_VRegR[pAddrVar] = p;
-	allUsedVRegR.insert(p);
+	allVarVRegR.insert(p);
 	return p;
 }
 
@@ -57,21 +57,39 @@ backend::VRegS * FuncInfo::convertFloatVariable(ircode::AddrVariable * pAddrVar)
 		backend::VRegS(backend::SId::unk)
 	);
 	m_AddrVar_VRegS[pAddrVar] = p;
-	allUsedVRegS.insert(p);
+	allVarVRegS.insert(p);
 	return p;
 }
 
 backend::VRegR * FuncInfo::convertThisIntArg(ircode::AddrPara * pAddrPara) {
-	com::Assert(
-		m_AddrArg_VRegR.find(pAddrPara) != m_AddrArg_VRegR.end(), "", CODEPOS
-	);
+	if (m_AddrArg_VRegR.find(pAddrPara) == m_AddrArg_VRegR.end()) {
+		com::Throw("", CODEPOS);
+//		com::Assert(
+//			paramsInfoOnCallingThis.find(pAddrPara) != paramsInfoOnCallingThis.end(), "",
+//			CODEPOS
+//		);
+//		auto * pVRegRPara = dynamic_cast<backend::VRegR *>(
+//			paramsInfoOnCallingThis[pAddrPara]
+//		);
+//		auto * pVRegRArg = opndPool.emplace_back(backend::VRegR(*pVRegRPara));
+//		m_AddrArg_VRegR[pAddrPara] = pVRegRArg;
+	}
 	return m_AddrArg_VRegR[pAddrPara];
 }
 
 backend::VRegS * FuncInfo::convertThisFloatArg(ircode::AddrPara * pAddrPara) {
-	com::Assert(
-		m_AddrArg_VRegS.find(pAddrPara) != m_AddrArg_VRegS.end(), "", CODEPOS
-	);
+	if (m_AddrArg_VRegS.find(pAddrPara) == m_AddrArg_VRegS.end()) {
+		com::Throw("", CODEPOS);
+//		com::Assert(
+//			paramsInfoOnCallingThis.find(pAddrPara) != paramsInfoOnCallingThis.end(), "",
+//			CODEPOS
+//		);
+//		auto * pVRegSPara = dynamic_cast<backend::VRegS *>(
+//			paramsInfoOnCallingThis[pAddrPara]
+//		);
+//		auto * pVRegSArg = opndPool.emplace_back(backend::VRegS(*pVRegSPara));
+//		m_AddrArg_VRegS[pAddrPara] = pVRegSArg;
+	}
 	return m_AddrArg_VRegS[pAddrPara];
 }
 
@@ -102,6 +120,24 @@ void FuncInfo::markOperand(ircode::AddrOperand * pAddrOperand) {
 			}
 			break;
 		}
+		case ircode::AddrType::ParaVar: {
+			auto * pAddrArgVar = dynamic_cast<ircode::AddrPara *>(pAddrOperand);
+			switch (pAddrOperand->getType().type) {
+				case sup::Type::Pointer_t:
+				case sup::Type::Int_t: {
+					auto * pVRegR = convertThisIntArg(pAddrArgVar);
+					defineUseTimelineVRegR[pVRegR].emplace_back(tim);
+					break;
+				}
+				case sup::Type::Float_t: {
+					auto * pVRegS = convertThisFloatArg(pAddrArgVar);
+					defineUseTimelineVRegS[pVRegS].emplace_back(tim);
+					break;
+				}
+				default:com::Throw("", CODEPOS);
+			}
+			break;
+		}
 		case ircode::AddrType::GlobalVar: {
 			auto * pGVarAddr
 				= dynamic_cast<ircode::AddrGlobalVariable *>(pAddrOperand);
@@ -115,10 +151,6 @@ void FuncInfo::markOperand(ircode::AddrOperand * pAddrOperand) {
 			break;
 		}
 		case ircode::AddrType::StaticValue: {
-			//  do nothing
-			break;
-		}
-		case ircode::AddrType::ParaVar: {
 			//  do nothing
 			break;
 		}

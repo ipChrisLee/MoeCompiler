@@ -411,7 +411,8 @@ std::string hexFormOf(float val) {
 std::string FuncInfo::genASMBranchInstrs(
 	const std::string & cond, backend::Label * pLabelTo, backend::RId scratchRId
 ) {
-	if (backend::inLabelRange(backend::instrCnt, pLabelTo->lineNum)) {
+	if (backend::inLabelRange(backend::instrCnt, pLabelTo->lineNum) ||
+		pLabelTo->lineNum == INT_MIN) {
 		return backend::toASM("b" + cond, pLabelTo->labelStr);
 	} else {
 		auto res = std::string();

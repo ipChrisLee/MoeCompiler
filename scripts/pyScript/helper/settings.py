@@ -16,7 +16,7 @@ class TimeoutSettings:
 	opt: float = 20
 	llc: float = 300
 	run: float = 300
-	moe: float = 90
+	moe: float = 300
 
 
 class CommandLineSettings:
