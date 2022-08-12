@@ -26,6 +26,17 @@ inline std::string to_asm(const char & s) {
 	return buf;
 }
 
+extern int instrCnt;
+
+inline bool inLabelRange(int from, int to) {
+	//  is ( from-8MB+bias < to < from +8MB-bias) => ( |to-from| < (8MB-bias) )
+	int64_t f = from;
+	int64_t t = to;
+	const int64_t bias = 1024;
+	const int64_t range = 1 << 23;
+	auto d = std::abs(t - f);
+	return d < range - bias;
+}
 
 template<typename Tf, typename ...Ts>
 std::string toASM(Tf && tf, Ts && ... args) {
@@ -33,6 +44,7 @@ std::string toASM(Tf && tf, Ts && ... args) {
 	((res += to_asm(args) + ","), ...);
 	res.pop_back();
 	res += "\n";
+	++instrCnt;
 	return res;
 }
 

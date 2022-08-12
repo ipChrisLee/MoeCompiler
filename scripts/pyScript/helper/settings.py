@@ -14,7 +14,7 @@ class TimeoutSettings:
 	clang: float = 40
 	gcc: float = 40
 	opt: float = 20
-	llc: float = 20
+	llc: float = 300
 	run: float = 300
 	moe: float = 90
 

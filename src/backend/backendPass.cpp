@@ -117,6 +117,7 @@ FuncInfo::FuncInfo(
 std::string FuncInfo::toASM() {
 	auto res = "@\t" + pFuncDef->pAddrFun->declLLVMIR() + " \n";
 	res += pFuncLabel->labelStr + ":\n";
+	pFuncLabel->lineNum = backend::instrCnt;
 	if (!backupRReg.empty()) {
 		genASMPushRegs(res, backupRReg);
 	}
@@ -203,7 +204,7 @@ std::string FuncInfo::toASM(ircode::InstrBr * pBr) {
 	if (!pBr->pCond) {    //  unconditional jump
 		com::Assert(pBr->pLabelTrue, "", CODEPOS);
 		auto * pASMLabelTrue = convertLabel(pBr->pLabelTrue);
-		res += backend::toASM("b", pASMLabelTrue->labelStr);
+		res += genASMBranchInstrs("", pASMLabelTrue, backend::RId::lhs);
 	} else if (pBr->pCond->addrType == ircode::AddrType::StaticValue) {
 		auto * pSVCond = dynamic_cast<ircode::AddrStaticValue *>(pBr->pCond);
 		auto b = dynamic_cast<const sup::BoolStaticValue &>(
@@ -211,11 +212,15 @@ std::string FuncInfo::toASM(ircode::InstrBr * pBr) {
 		).value;
 		if (b) {
 			if (pBr->pLabelTrue) {
-				res += backend::toASM("b", convertLabel(pBr->pLabelTrue)->labelStr);
+				res += genASMBranchInstrs(
+					"", convertLabel(pBr->pLabelTrue), backend::RId::lhs
+				);
 			}
 		} else {
 			if (pBr->pLabelFalse) {
-				res += backend::toASM("b", convertLabel(pBr->pLabelFalse)->labelStr);
+				res += genASMBranchInstrs(
+					"", convertLabel(pBr->pLabelFalse), backend::RId::lhs
+				);
 			}
 		}
 	} else {
@@ -225,21 +230,23 @@ std::string FuncInfo::toASM(ircode::InstrBr * pBr) {
 			switch (cmpType) {
 				case CmpType::I: {
 					condStr = genASMCondName(lastICmp, false);
-					res += backend::toASM(
-						"b" + condStr, convertLabel(pBr->pLabelTrue)->labelStr
+					res += genASMBranchInstrs(
+						condStr, convertLabel(pBr->pLabelTrue), backend::RId::lhs
 					);
-					res += backend::toASM(
-						"b", convertLabel(pBr->pLabelFalse)->labelStr
+					res += genASMBranchInstrs(
+						"", convertLabel(pBr->pLabelFalse), backend::RId::lhs
 					);
 					break;
 				}
 				case CmpType::F: {
 					condStr = genASMCondNameReverse(lastFCmp);
 					res += backend::toASM("vmrs", "APSR_nzcv", "fpscr");
-					res += backend::toASM(
-						"b" + condStr, convertLabel(pBr->pLabelFalse)->labelStr
+					res += genASMBranchInstrs(
+						condStr, convertLabel(pBr->pLabelFalse), backend::RId::lhs
 					);
-					res += backend::toASM("b", convertLabel(pBr->pLabelTrue)->labelStr);
+					res += genASMBranchInstrs(
+						"", convertLabel(pBr->pLabelTrue), backend::RId::lhs
+					);
 					break;
 				}
 				default:com::Throw("", CODEPOS);
@@ -248,8 +255,8 @@ std::string FuncInfo::toASM(ircode::InstrBr * pBr) {
 			switch (cmpType) {
 				case CmpType::I: {
 					auto condStr = genASMCondName(lastICmp, false);
-					res += backend::toASM(
-						"b" + condStr, convertLabel(pBr->pLabelTrue)->labelStr
+					res += genASMBranchInstrs(
+						condStr, convertLabel(pBr->pLabelTrue), backend::RId::lhs
 					);
 					break;
 				}
@@ -258,18 +265,11 @@ std::string FuncInfo::toASM(ircode::InstrBr * pBr) {
 		} else if (!pBr->pLabelTrue && pBr->pLabelFalse) {
 			auto condStr = std::string();
 			switch (cmpType) {
-				case CmpType::I: {
-					condStr = genASMCondName(lastICmp, true);
-					res += backend::toASM(
-						"b" + condStr, convertLabel(pBr->pLabelTrue)->labelStr
-					);
-					break;
-				}
 				case CmpType::F: {
 					condStr = genASMCondNameReverse(lastFCmp);
-					res += backend::toASM("vmrs");
-					res += backend::toASM(
-						"b" + condStr, convertLabel(pBr->pLabelFalse)->labelStr
+					res += backend::toASM("vmrs", "APSR_nzcv", "fpscr");
+					res += genASMBranchInstrs(
+						condStr, convertLabel(pBr->pLabelFalse), backend::RId::lhs
 					);
 					break;
 				}
@@ -538,6 +538,7 @@ int FuncInfo::run(ircode::InstrLabel * pInstrLabel) {
 std::string FuncInfo::toASM(ircode::InstrLabel * pInstrLabel) {
 	auto * pASMLabel = convertLabel(pInstrLabel->pAddrLabel);
 	auto res = pASMLabel->labelStr + ":\n";
+	pASMLabel->lineNum = backend::instrCnt;
 	return res;
 }
 

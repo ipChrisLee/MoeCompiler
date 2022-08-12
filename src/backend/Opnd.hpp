@@ -109,6 +109,7 @@ class Label : public Opnd {
   protected:
   public:
 	std::string labelStr;
+	int lineNum = INT_MIN;
 
 	explicit Label(ircode::AddrFunction * pAddrFunc);
 

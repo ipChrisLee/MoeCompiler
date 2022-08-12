@@ -153,10 +153,10 @@ class FuncInfo {
 		std::string & res, int offset, backend::SId sIdDest, backend::RId scratchRId
 	);
 
-	static std::string
+	[[nodiscard]] static std::string
 	genASMPtrOffsetToOperand2(std::string & res, int offset, backend::RId rIdRest);
 
-	static std::string
+	[[nodiscard]] static std::string
 	genASMPtrOffsetToFOperand2(std::string & res, int offset, backend::RId scratchRId);
 
 	/**
@@ -183,11 +183,16 @@ class FuncInfo {
 		std::string & res, backend::SId sidFrom, int offset, backend::RId scratchReg
 	);
 
-	static std::string
+	[[nodiscard]] static std::string
 	genASMCondName(ircode::ICMP icmp, bool reverse = false);
 
-	static std::string
+	[[nodiscard]] static std::string
 	genASMCondNameReverse(ircode::FCMP fcmp);
+
+	[[nodiscard]] static std::string
+	genASMBranchInstrs(
+		const std::string & cond, backend::Label * pLabelTo, backend::RId scratchRId
+	);
 
 	//  Generate mapping of defined var in instruction
 	//  Complete timeline of VRegs

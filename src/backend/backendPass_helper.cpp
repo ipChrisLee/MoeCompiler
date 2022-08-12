@@ -196,6 +196,7 @@ FuncInfo::genASMPushRegs(std::string & res, const std::set<backend::RId> & list)
 	}
 	ins.pop_back();
 	ins += "}\n";
+	backend::instrCnt += int(list.size());
 	res += ins;
 }
 
@@ -208,6 +209,7 @@ FuncInfo::genASMPushRegs(std::string & res, const std::set<backend::SId> & list)
 	}
 	ins.pop_back();
 	ins += "}\n";
+	backend::instrCnt += int(list.size());
 	res += ins;
 }
 
@@ -220,6 +222,7 @@ FuncInfo::genASMPopRegs(std::string & res, const std::set<backend::RId> & list) 
 	}
 	ins.pop_back();
 	ins += "}\n";
+	backend::instrCnt += int(list.size());
 	res += ins;
 }
 
@@ -232,6 +235,7 @@ FuncInfo::genASMPopRegs(std::string & res, const std::set<backend::SId> & list) 
 	}
 	ins.pop_back();
 	ins += "}\n";
+	backend::instrCnt += int(list.size());
 	res += ins;
 }
 
@@ -313,7 +317,7 @@ const char * ToASM::asmHeader = ".arch armv7ve\n.arm\n";
 
 const char * ToASM::gVarHeader = ".section .data\n";
 
-const char * ToASM::functionsHeader = ".global main \n.section .text\n";
+const char * ToASM::functionsHeader = ".global main \n.section .text\n.align 4";
 
 
 std::string ToASM::declGVar(ircode::AddrGlobalVariable * pGVarAddr) {
@@ -402,6 +406,20 @@ std::string hexFormOf(int32_t val) {
 
 std::string hexFormOf(float val) {
 	return hexFormOf(*reinterpret_cast<int32_t *>(&val));
+}
+
+std::string FuncInfo::genASMBranchInstrs(
+	const std::string & cond, backend::Label * pLabelTo, backend::RId scratchRId
+) {
+	if (backend::inLabelRange(backend::instrCnt, pLabelTo->lineNum)) {
+		return backend::toASM("b" + cond, pLabelTo->labelStr);
+	} else {
+		auto res = std::string();
+		genASMLoadLabel(res, pLabelTo, scratchRId);
+		res += backend::toASM("bx" + cond, scratchRId);
+		return res;
+	}
+
 }
 
 }

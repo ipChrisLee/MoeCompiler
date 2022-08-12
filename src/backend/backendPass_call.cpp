@@ -263,7 +263,14 @@ std::string FuncInfo::toASM(ircode::InstrCall * pInstrCall) {
 		}
 	}
 	//  call
-	res += backend::toASM("bl", pFuncInfoToCall->pFuncLabel->labelStr);
+	if (pFuncInfoToCall->pFuncLabel->lineNum == INT_MIN || backend::inLabelRange(
+		backend::instrCnt, pFuncInfoToCall->pFuncLabel->lineNum
+	)) {
+		res += backend::toASM("bl", pFuncInfoToCall->pFuncLabel->labelStr);
+	} else {
+		genASMLoadLabel(res, pFuncInfoToCall->pFuncLabel, backend::RId::lhs);
+		res += backend::toASM("blx", backend::RId::lhs);
+	}
 	//  restore arguments field on calling next function
 	if (pFuncInfoToCall->argsStkSizeOnCallingThis + backUpStkSize) {
 		auto stkSizeArgs = pFuncInfoToCall->argsStkSizeOnCallingThis + backUpStkSize;

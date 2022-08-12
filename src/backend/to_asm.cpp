@@ -3,4 +3,6 @@
 
 namespace backend {
 
+int instrCnt = 0;
+
 }
