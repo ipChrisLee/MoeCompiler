@@ -278,8 +278,9 @@ class ToASM : public IRPass {
 	std::map<ircode::AddrFunction *, FuncInfo *> addrToFuncInfo;
 	std::map<ircode::AddrGlobalVariable *, backend::Label *> gVarToLabel;
 	static const char * asmHeader;
-	static const char * gVarHeader;
+	static const char * gVarHeaderDataSection;
 	static const char * functionsHeader;
+	static const char * gVarHeaderBssSection;
 
 	std::string declGVar(ircode::AddrGlobalVariable * pGVarAddr);
   public:

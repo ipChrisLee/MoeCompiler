@@ -174,19 +174,10 @@ def test_llvmir_run():
 
 
 def test_difftest():
-	res = Moe.compile(
-		syFilePath=TestFilesSettings.FilePath.testSy,
-		msFilePath=TestFilesSettings.FilePath.testMLL,
-		optiLevel=args.moeOpti, timeout=TimeoutSettings.moe, emit_llvm=True,
-		float_dec_format=False
-	)
-	if res.returncode != 0:
-		cprint(res.stderr, color=C.WA)
-		res.check_returncode()
 	res = Clang.compile_to_ass(
 		syFilePath=TestFilesSettings.FilePath.testSy,
 		sFilePath=TestFilesSettings.FilePath.testS,
-		optiLevel=0
+		optiLevel=args.moeOpti
 	)
 	if res.returncode != 0:
 		cprint(res.stderr, color=C.WA)

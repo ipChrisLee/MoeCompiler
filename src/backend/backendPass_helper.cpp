@@ -315,13 +315,15 @@ void FuncInfo::genASMSaveFromVRegSToSReg(
 
 const char * ToASM::asmHeader = ".arch armv7ve\n.arm\n";
 
-const char * ToASM::gVarHeader = ".section .data\n";
+const char * ToASM::gVarHeaderDataSection = ".align\n.section .data\n";
+
+const char * ToASM::gVarHeaderBssSection = ".align\n.section .data\n";
 
 const char * ToASM::functionsHeader = ".global main \n.section .text\n.align 4";
 
 
 std::string ToASM::declGVar(ircode::AddrGlobalVariable * pGVarAddr) {
-	auto res = std::string(".align\n");
+	auto res = std::string();
 	auto gType = pGVarAddr->getStaticValue().getType().type;
 	auto * pLabel = gVarToLabel[pGVarAddr];
 	switch (gType) {
@@ -329,6 +331,7 @@ std::string ToASM::declGVar(ircode::AddrGlobalVariable * pGVarAddr) {
 			auto value = dynamic_cast<const sup::IntStaticValue &>(
 				pGVarAddr->getStaticValue()
 			).value;
+			res += gVarHeaderDataSection;
 			res += pLabel->labelStr + ":\n";
 			res += "\t.long\t" + hexFormOf(value) + "\t@\t" + to_string(value) + "\n";
 			break;
@@ -337,6 +340,7 @@ std::string ToASM::declGVar(ircode::AddrGlobalVariable * pGVarAddr) {
 			auto value = dynamic_cast<const sup::FloatStaticValue &>(
 				pGVarAddr->getStaticValue()
 			).value;
+			res += gVarHeaderDataSection;
 			res += pLabel->labelStr + ":\n";
 			res += "\t.long\t" + hexFormOf(value) + "\t@\t" + to_string(value) + "\n";
 			break;
@@ -349,22 +353,30 @@ std::string ToASM::declGVar(ircode::AddrGlobalVariable * pGVarAddr) {
 			const auto & vecValue = dynamic_cast<const sup::IntArrayStaticValue &>(
 				pGVarAddr->getStaticValue()
 			).value;
-			res += pLabel->labelStr + ":\n";
-			auto posNow = 0;
-			auto iPos = 0;
-			for (auto valPair: vecValue) {
-				posNow = sup::idxToPos(valPair.first, viTypeInfo.shape) * 4;
+			if (vecValue.empty()) {
+				res += gVarHeaderBssSection;
+				res += pLabel->labelStr + ":\n";
+				auto space = sup::lastPosOfShape(viTypeInfo.shape) * 4 + 4;
+				res += "\t.space\t" + hexFormOf(space) + "\n";
+			} else {
+				res += gVarHeaderDataSection;
+				res += pLabel->labelStr + ":\n";
+				auto posNow = 0;
+				auto iPos = 0;
+				for (const auto & valPair: vecValue) {
+					posNow = sup::idxToPos(valPair.first, viTypeInfo.shape) * 4;
+					if (posNow - iPos) {
+						res += "\t.space\t" + hexFormOf(posNow - iPos) + "\n";
+					}
+					auto & value = valPair.second;
+					res += "\t.long\t" + hexFormOf(value.value) + "\t@\t" +
+						to_string(value.value) + "\n";
+					iPos = posNow + 4;
+				}
+				posNow = sup::lastPosOfShape(viTypeInfo.shape) * 4;
 				if (posNow - iPos) {
 					res += "\t.space\t" + hexFormOf(posNow - iPos) + "\n";
 				}
-				auto & value = valPair.second;
-				res += "\t.long\t" + hexFormOf(value.value) + "\t@\t" +
-					to_string(value.value) + "\n";
-				iPos = posNow + 4;
-			}
-			posNow = sup::lastPosOfShape(viTypeInfo.shape) * 4;
-			if (posNow - iPos) {
-				res += "\t.space\t" + hexFormOf(posNow - iPos) + "\n";
 			}
 			break;
 		}
@@ -376,23 +388,30 @@ std::string ToASM::declGVar(ircode::AddrGlobalVariable * pGVarAddr) {
 			const auto & vecValue = dynamic_cast<const sup::FloatArrayStaticValue &>(
 				pGVarAddr->getStaticValue()
 			).value;
-			res += pLabel->labelStr + ":\n";
-			auto posNow = 0;
-			auto iPos = 0;
-			for (auto valPair: vecValue) {
-				posNow = sup::idxToPos(valPair.first, vfTypeInfo.shape) * 4;
+			if (vecValue.empty()) {
+				res += gVarHeaderBssSection;
+				res += pLabel->labelStr + ":\n";
+				auto space = sup::lastPosOfShape(vfTypeInfo.shape) * 4 + 4;
+				res += "\t.space\t" + hexFormOf(space) + "\n";
+			} else {
+				res += gVarHeaderDataSection;
+				res += pLabel->labelStr + ":\n";
+				auto posNow = 0;
+				auto iPos = 0;
+				for (const auto & valPair: vecValue) {
+					posNow = sup::idxToPos(valPair.first, vfTypeInfo.shape) * 4;
+					if (posNow - iPos) {
+						res += "\t.space\t" + hexFormOf(posNow - iPos) + "\n";
+					}
+					auto & value = valPair.second;
+					res += "\t.long\t" + hexFormOf(value.value) + "\t@\t" +
+						to_string(value.value) + "\n";
+					iPos = posNow + 4;
+				}
+				posNow = sup::lastPosOfShape(vfTypeInfo.shape) * 4;
 				if (posNow - iPos) {
 					res += "\t.space\t" + hexFormOf(posNow - iPos) + "\n";
 				}
-				auto & value = valPair.second;
-				res += "\t.long\t" + hexFormOf(value.value) + "\t@\t" +
-					to_string(value.value) +
-					"\n";
-				iPos = posNow + 4;
-			}
-			posNow = sup::lastPosOfShape(vfTypeInfo.shape) * 4;
-			if (posNow - iPos) {
-				res += "\t.space\t" + hexFormOf(posNow - iPos) + "\n";
 			}
 			break;
 		}
