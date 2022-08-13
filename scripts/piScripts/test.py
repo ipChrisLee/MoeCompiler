@@ -97,7 +97,7 @@ with open(bufferFilePath, 'w') as _:
 	pass
 _ = subprocess.run(
 	[
-		'gcc-7', '-march=armv7-a', '-O0',
+		'gcc-7', '-march=armv7-a', '-O0', '-g',
 		'-Wl,--whole-archive', args.aLibPath, '-Wl,--no-whole-archive',
 		args.msFilePath, '-o', f'{exeFilePath}'
 	],

@@ -16,11 +16,6 @@ argParser.add_argument(
 	help='List all available tests.',
 	action='store_true'
 )
-# argParser.add_argument(
-#     '--write_error_file_to_testDir_test_sy',
-#     help='If error occurs, write error sy file to testDir/test.sy',
-#     action='store_true'
-# )
 argParser.add_argument(
 	'--save_result_to_table',
 	help='Save test result to table.',
@@ -34,11 +29,6 @@ argParser.add_argument(
 argParser.add_argument(
 	'--term_if_failed',
 	help=f'Once a testcase failed, term tester.',
-	action='store_true'
-)
-argParser.add_argument(
-	'--verbose_of_terminal',
-	help=f'Show every command tester runs.',
 	action='store_true'
 )
 

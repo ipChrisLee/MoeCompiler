@@ -52,7 +52,7 @@ class FuncInfo {
 	//  StkSize for spilled registers.
 	int spilledStkSize = 0;
 	//  backup of callee saved registers
-	int backupStkSize = 0;
+	int backupStkSizeWhenCallingThis = 0;
 	//  backup of callee saved registers. Alignment is in consideration.
 	std::set<backend::RId> backupRReg;   //  include lr, which is the return addr
 	std::set<backend::RId> restoreRReg;  //  include pc, which means `return addr`

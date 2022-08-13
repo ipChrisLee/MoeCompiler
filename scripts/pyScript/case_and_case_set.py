@@ -22,7 +22,7 @@ class TestCase:
 		syFilePath: str, inFilePath: str, outFilePath: str,
 		year: int, testType: TestType
 	):
-		self.testName: str = testName
+		self._testName: str = testName
 		self.syFilePath: str = syFilePath
 		if not Path(inFilePath).exists():
 			inFilePath = emptyTextFilePath
@@ -36,7 +36,7 @@ class TestCase:
 		Path(self.msFilePath).touch()
 	
 	def __str__(self):
-		return str(self.year) + "::" + self.testType.name + "::" + self.testName
+		return str(self.year) + "::" + self.testType.name + "::" + self._testName
 	
 	def __hash__(self):
 		return hash(self.syFilePath)

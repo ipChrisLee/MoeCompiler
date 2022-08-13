@@ -1,5 +1,6 @@
 from enum import Enum
 import typing as typ
+import math
 
 
 class TestStatus(Enum):
@@ -35,7 +36,7 @@ class RunningInfo:
 		out: typ.Optional[str] = None,
 		stderr: typ.Optional[str] = None,
 		time_now: typ.Optional[str] = None,
-		time_cost: float = -1
+		time_cost: float = math.nan
 	):
 		"""
 			exit_code:
@@ -69,6 +70,8 @@ class RunningInfo:
 		self.out = out
 		self.stderr = stderr
 		self.time_now = time_now
+		if not isinstance(time_cost, float):
+			time_cost = math.nan
 		self.time_cost = time_cost
 	
 	def to_dict(self):
@@ -98,8 +101,8 @@ class RunningInfo:
 	def accepted(self):
 		return self.test_status == TestStatus.AC
 	
-	def to_list_info(self):
-		return [self.test_status.name, self.time_cost,
-		        self.info, self.stderr]
+	def to_list_info(self, testName: str, stdTimeCost: float):
+		return [testName, self.test_status.name, self.time_cost,
+		        self.info, self.stderr, self.time_cost / stdTimeCost]
 	
 	header = ['test_name', 'status', 'time_cost', 'info', 'stderr', 'score']

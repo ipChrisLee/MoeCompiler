@@ -330,7 +330,7 @@ std::string ToASM::declGVar(ircode::AddrGlobalVariable * pGVarAddr) {
 				pGVarAddr->getStaticValue()
 			).value;
 			res += pLabel->labelStr + ":\n";
-			res += "\t.long\t" + hexFormOf(value);
+			res += "\t.long\t" + hexFormOf(value) + "\t@\t" + to_string(value) + "\n";
 			break;
 		}
 		case sup::Type::Float_t: {
@@ -338,7 +338,7 @@ std::string ToASM::declGVar(ircode::AddrGlobalVariable * pGVarAddr) {
 				pGVarAddr->getStaticValue()
 			).value;
 			res += pLabel->labelStr + ":\n";
-			res += "\t.long\t" + hexFormOf(value);
+			res += "\t.long\t" + hexFormOf(value) + "\t@\t" + to_string(value) + "\n";
 			break;
 		}
 		case sup::Type::IntArray_t: {
@@ -358,7 +358,8 @@ std::string ToASM::declGVar(ircode::AddrGlobalVariable * pGVarAddr) {
 					res += "\t.space\t" + hexFormOf(posNow - iPos) + "\n";
 				}
 				auto & value = valPair.second;
-				res += "\t.long\t" + hexFormOf(value.value) + "\n";
+				res += "\t.long\t" + hexFormOf(value.value) + "\t@\t" +
+					to_string(value.value) + "\n";
 				iPos = posNow + 4;
 			}
 			posNow = sup::lastPosOfShape(viTypeInfo.shape) * 4;
@@ -384,7 +385,9 @@ std::string ToASM::declGVar(ircode::AddrGlobalVariable * pGVarAddr) {
 					res += "\t.space\t" + hexFormOf(posNow - iPos) + "\n";
 				}
 				auto & value = valPair.second;
-				res += "\t.long\t" + hexFormOf(value.value) + "\n";
+				res += "\t.long\t" + hexFormOf(value.value) + "\t@\t" +
+					to_string(value.value) +
+					"\n";
 				iPos = posNow + 4;
 			}
 			posNow = sup::lastPosOfShape(vfTypeInfo.shape) * 4;

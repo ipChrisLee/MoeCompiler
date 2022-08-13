@@ -125,9 +125,10 @@ std::string FuncInfo::toASM_SRem(
 	switch (pLOp->addrType) {
 		case ircode::AddrType::Var: {
 			auto pVarAddr = dynamic_cast<ircode::AddrVariable *>(pLOp);
-			rIdLOp = genASMGetVRegRVal(
+			genASMSaveFromVRegRToRReg(
 				res, convertIntVariable(pVarAddr), backend::RId::lhs
 			);
+			rIdLOp = backend::RId::lhs;
 			break;
 		}
 		case ircode::AddrType::StaticValue: {
@@ -144,9 +145,10 @@ std::string FuncInfo::toASM_SRem(
 	switch (pROp->addrType) {
 		case ircode::AddrType::Var: {
 			auto pVarAddr = dynamic_cast<ircode::AddrVariable *>(pROp);
-			rIdROp = genASMGetVRegRVal(
+			genASMSaveFromVRegRToRReg(
 				res, convertIntVariable(pVarAddr), backend::RId::rhs
 			);
+			rIdROp = backend::RId::rhs;
 			break;
 		}
 		case ircode::AddrType::StaticValue: {
@@ -162,19 +164,12 @@ std::string FuncInfo::toASM_SRem(
 	switch (pDest->addrType) {
 		case ircode::AddrType::Var: {
 			auto * pVRegRDest = convertIntVariable(pDest);
-			//  TODO: can be optimized
-			if (pVRegRDest->rid == backend::RId::r0) {
-				res += backend::toASM("sdiv", backend::RId::r0, rIdLOp, rIdROp);
+			//  TODO: can be optimized [check what register is freeing]
+			if (backend::isGPR(pVRegRDest->rid)) {
+				res += backend::toASM("sdiv", pVRegRDest->rid, rIdLOp, rIdROp);
 				res += backend::toASM(
-					"mls", backend::RId::r0, rIdROp, backend::RId::r0, rIdLOp
+					"mls", pVRegRDest->rid, rIdROp, pVRegRDest->rid, rIdLOp
 				);
-			} else if (backend::isGPR(pVRegRDest->rid)) {
-				genASMPushRegs(res, {backend::RId::r0});
-				res += backend::toASM("sdiv", backend::RId::r0, rIdLOp, rIdROp);
-				res += backend::toASM(
-					"mls", pVRegRDest->rid, rIdROp, backend::RId::r0, rIdLOp
-				);
-				genASMPopRegs(res, {backend::RId::r0});
 			} else if (pVRegRDest->rid == backend::RId::stk) {
 				genASMPushRegs(res, {backend::RId::r0});
 				res += backend::toASM("sdiv", backend::RId::r0, rIdLOp, rIdROp);

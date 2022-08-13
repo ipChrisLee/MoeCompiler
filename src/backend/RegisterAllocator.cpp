@@ -37,8 +37,10 @@ int RegisterAllocator::getRes() {
 			pVRegR->offset = spilledStkSize;
 			spilledStkSize += 4;
 		} else if (isCalleeSave(pVRegR->rid)) {
-			backupRReg.insert(pVRegR->rid);
-			backupStkSize += 4;
+			if (backupRReg.find(pVRegR->rid) == backupRReg.end()) {
+				backupRReg.insert(pVRegR->rid);
+				backupStkSizeWhenCallingThis += 4;
+			}
 		} else if (isCallerSave(pVRegR->rid)) {
 			callerSaveRReg.insert(pVRegR->rid);
 		} else { com::Throw("", CODEPOS); }
@@ -48,11 +50,32 @@ int RegisterAllocator::getRes() {
 			pVRegS->offset = spilledStkSize;
 			spilledStkSize += 4;
 		} else if (isCalleeSave(pVRegS->sid)) {
-			backupAndRestoreSReg.insert(pVRegS->sid);
-			backupStkSize += 4;
+			if (backupAndRestoreSReg.find(pVRegS->sid) == backupAndRestoreSReg.end()) {
+				backupAndRestoreSReg.insert(pVRegS->sid);
+				backupStkSizeWhenCallingThis += 4;
+			}
 		} else if (isCallerSave(pVRegS->sid)) {
 			callerSaveSReg.insert(pVRegS->sid);
 		} else { com::Throw("", CODEPOS); }
+	}
+	for (auto [pPara, pOpnd]: paramsOnCallingThis) {
+		switch (pOpnd->getOpndType()) {
+			case OpndType::VRegR: {
+				auto * pVRegR = dynamic_cast<VRegR *>(pOpnd);
+				if (isCallerSave(pVRegR->rid)) {
+					callerSaveRReg.insert(pVRegR->rid);
+				}
+				break;
+			}
+			case OpndType::VRegS: {
+				auto * pVRegS = dynamic_cast<VRegS *>(pOpnd);
+				if (isCallerSave(pVRegS->sid)) {
+					callerSaveSReg.insert(pVRegS->sid);
+				}
+				break;
+			}
+			default:com::Throw("", CODEPOS);
+		}
 	}
 	for (auto * pStkPtr: allVarStkPtr) {
 		pStkPtr->offset = spilledStkSize;
@@ -61,8 +84,8 @@ int RegisterAllocator::getRes() {
 	restoreRReg = backupRReg;
 	backupRReg.insert(RId::lr);
 	restoreRReg.insert(RId::pc);
-	backupStkSize += 4;
-	if ((backupStkSize + spilledStkSize) % 8 != 0) {  //  need alignment
+	backupStkSizeWhenCallingThis += 4;
+	if ((backupStkSizeWhenCallingThis + spilledStkSize) % 8 != 0) {  //  need alignment
 		spilledStkSize += 4;
 	}
 	//  change vreg of para after register allocation
@@ -72,7 +95,7 @@ int RegisterAllocator::getRes() {
 				auto * pVRegRArg = m_AddrArg_VRegR[pParaAddr];
 				if (pVRegRArg->rid == RId::stk) {
 					pVRegRArg->offset = argsStkSizeOnCallingThis +
-						pVRegRArg->offset + spilledStkSize + backupStkSize;
+						pVRegRArg->offset + spilledStkSize + backupStkSizeWhenCallingThis;
 				} else if (isGPR(pVRegRArg->rid)) {
 					//  do nothing
 				} else { com::Throw("", CODEPOS); }
@@ -82,7 +105,7 @@ int RegisterAllocator::getRes() {
 				auto * pVRegSArg = m_AddrArg_VRegS[pParaAddr];
 				if (pVRegSArg->sid == SId::stk) {
 					pVRegSArg->offset = argsStkSizeOnCallingThis +
-						pVRegSArg->offset + spilledStkSize + backupStkSize;
+						pVRegSArg->offset + spilledStkSize + backupStkSizeWhenCallingThis;
 				} else if (isGPR(pVRegSArg->sid)) {
 					//  do nothing
 				} else { com::Throw("", CODEPOS); }
@@ -212,6 +235,24 @@ void LinearScanAllocator::linear_scan() {
 			defVRegRAt.find(i) == defVRegRAt.end() || defVRegSAt.find(i) == defVRegSAt.end(),
 			"", CODEPOS
 		);
+		if (lstUseVRegRAt.find(i) != lstUseVRegRAt.end()) {
+			auto & vec = lstUseVRegRAt[i];
+			for (auto * pVRegRLstUse: vec) {
+				if (isGPR(pVRegRLstUse->rid)) {
+					freeRIds.emplace(pVRegRLstUse->rid);
+					livingVRegR.erase(pVRegRLstUse->rid);
+				}
+			}
+		}
+		if (lstUseVRegSAt.find(i) != lstUseVRegSAt.end()) {
+			auto & vec = lstUseVRegSAt[i];
+			for (auto * pVRegSLstUse: vec) {
+				if (isGPR(pVRegSLstUse->sid)) {
+					freeSIds.emplace(pVRegSLstUse->sid);
+					livingVRegS.erase(pVRegSLstUse->sid);
+				}
+			}
+		}
 		if (defVRegRAt.find(i) != defVRegRAt.end()) {
 			auto & vec = defVRegRAt[i];
 			com::Assert(vec.size() == 1, "", CODEPOS);
@@ -243,24 +284,6 @@ void LinearScanAllocator::linear_scan() {
 				freeSIds.erase(newPos);
 				definingVRegS->sid = newPos;
 				livingVRegS[newPos] = definingVRegS;
-			}
-		}
-		if (lstUseVRegRAt.find(i) != lstUseVRegRAt.end()) {
-			auto & vec = lstUseVRegRAt[i];
-			for (auto * pVRegRLstUse: vec) {
-				if (isGPR(pVRegRLstUse->rid)) {
-					freeRIds.emplace(pVRegRLstUse->rid);
-					livingVRegR.erase(pVRegRLstUse->rid);
-				}
-			}
-		}
-		if (lstUseVRegSAt.find(i) != lstUseVRegSAt.end()) {
-			auto & vec = lstUseVRegSAt[i];
-			for (auto * pVRegSLstUse: vec) {
-				if (isGPR(pVRegSLstUse->sid)) {
-					freeSIds.emplace(pVRegSLstUse->sid);
-					livingVRegS.erase(pVRegSLstUse->sid);
-				}
 			}
 		}
 	}

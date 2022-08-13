@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+import typing as typ
 
 
 class BasicSettings:
@@ -32,6 +33,9 @@ class Commands:
 class TestUnitSettings:
 	tablesFolderPath: Path = Path('scripts/result_tables/')
 	syPathForFailedTest: Path = Path('testDir/testSyFile/test.sy')
+	generalTableFilePath: Path = tablesFolderPath / Path('result.table')
+	assert (Path(syPathForFailedTest).exists())
+	assert (Path(tablesFolderPath).exists())
 
 
 class TestFilesSettings:
@@ -58,10 +62,12 @@ class JudgmentSettings:
 	assert gccPerfDataFilePath.exists()
 	gccPerfTableFilePath: Path = Path('scripts/result_tables/gcc_perf.table')
 	assert gccPerfTableFilePath.exists()
+	gccPerfTimeData: typ.Dict[str, float] = {}
+	with open(gccPerfDataFilePath, 'r') as _:
+		_data: typ.Dict = json.load(_)
+		for _name, _dic in _data.items():
+			gccPerfTimeData[_name] = _dic['time_cost']
 
-
-assert (Path(TestUnitSettings.syPathForFailedTest).exists())
-assert (Path(TestUnitSettings.tablesFolderPath).exists())
 
 nullDev: str = '/dev/null'
 bufferTextFilePath: str = f'testDir/buffer.txt'
@@ -72,4 +78,4 @@ if not Path(bufferTextFilePath).exists():
 		pass
 
 if __name__ == '__main__':
-	pass
+	print(JudgmentSettings.gccPerfTimeData)

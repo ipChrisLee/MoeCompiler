@@ -1,10 +1,13 @@
+import tabulate
+
+from scripts.piScripts.test_info import RunningInfo
 from scripts.pyScript.helper.color import C, cprint, cprint_separate_line
 from case_and_case_set import TestCaseSet, TestCase
-from scripts.pyScript.helper.settings import TestUnitSettings
+from scripts.pyScript.helper.settings import TestUnitSettings, JudgmentSettings
 import actions
 import typing as typ
 from case_and_case_set import emptyTestCaseSet, allFunctionTestsCaseSet, \
-	functionWithoutFloat, myFuncTestCaseSet
+	functionWithoutFloat, myFuncTestCaseSet, allPerformanceTestsCaseSet
 from scripts.pyScript.helper.settings import SysYSettings
 from pathlib import Path
 
@@ -53,24 +56,29 @@ class TestUnit:
 		)
 		action: actions.ActionBasic
 		for action in self.actions:
-			cprint(f'\t\t{action.config} = \n'
-			       f'\t\t\tconfig = {action.config}',
-			       color=C.INFO)
-		cprint(
-			f'Test result will {"" if saveToTable else "NOT"}be saved on '
-			f'[{TestUnitSettings.tablesFolderPath}/*.table] .',
-			color=C.INFO
-		)
+			cprint(
+				f'\t\t{action.config} = ',
+				f'\t\t\tconfig = {action.config}',
+				color=C.INFO
+			)
+		if saveToTable:
+			cprint(
+				f'Test result will be saved on '
+				f'[{TestUnitSettings.tablesFolderPath}/"actionName".table] .',
+				color=C.INFO
+			)
 		if termIfFailed:
-			cprint(f'Test unit will be terminated once error occurs.', color=C.INFO)
+			cprint(f'Test unit will be terminated once one test failed.', color=C.INFO)
 		
 		cprint(f'Have a nice play!', color=C.INFO)
-		cprint_separate_line(f'Test info end', color=C.INFO,
-		                     fill_len_indent=4, new_line=True)
-		
-		cprint_separate_line(f'Testing actions', color=C.INFO,
-		                     fill_len_indent=4)
+		cprint_separate_line(
+			f'Test info end', color=C.INFO, fill_len_indent=4, new_line=True
+		)
+		cprint_separate_line(
+			f'Testing actions', color=C.INFO, fill_len_indent=4
+		)
 		failedTestCase: typ.Optional[TestCase] = None
+		resTable: typ.List[typ.List] = []
 		for action in self.actions:
 			cprint_separate_line(f'For action [{action.name}]',
 			                     color=C.INFO, fill_len_indent=8)
@@ -78,19 +86,40 @@ class TestUnit:
 				res = action(testCase=testCase)
 				if not res.accepted():
 					failedTestCase = testCase
-			if failedTestCase is not None and termIfFailed:
+				if saveToTable:
+					resTable.append(
+						res.to_list_info(
+							str(testCase),
+							JudgmentSettings.gccPerfTimeData[str(testCase)]
+						)
+					)
+				if termIfFailed:
+					break
+			if failedTestCase is not None:
 				cprint(f'Failed action [{action.name}] on testCase '
-				       f'[{failedTestCase}] ',
+				       f'[{failedTestCase}] (and so on) ',
 				       color=C.WA)
 				if copyFailedTestCaseToTestSy:
 					failedTestCase.copy_to_test_files()
 					cprint(f'Failed test SysY file has been copied.',
 					       color=C.WA)
 			else:
-				cprint(f'All testCases are passed in action [{action.name}]! '
-				       f'Congratulation!',
-				       color=C.AC
-				       )
+				cprint(
+					f'All testCases are passed in action [{action.name}]! '
+					f'Congratulation!', color=C.AC
+				)
+			if saveToTable:
+				cprint(
+					f'Result will be saved on '
+					f'[{TestUnitSettings.tablesFolderPath}/{action.name}.table].',
+					color=C.INFO
+				)
+				with open(TestUnitSettings.generalTableFilePath, 'w') as fp:
+					fp.write(
+						tabulate.tabulate(
+							resTable, headers=RunningInfo.header, tablefmt='fancy_grid'
+						)
+					)
 		cprint_separate_line(f'Test end', color=C.INFO)
 
 
@@ -114,6 +143,15 @@ allTestUnits: typ.Dict[str, TestUnit] = dict(
 			]
 		),
 		TestUnit(
+			name='test_moe_perf',
+			testCaseSet=allPerformanceTestsCaseSet,
+			terminalVerbose=True,
+			helpInfo='Test MoeCompiler for all performance tests.',
+			acts=[
+				actions.CompileToASMAndRunOnPi(optiLevel=1)
+			]
+		),
+		TestUnit(
 			name='test_moe_on_my_function',
 			testCaseSet=myFuncTestCaseSet,
 			terminalVerbose=True,
@@ -121,7 +159,7 @@ allTestUnits: typ.Dict[str, TestUnit] = dict(
 			acts=[
 				actions.CompileToASMAndRunOnPi(optiLevel=0)
 			]
-		)
+		),
 	])
 )
 

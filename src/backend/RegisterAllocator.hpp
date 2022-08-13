@@ -38,7 +38,7 @@ class RegisterAllocator {
 	//  StkSize for spilled registers.
 	int spilledStkSize = 0;
 	//  backup of callee saved registers. Alignment is in consideration.
-	int backupStkSize = 0;
+	int backupStkSizeWhenCallingThis = 0;
 	std::set<RId> backupRReg;   //  always include lr, which is the return address
 	std::set<RId> restoreRReg;  //  always include pc, which means `return`
 	std::set<SId> backupAndRestoreSReg;

@@ -3,7 +3,7 @@ from scripts.pyScript.entities.llvm import Clang, Opt, LLC
 from scripts.pyScript.entities.Pi import Pi
 from scripts.pyScript.entities.gcc import GCC
 from scripts.pyScript.case_and_case_set import allPerformanceTestsCaseSet, \
-	myFuncTestCaseSet
+	myFuncTestCaseSet, allFunctionTestsCaseSet
 from scripts.pyScript.helper.settings import TestFilesSettings, TimeoutSettings, \
 	bufferTextFilePath, JudgmentSettings
 from scripts.piScripts.test_info import RunningInfo
@@ -72,6 +72,12 @@ argParser.add_argument(
 	action='store_true',
 	dest='gcc_table',
 	help='Generate gcc table.'
+)
+argParser.add_argument(
+	'--move_sy',
+	nargs=1,
+	default=None,
+	type=str
 )
 
 
@@ -232,10 +238,8 @@ def test_gcc_table():
 		if res.exit_code != 0:
 			cprint(f'ErrInfo: {res.stderr}', color=C.ERR)
 			exit(1)
-		data[testCase.testName] = res.to_dict()
-		row = res.to_list_info()
-		row.insert(0, testCase.testName)
-		row.append(1)
+		data[str(testCase)] = res.to_dict()
+		row = res.to_list_info(str(testCase), res.time_cost)
 		table.append(row)
 	with open(str(JudgmentSettings.gccPerfDataFilePath), 'w') as fp:
 		fp.write(json.dumps(data, indent=4))
@@ -247,8 +251,21 @@ def test_gcc_table():
 		)
 
 
+def move_sy(name: str):
+	for testCase in allFunctionTestsCaseSet.caseSet:
+		if testCase._testName == name:
+			testCase.copy_to_test_files()
+			cprint(f'Test [{name}] is found. Copying to test files.', color=C.INFO)
+	for testCase in allPerformanceTestsCaseSet.caseSet:
+		if testCase._testName == name:
+			testCase.copy_to_test_files()
+			cprint(f'Test [{name}] is found. Copying to test files.', color=C.INFO)
+
+
 if __name__ == '__main__':
 	args = argParser.parse_args()
+	if args.move_sy is not None:
+		move_sy(args.move_sy[0])
 	if args.frontend:
 		test_frontend()
 	elif args.llvm:
