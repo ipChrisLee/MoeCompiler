@@ -16,7 +16,7 @@ std::string FuncInfo::toASM(ircode::InstrCall * pInstrCall) {
 		backUpStkSize += 4;
 	}
 	for (auto sId: pFuncInfoToCall->callerSaveSReg) {
-		sId2StkOffset[sId] = -backUpStkSize * 4;
+		sId2StkOffset[sId] = -backUpStkSize - 4;
 		genASMSaveFromSRegToOffset(res, sId, -backUpStkSize - 4, backend::RId::lhs);
 		backUpStkSize += 4;
 	}

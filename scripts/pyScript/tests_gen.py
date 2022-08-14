@@ -62,6 +62,12 @@ argParser.add_argument(
 	help='Difftest between clang and moe.'
 )
 argParser.add_argument(
+	'--frontend_difftest',
+	action='store_true',
+	dest='frontend_difftest',
+	help='Just test frontend of MoeCompiler(-emit-llvm) and diff test to clang.'
+)
+argParser.add_argument(
 	'--backend',
 	action='store_true',
 	dest='backend',
@@ -257,6 +263,51 @@ def move_sy(name: str):
 	exit(1)
 
 
+def test_frontend_difftest():
+	res = Clang.compile_to_ass(
+		syFilePath=TestFilesSettings.FilePath.testSy,
+		sFilePath=TestFilesSettings.FilePath.testS,
+		optiLevel=args.moeOpti
+	)
+	if res.returncode != 0:
+		cprint(res.stderr, color=C.WA)
+		res.check_returncode()
+	Clang.compile_to_llvmir(
+		syFilePath=TestFilesSettings.FilePath.testSy,
+		llFilePath=TestFilesSettings.FilePath.testLL
+	)
+	Pi.run_tester(
+		sFilePath=TestFilesSettings.FilePath.testS,
+		inFilePath=TestFilesSettings.FilePath.testIn,
+		outFilePath=TestFilesSettings.FilePath.testOut,
+		resFilePath=TestFilesSettings.FilePath.testRes
+	)
+	Pi.get_from_pi('.tmp/buffer.txt', TestFilesSettings.FilePath.testOut)
+	res = Moe.compile(
+		syFilePath=TestFilesSettings.FilePath.testSy,
+		msFilePath=TestFilesSettings.FilePath.testMLL,
+		optiLevel=args.moeOpti, timeout=TimeoutSettings.moe, emit_llvm=True,
+		float_dec_format=False
+	)
+	if res.returncode != 0:
+		cprint(res.stderr, color=C.WA)
+		res.check_returncode()
+	res = LLC.compile_llvmir(
+		llFilePath=TestFilesSettings.FilePath.testMLL,
+		sFilePath=TestFilesSettings.FilePath.testMS
+	)
+	if res.returncode != 0:
+		cprint(res.stderr, color=C.WA)
+		res.check_returncode()
+	res = Pi.run_tester(
+		sFilePath=TestFilesSettings.FilePath.testMS,
+		inFilePath=TestFilesSettings.FilePath.testIn,
+		outFilePath=TestFilesSettings.FilePath.testOut,
+		resFilePath=TestFilesSettings.FilePath.testRes
+	)
+	print(f'Result : {res.test_status.value}')
+
+
 if __name__ == '__main__':
 	args = argParser.parse_args()
 	if args.move_sy is not None:
@@ -275,3 +326,5 @@ if __name__ == '__main__':
 		test_difftest()
 	elif args.gcc_table:
 		test_gcc_table()
+	elif args.frontend_difftest:
+		test_frontend_difftest()

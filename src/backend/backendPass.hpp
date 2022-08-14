@@ -34,7 +34,7 @@ class FuncInfo {
 	//  VRegR(rx)/StkPtr(-stk)      ='retAllocator'=>
 	//  VRegR(rx)/StkPtr(+stk)
 	std::map<ircode::AddrPara *, backend::VRegR *> m_AddrArg_VRegR;
-	//  mir::AddrPara(float)        ='run(), copy from `paramsInfoOnCallingThis`'=>
+	//  mir::AddrPara(float)        ='copy from `paramsInfoOnCallingThis`'=>
 	//  VRegS(sx)/StkPtr(-stk)      ='retAllocator'=>
 	//  VRegS(sx)/StkPtr(+stk)
 	std::map<ircode::AddrPara *, backend::VRegS *> m_AddrArg_VRegS;

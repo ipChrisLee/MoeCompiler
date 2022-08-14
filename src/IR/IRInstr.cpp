@@ -553,7 +553,7 @@ std::string InstrICmp::toLLVMIR() const {
 std::string to_string(FCMP fcmp) {
 	switch (fcmp) {
 		case FCMP::OEQ: return "oeq";
-		case FCMP::OGT: return "oqt";
+		case FCMP::OGT: return "ogt";
 		case FCMP::OGE: return "oge";
 		case FCMP::OLT: return "olt";
 		case FCMP::OLE: return "ole";

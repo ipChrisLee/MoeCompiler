@@ -284,7 +284,9 @@ int FuncInfo::run_Store_Int(ircode::InstrStore * pInstrStore) {
 		auto * pVRegR = convertIntVariable(pVarFrom);
 		defineUseTimelineVRegR[pVRegR].emplace_back(tim);
 	} else if (pFrom->addrType == ircode::AddrType::ParaVar) {
-		//  do nothing
+		auto * pVarFrom = dynamic_cast<ircode::AddrPara *>(pFrom);
+		auto * pVRegR= convertThisIntArg(pVarFrom);
+		defineUseTimelineVRegR[pVRegR].emplace_back(tim);
 	} else if (pFrom->addrType == ircode::AddrType::StaticValue) {
 		// do nothing
 	} else {
@@ -313,7 +315,9 @@ int FuncInfo::run_Store_Float(ircode::InstrStore * pInstrStore) {
 		auto * pVRegS = convertFloatVariable(pVarFrom);
 		defineUseTimelineVRegS[pVRegS].emplace_back(tim);
 	} else if (pFrom->addrType == ircode::AddrType::ParaVar) {
-		//  do nothing
+		auto * pVarFrom = dynamic_cast<ircode::AddrPara *>(pFrom);
+		auto * pVRegS= convertThisFloatArg(pVarFrom);
+		defineUseTimelineVRegS[pVRegS].emplace_back(tim);
 	} else if (pFrom->addrType == ircode::AddrType::StaticValue) {
 		// do nothing
 	} else {

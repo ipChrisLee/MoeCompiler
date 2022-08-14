@@ -7,7 +7,7 @@ namespace pass {
 
 backend::RId
 FuncInfo::genASMLoadInt(std::string & res, int32_t val, backend::RId to) {
-	if (val < 0) { res += "@\t " + to_string(val) + " \n"; }
+	res += "@\t" + to_string(val) + "\n";
 	auto [highVal, lowVal] = backend::splitNumber(val);
 	res += backend::toASM("movw", to, lowVal);
 	if (highVal) { res += backend::toASM("movt", to, highVal); }

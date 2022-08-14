@@ -25,6 +25,12 @@ void RegisterAllocator::set(
 	this->argsStkSizeOnCallingThis = _argsStkSizeOnPrev;
 	this->m_AddrArg_VRegR = _m_AddrArg_VRegR;
 	this->m_AddrArg_VRegS = _m_AddrArg_VRegS;
+	for (auto [_, p]: this->m_AddrArg_VRegR) {
+		fixedOpnd.emplace(p);
+	}
+	for (auto [_, p]: this->m_AddrArg_VRegS) {
+		fixedOpnd.emplace(p);
+	}
 	com::Assert(argsStkSizeOnCallingThis % 8 == 0, "", CODEPOS);
 }
 
@@ -261,9 +267,14 @@ void LinearScanAllocator::linear_scan() {
 				//  TODO: spill basing on some rate.
 				//  Now: random choose
 				auto newPos = chooseWhereToSpillRReg();
-				livingVRegR[newPos]->rid = backend::RId::stk;
-				definingVRegR->rid = newPos;
-				livingVRegR[newPos] = definingVRegR;
+				auto * spilledVRegR = livingVRegR[newPos];
+				if (fixedOpnd.find(spilledVRegR) != fixedOpnd.end()) {
+					definingVRegR->rid = backend::RId::stk;
+				} else {
+					spilledVRegR->rid = backend::RId::stk;
+					definingVRegR->rid = newPos;
+					livingVRegR[newPos] = definingVRegR;
+				}
 			} else {
 				auto newPos = *freeRIds.rbegin();
 				freeRIds.erase(newPos);
@@ -276,9 +287,14 @@ void LinearScanAllocator::linear_scan() {
 			auto * definingVRegS = vec[0];
 			if (freeSIds.empty()) {
 				auto newPos = chooseWhereToSpillSReg();
-				livingVRegS[newPos]->sid = backend::SId::stk;
-				definingVRegS->sid = newPos;
-				livingVRegS[newPos] = definingVRegS;
+				auto * spilledVRegS = livingVRegS[newPos];
+				if (fixedOpnd.find(spilledVRegS) != fixedOpnd.end()) {
+					definingVRegS->sid = backend::SId::stk;
+				} else {
+					spilledVRegS->sid = backend::SId::stk;
+					definingVRegS->sid = newPos;
+					livingVRegS[newPos] = definingVRegS;
+				}
 			} else {
 				auto newPos = *freeSIds.rbegin();
 				freeSIds.erase(newPos);

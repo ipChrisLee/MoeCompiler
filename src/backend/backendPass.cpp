@@ -813,6 +813,7 @@ std::string FuncInfo::toASM(ircode::InstrZExt * pInstrZExt) {
 					break;
 				}
 				case CmpType::F: {
+					res += backend::toASM("vmrs", "APSR_nzcv", "fpscr");
 					res += backend::toASM("movw", extValRId, 1);
 					res += backend::toASM(
 						"movw" + genASMCondNameReverse(lastFCmp), extValRId, 0

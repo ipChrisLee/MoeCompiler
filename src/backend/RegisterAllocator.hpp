@@ -31,6 +31,9 @@ class RegisterAllocator {
 	//  backendOpnd * : VRegR(rx), VRegR(stk, -bias), VRegS(sx), VRegS(stk, -bias)
 	std::map<ircode::AddrPara *, backend::Opnd *> paramsOnCallingThis;
 
+	//  Fixed opnd, like arg, can not change its position.
+	std::set<backend::Opnd *> fixedOpnd;
+
   public:
 	explicit RegisterAllocator(OpndPool & opndPool) : opndPool(opndPool) {}
 
