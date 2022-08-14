@@ -13,7 +13,7 @@ class GCC:
 			[
 				'arm-linux-gnueabihf-g++', f'-O{optiLevel}', '-S', '-x', 'c++',
 				'-include', SysYSettings.mySyLibHeaderPath,
-				'-march=armv7-a',
+				'-march=armv7-a', "-fsingle-precision-constant",
 				f'{syFilePath}', '-o', f'{sFilePath}'
 			], timeout=TimeoutSettings.gcc
 		)

@@ -18,8 +18,23 @@ argParser = argparse.ArgumentParser(
 	add_help=True
 )
 argParser.add_argument(
+	'--move_sy',
+	action='store',
+	nargs='?',
+	default=None,
+	type=str,
+	help='Move testcase and test then.'
+)
+argParser.add_argument(
+	'--difftest',
+	action='store_true',
+	default=False,
+	help='Do a diff test with gcc.'
+)
+argParser.add_argument(
 	'--moeOpti',
 	action='store',
+	nargs=1,
 	type=int,
 	default=0,
 	dest='moeOpti',
@@ -29,61 +44,41 @@ argParser.add_argument(
 	'--frontend',
 	action='store_true',
 	dest='frontend',
-	help='Just test frontend of MoeCompiler(-emit-llvm).'
-)
-argParser.add_argument(
-	'--llvm',
-	action='store_true',
-	dest='llvm',
-	help='Generate codes by using llvm tool-chain.'
+	help='Just test frontend of MoeCompiler.\n'
+	     '(.sy =(moe)=> .mll =(llc)=> .ms =(pi)=> .res.json)'
 )
 argParser.add_argument(
 	'--moe',
 	action='store_true',
 	dest='moe',
-	help='Just test moe.'
+	help='Just test moe.\n(.sy =(moe)=> .ms =(pi)=> .res.json)'
+)
+argParser.add_argument(
+	'--llvm',
+	action='store_true',
+	dest='llvm',
+	help='Generate codes by using llvm tool-chain.\n'
+	     '(.sy =(clang)=> .ll =(llc)=> .s =(pi)=> .res.json)'
 )
 argParser.add_argument(
 	'--asm_run',
 	action='store_true',
 	dest='asm_run',
-	help='Run asm file.'
+	help='Run asm file.\n'
+	     '(.ms =(pi)=> .res.json)'
 )
 argParser.add_argument(
 	'--llvmir-run',
 	action='store_true',
 	dest='llvmir_run',
-	help='Run llvm-ir file.'
-)
-argParser.add_argument(
-	'--difftest',
-	action='store_true',
-	dest='difftest',
-	help='Difftest between clang and moe.'
-)
-argParser.add_argument(
-	'--frontend_difftest',
-	action='store_true',
-	dest='frontend_difftest',
-	help='Just test frontend of MoeCompiler(-emit-llvm) and diff test to clang.'
-)
-argParser.add_argument(
-	'--backend',
-	action='store_true',
-	dest='backend',
-	help='Test backend (almost test moe).'
+	help='Run llvm-ir file.\n'
+	     '(.mll =(llc)=> .ms =(pi)=> .res.json)'
 )
 argParser.add_argument(
 	'--gcc_table',
 	action='store_true',
 	dest='gcc_table',
 	help='Generate gcc table.'
-)
-argParser.add_argument(
-	'--move_sy',
-	nargs=1,
-	default=None,
-	type=str
 )
 
 
@@ -180,10 +175,10 @@ def test_llvmir_run():
 
 
 def test_difftest():
-	res = Clang.compile_to_ass(
+	res = GCC.compile_to_ass(
 		syFilePath=TestFilesSettings.FilePath.testSy,
 		sFilePath=TestFilesSettings.FilePath.testS,
-		optiLevel=args.moeOpti
+		optiLevel=2
 	)
 	if res.returncode != 0:
 		cprint(res.stderr, color=C.WA)
@@ -192,7 +187,8 @@ def test_difftest():
 		sFilePath=TestFilesSettings.FilePath.testS,
 		inFilePath=TestFilesSettings.FilePath.testIn,
 		outFilePath=TestFilesSettings.FilePath.testOut,
-		resFilePath=TestFilesSettings.FilePath.testRes
+		resFilePath=TestFilesSettings.FilePath.testRes,
+		mySysYLib=True
 	)
 	Pi.get_from_pi('.tmp/buffer.txt', TestFilesSettings.FilePath.testOut)
 	res = Moe.compile(
@@ -263,68 +259,41 @@ def move_sy(name: str):
 	exit(1)
 
 
-def test_frontend_difftest():
-	res = Clang.compile_to_ass(
+def generate_std():
+	res = GCC.compile_to_ass(
 		syFilePath=TestFilesSettings.FilePath.testSy,
 		sFilePath=TestFilesSettings.FilePath.testS,
-		optiLevel=args.moeOpti
+		optiLevel=2
 	)
-	if res.returncode != 0:
-		cprint(res.stderr, color=C.WA)
-		res.check_returncode()
-	Clang.compile_to_llvmir(
-		syFilePath=TestFilesSettings.FilePath.testSy,
-		llFilePath=TestFilesSettings.FilePath.testLL
-	)
+	if res.returncode:
+		cprint(f'Compile Error on GCC: [{res.stderr}]', color=C.WA)
+		exit(1)
 	Pi.run_tester(
 		sFilePath=TestFilesSettings.FilePath.testS,
 		inFilePath=TestFilesSettings.FilePath.testIn,
 		outFilePath=TestFilesSettings.FilePath.testOut,
-		resFilePath=TestFilesSettings.FilePath.testRes
+		resFilePath=TestFilesSettings.FilePath.testRes,
+		mySysYLib=True
 	)
-	Pi.get_from_pi('.tmp/buffer.txt', TestFilesSettings.FilePath.testOut)
-	res = Moe.compile(
-		syFilePath=TestFilesSettings.FilePath.testSy,
-		msFilePath=TestFilesSettings.FilePath.testMLL,
-		optiLevel=args.moeOpti, timeout=TimeoutSettings.moe, emit_llvm=True,
-		float_dec_format=False
-	)
-	if res.returncode != 0:
-		cprint(res.stderr, color=C.WA)
-		res.check_returncode()
-	res = LLC.compile_llvmir(
-		llFilePath=TestFilesSettings.FilePath.testMLL,
-		sFilePath=TestFilesSettings.FilePath.testMS
-	)
-	if res.returncode != 0:
-		cprint(res.stderr, color=C.WA)
-		res.check_returncode()
-	res = Pi.run_tester(
-		sFilePath=TestFilesSettings.FilePath.testMS,
-		inFilePath=TestFilesSettings.FilePath.testIn,
-		outFilePath=TestFilesSettings.FilePath.testOut,
-		resFilePath=TestFilesSettings.FilePath.testRes
-	)
-	print(f'Result : {res.test_status.value}')
 
 
 if __name__ == '__main__':
 	args = argParser.parse_args()
+	argParser.print_help()
 	if args.move_sy is not None:
 		move_sy(args.move_sy[0])
+	if args.difftest:
+		generate_std()
+	
 	if args.frontend:
 		test_frontend()
-	elif args.llvm:
-		test_llvm()
 	elif args.moe:
 		test_moe()
+	elif args.llvm:
+		test_llvm()
 	elif args.asm_run:
 		test_asm_run()
 	elif args.llvmir_run:
 		test_llvmir_run()
-	elif args.difftest:
-		test_difftest()
 	elif args.gcc_table:
 		test_gcc_table()
-	elif args.frontend_difftest:
-		test_frontend_difftest()

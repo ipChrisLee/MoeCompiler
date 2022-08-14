@@ -27,7 +27,7 @@ class Clang:
 				'-emit-llvm',
 				'-include', SysYSettings.syLibHeaderPath,
 				'-target', 'armv7a-unknown-linux-gnueabihf', '-march=armv7-a',
-				'-mfloat-abi=hard','-fsingle-precision-constant',
+				'-mfloat-abi=hard',
 				'-fno-discard-value-names',
 				f'{syFilePath}', '-o', f'{llFilePath}'
 			], timeout=TimeoutSettings.clang
