@@ -5,10 +5,15 @@
 
 namespace pass {
 
-class Mem2Reg : public IRPass {
+class Node {
   protected:
-
   public:
+
+
+};
+
+
+class CFG {
 
 
 };

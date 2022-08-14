@@ -222,10 +222,11 @@ std::string FuncInfo::toASM_Load_Float(ircode::InstrLoad * pInstrLoad) {
 			auto * pFrom = pInstrLoad->from;
 			switch (pFrom->addrType) {
 				case ircode::AddrType::Var: {
-					auto sIdFrom = genASMGetVRegSVal(
-						res, convertFloatVariable(pFrom), backend::SId::lhs, backend::RId::lhs
-					);
-					res += backend::toASM("vmov", pVRegSTo->sid, sIdFrom);
+					auto * pVRegRFrom = convertIntVariable(pFrom);
+					auto rIdFrom = genASMGetVRegRVal(res, pVRegRFrom, backend::RId::lhs);
+					auto loadFrom =
+						"[" + backend::to_asm(rIdFrom) + ", " + backend::to_asm(0) + "]";
+					res += backend::toASM("vldr", pVRegSTo->sid, loadFrom);
 					break;
 				}
 				case ircode::AddrType::LocalVar: {
@@ -244,8 +245,9 @@ std::string FuncInfo::toASM_Load_Float(ircode::InstrLoad * pInstrLoad) {
 					genASMLoadLabel(
 						res, convertGlobalVar(pGVarAddr), backend::RId::lhs
 					);
-					auto loadFrom = "[" + backend::to_asm(backend::RId::lhs) + ", " +
-						backend::to_asm(0) + "]";
+					auto loadFrom =
+						"[" + backend::to_asm(backend::RId::lhs) + ", " + backend::to_asm(0) +
+							"]";
 					res += backend::toASM("vldr", pVRegSTo->sid, loadFrom);
 					break;
 				}

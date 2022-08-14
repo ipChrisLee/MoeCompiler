@@ -45,31 +45,8 @@ class IRFuncDef;
 
 class IRFuncDefPool : public moeconcept::Pool<IRFuncDef> {
   public:
-	std::vector<IRFuncDef *> funcDefs;
 	IRFuncDefPool();
 
-	auto begin() { return funcDefs.begin(); }
-
-	auto begin() const { return funcDefs.begin(); }
-
-	auto end() { return funcDefs.end(); }
-
-	auto end() const { return funcDefs.end(); }
-};
-
-/**
- * @brief Block of instructions.
- * @note If @c instrs form a basic block, @c thisIsBasicBlock will be @c true .
- */
-class IRFuncBlock : public sup::LLVMable {
-  public:
-	std::list<IRInstr *> instrs;
-
-	IRFuncBlock();
-
-	IRFuncBlock(IRFuncBlock &&) = default;
-
-	std::string toLLVMIR() const override;
 };
 
 /**
@@ -81,19 +58,15 @@ class IRFuncDef : public sup::LLVMable {
 
 	AddrJumpLabel * addEntryLabelInstr(IRModule & ir);
 
-	std::vector<std::unique_ptr<IRFuncBlock>> pool;
 
 	bool loadFinished = false;
   public:
 	AddrFunction * pAddrFun;
 	std::list<IRInstr *> instrs;
-	std::list<IRFuncBlock *> blocks;
 
 	IRInstr * emplace_back(IRInstr *);
 
 	void emplace_back(std::list<IRInstr *> &&);
-
-	IRFuncBlock * emplace_back(IRFuncBlock &&);
 
 	explicit IRFuncDef(AddrFunction * pAddrFun);
 

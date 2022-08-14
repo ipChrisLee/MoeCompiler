@@ -14,7 +14,7 @@ int ToASM::run() {
 			backend::Label(pGVarAddr)
 		);
 	}
-	for (auto * pFuncDef: ir.funcPool.funcDefs) {
+	for (auto * pFuncDef: ir.funcPool) {
 		auto * pFuncInfo = funcInfoPool.emplace_back(
 			FuncInfo(
 				opndPool, pFuncDef, addrToFuncInfo, gVarToLabel,

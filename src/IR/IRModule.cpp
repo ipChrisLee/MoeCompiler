@@ -213,14 +213,6 @@ void IRInstrPool::printAll(std::ostream & os) const {
 }
 
 
-IRFuncBlock::IRFuncBlock() : instrs() {
-}
-
-std::string IRFuncBlock::toLLVMIR() const {
-	com::TODO("", CODEPOS);
-}
-
-
 IRFuncDef::IRFuncDef(AddrFunction * pAddrFun)
 	: pAddrFun(pAddrFun) {
 }
@@ -229,21 +221,9 @@ std::string IRFuncDef::toLLVMIR() const {
 	if (pAddrFun->justDeclare) {
 		return pAddrFun->declLLVMIR() + "\n\n";
 	}
-	std::string res =
-		pAddrFun->declLLVMIR() +
-			"{\n";
-	if (!loadFinished) {
-		com::Throw(
-			"You should call finishLoading before call other functions.", CODEPOS
-		);
-	} else {
-		if (blocks.empty()) {
-			for (const auto & pInstr: instrs) {
-				res += pInstr->toLLVMIR() + "\n";
-			}
-		} else {
-			for (const auto * block: blocks) { res += block->toLLVMIR() + "\n"; }
-		}
+	std::string res = pAddrFun->declLLVMIR() + "{\n";
+	for (const auto & pInstr: instrs) {
+		res += pInstr->toLLVMIR() + "\n";
 	}
 	res += "}\n\n";
 	return res;
@@ -284,15 +264,7 @@ void IRFuncDef::emplace_back(std::list<IRInstr *> && appendList) {
 	instrs.splice(instrs.end(), std::move(appendList));
 }
 
-IRFuncBlock * IRFuncDef::emplace_back(IRFuncBlock && irFuncBlock) {
-	pool.emplace_back(std::make_unique<IRFuncBlock>(std::move(irFuncBlock)));
-	return pool.rbegin()->get();
-}
-
 IRFuncDefPool::IRFuncDefPool() {
-	afterEmplace = [this](IRFuncDef * p) {
-		funcDefs.emplace_back(p);
-	};
 }
 }
 
@@ -412,7 +384,6 @@ std::list<ircode::IRInstr *> genBinaryOperationInstrs(
 						"In C, comparison between bool is converted to comparison between int.",
 						CODEPOS
 					);
-					break;
 				}
 				default:com::Throw("??", CODEPOS);
 			}

@@ -264,10 +264,17 @@ FuncInfo::genASMSaveFromSRegToOffset(
 		auto to = "[sp, " + backend::to_asm(offset) + "]";
 		res += backend::toASM("vstr", sidFrom, to);
 	} else {
-		genASMLoadInt(res, offset, scratchReg);
-		res += backend::toASM("add", scratchReg, backend::RId::sp, scratchReg);
-		auto to = "[" + backend::to_asm(scratchReg) + ", " + backend::to_asm(0) + "]";
-		res += backend::toASM("vstr", sidFrom, to);
+		if (offset < 0) {
+			genASMLoadInt(res, -offset, scratchReg);
+			res += backend::toASM("sub", scratchReg, backend::RId::sp, scratchReg);
+			auto to = "[" + backend::to_asm(scratchReg) + ", " + backend::to_asm(0) + "]";
+			res += backend::toASM("vstr", sidFrom, to);
+		} else {
+			genASMLoadInt(res, offset, scratchReg);
+			res += backend::toASM("add", scratchReg, backend::RId::sp, scratchReg);
+			auto to = "[" + backend::to_asm(scratchReg) + ", " + backend::to_asm(0) + "]";
+			res += backend::toASM("vstr", sidFrom, to);
+		}
 	}
 }
 
@@ -289,7 +296,7 @@ void FuncInfo::genASMSaveFromSRegToVRegS(
 	if (pVRegSTo->sid == backend::SId::stk) {
 		genASMSaveFromSRegToOffset(res, sIdFrom, pVRegSTo->offset, scratchRId);
 	} else if (backend::isGPR(pVRegSTo->sid)) {
-		res += backend::toASM("mov", pVRegSTo->sid, sIdFrom);
+		res += backend::toASM("vmov", pVRegSTo->sid, sIdFrom);
 	} else { com::Throw("", CODEPOS); }
 
 }
@@ -309,7 +316,7 @@ void FuncInfo::genASMSaveFromVRegSToSReg(
 ) {
 	auto xSId = genASMGetVRegSVal(res, pVRegSFrom, sIdTo, scratchRId);
 	if (xSId != sIdTo) {
-		res += backend::toASM("mov", sIdTo, xSId);
+		res += backend::toASM("vmov", sIdTo, xSId);
 	}
 }
 

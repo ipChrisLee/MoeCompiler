@@ -49,7 +49,11 @@ backend::VRegR * FuncInfo::convertIntVariable(ircode::AddrVariable * pAddrVar) {
 
 backend::VRegS * FuncInfo::convertFloatVariable(ircode::AddrVariable * pAddrVar) {
 	com::Assert(pAddrVar->addrType == ircode::AddrType::Var, "", CODEPOS);
-	com::Assert(pAddrVar->getType().type == sup::Type::Float_t, "", CODEPOS);
+	com::Assert(
+		com::enum_fun::in(
+			pAddrVar->getType().type, {sup::Type::Float_t}
+		), "", CODEPOS
+	);
 	if (m_AddrVar_VRegS.find(pAddrVar) != m_AddrVar_VRegS.end()) {
 		return m_AddrVar_VRegS[pAddrVar];
 	}

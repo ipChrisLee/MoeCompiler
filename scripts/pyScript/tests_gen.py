@@ -247,10 +247,14 @@ def move_sy(name: str):
 		if testCase._testName == name:
 			testCase.copy_to_test_files()
 			cprint(f'Test [{name}] is found. Copying to test files.', color=C.INFO)
+			return
 	for testCase in allPerformanceTestsCaseSet.caseSet:
 		if testCase._testName == name:
 			testCase.copy_to_test_files()
 			cprint(f'Test [{name}] is found. Copying to test files.', color=C.INFO)
+			return
+	cprint(f'Test [{name}] not found! Terming tests_gen.', color=C.ERR)
+	exit(1)
 
 
 if __name__ == '__main__':
