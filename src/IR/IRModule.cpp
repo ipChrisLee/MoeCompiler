@@ -266,6 +266,7 @@ void IRFuncDef::emplace_back(std::list<IRInstr *> && appendList) {
 
 IRFuncDefPool::IRFuncDefPool() {
 }
+
 }
 
 using namespace ircode;

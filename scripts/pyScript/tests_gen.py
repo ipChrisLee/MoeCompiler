@@ -68,7 +68,7 @@ argParser.add_argument(
 	     '(.ms =(pi)=> .res.json)'
 )
 argParser.add_argument(
-	'--llvmir-run',
+	'--llvmir_run',
 	action='store_true',
 	dest='llvmir_run',
 	help='Run llvm-ir file.\n'
@@ -83,16 +83,22 @@ argParser.add_argument(
 
 
 def test_frontend():
-	Moe.compile(
+	res = Moe.compile(
 		syFilePath=TestFilesSettings.FilePath.testSy,
 		msFilePath=TestFilesSettings.FilePath.testMLL,
 		optiLevel=args.moeOpti, timeout=TimeoutSettings.moe, emit_llvm=True,
 		float_dec_format=False
-	).check_returncode()
-	LLC.compile_llvmir(
+	)
+	if res.returncode != 0:
+		cprint(f'{res.stderr}', color=C.WA)
+		exit(1)
+	res = LLC.compile_llvmir(
 		llFilePath=TestFilesSettings.FilePath.testMLL,
 		sFilePath=TestFilesSettings.FilePath.testMS
-	).check_returncode()
+	)
+	if res.returncode != 0:
+		cprint(f'{res.stderr}', color=C.WA)
+		exit(1)
 	res = Pi.run_tester(
 		sFilePath=TestFilesSettings.FilePath.testMS,
 		inFilePath=TestFilesSettings.FilePath.testIn,
@@ -161,12 +167,15 @@ def test_asm_run():
 
 
 def test_llvmir_run():
-	LLC.compile_llvmir(
-		llFilePath=TestFilesSettings.FilePath.testLL,
-		sFilePath=TestFilesSettings.FilePath.testS
-	).check_returncode()
+	res = LLC.compile_llvmir(
+		llFilePath=TestFilesSettings.FilePath.testMLL,
+		sFilePath=TestFilesSettings.FilePath.testMS
+	)
+	if res.returncode != 0:
+		cprint(f'Error when LLC compiling: \n{res.stderr}\n', color=C.WA)
+		exit(1)
 	res = Pi.run_tester(
-		sFilePath=TestFilesSettings.FilePath.testS,
+		sFilePath=TestFilesSettings.FilePath.testMS,
 		inFilePath=TestFilesSettings.FilePath.testIn,
 		outFilePath=TestFilesSettings.FilePath.testOut,
 		resFilePath=TestFilesSettings.FilePath.testRes,

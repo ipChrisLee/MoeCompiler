@@ -575,6 +575,17 @@ std::string BoolStaticValue::toLLVMIR() const {
 	return intToString(value);
 }
 
+PointerStaticValue::PointerStaticValue(const PointerType & pointerType) :
+	StaticValue(pointerType) {
+}
+
+std::string PointerStaticValue::toLLVMIR() const {
+	return "null";
+}
+
+std::unique_ptr<StaticValue> PointerStaticValue::getValue(const VI &) const {
+	com::Throw("", CODEPOS);
+}
 
 [[nodiscard]] std::unique_ptr<StaticValue>
 BoolStaticValue::getValue(const VI &) const {
@@ -732,7 +743,8 @@ fromTypeInfoToStaticValue(const TypeInfo & typeInfo) {
 			return std::make_unique<BoolStaticValue>();
 		}
 		case Type::Pointer_t: {
-			return nullptr;
+			const auto & pointerType = dynamic_cast<const PointerType &>(typeInfo);
+			return std::make_unique<PointerStaticValue>(pointerType);
 		}
 		default: com::Throw("", CODEPOS);
 	}

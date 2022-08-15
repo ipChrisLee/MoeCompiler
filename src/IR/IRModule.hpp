@@ -46,7 +46,6 @@ class IRFuncDef;
 class IRFuncDefPool : public moeconcept::Pool<IRFuncDef> {
   public:
 	IRFuncDefPool();
-
 };
 
 /**

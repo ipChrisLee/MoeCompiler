@@ -231,6 +231,25 @@ class IntArrayStaticValue
 	void insertValue(const VI & idx, StaticValue & staticValue) override;
 };
 
+
+//  Only allow null
+class PointerStaticValue
+	: public StaticValue {
+  protected:
+	[[nodiscard]] std::unique_ptr<moeconcept::Cloneable>
+	_cloneToUniquePtr() const override CLONEABLE_DEFAULT_IMPLEMENT;
+
+	std::unique_ptr<Cutable> _cutToUniquePtr() override CUTABLE_DEFAULT_IMPLEMENT;
+
+  public:
+	explicit PointerStaticValue(const PointerType & pointerType);
+	PointerStaticValue(const PointerStaticValue &) = default;
+	PointerStaticValue(PointerStaticValue &&) = default;
+	[[nodiscard]] std::string toLLVMIR() const override;
+
+	[[nodiscard]] std::unique_ptr<StaticValue> getValue(const sup::VI &) const override;
+};
+
 //  If `op` is "!", `fr` is ignored.
 std::unique_ptr<StaticValue>
 calcOfFloat(float fl, float fr, const std::string & op);
