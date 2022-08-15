@@ -83,7 +83,11 @@ inline std::string to_string(const std::string & s) { return s; }
 }
 
 template<typename Iter>
-typename std::iterator_traits<Iter>::value_type & get(Iter & it) {
-	return *it;
+auto get(Iter & it) {
+	return it.operator*();
 }
 
+template<typename Iter>
+auto get(Iter && it) {
+	return it.operator*();
+}
