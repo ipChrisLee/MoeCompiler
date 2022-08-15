@@ -104,7 +104,8 @@ backend::Label * FuncInfo::convertGlobalVar(ircode::AddrGlobalVariable * pAddrGV
 	return m_AddrGVar_Label[pAddrGVar];
 }
 
-void FuncInfo::markOperand(ircode::AddrOperand * pAddrOperand) {
+backend::Opnd * FuncInfo::markOperand(ircode::AddrOperand * pAddrOperand) {
+	auto * res = static_cast<backend::Opnd *>(nullptr);
 	switch (pAddrOperand->addrType) {
 		case ircode::AddrType::Var: {
 			auto * pAddrVar = dynamic_cast<ircode::AddrVariable *>(pAddrOperand);
@@ -113,11 +114,13 @@ void FuncInfo::markOperand(ircode::AddrOperand * pAddrOperand) {
 				case sup::Type::Int_t: {
 					auto * pVRegR = convertIntVariable(pAddrVar);
 					defineUseTimelineVRegR[pVRegR].emplace_back(tim);
+					res = pVRegR;
 					break;
 				}
 				case sup::Type::Float_t: {
 					auto * pVRegS = convertFloatVariable(pAddrVar);
 					defineUseTimelineVRegS[pVRegS].emplace_back(tim);
+					res = pVRegS;
 					break;
 				}
 				default:com::Throw("", CODEPOS);
@@ -131,11 +134,13 @@ void FuncInfo::markOperand(ircode::AddrOperand * pAddrOperand) {
 				case sup::Type::Int_t: {
 					auto * pVRegR = convertThisIntArg(pAddrArgVar);
 					defineUseTimelineVRegR[pVRegR].emplace_back(tim);
+					res = pVRegR;
 					break;
 				}
 				case sup::Type::Float_t: {
 					auto * pVRegS = convertThisFloatArg(pAddrArgVar);
 					defineUseTimelineVRegS[pVRegS].emplace_back(tim);
+					res = pVRegS;
 					break;
 				}
 				default:com::Throw("", CODEPOS);
@@ -145,13 +150,13 @@ void FuncInfo::markOperand(ircode::AddrOperand * pAddrOperand) {
 		case ircode::AddrType::GlobalVar: {
 			auto * pGVarAddr
 				= dynamic_cast<ircode::AddrGlobalVariable *>(pAddrOperand);
-			convertGlobalVar(pGVarAddr);
+			res = convertGlobalVar(pGVarAddr);
 			break;
 		}
 		case ircode::AddrType::LocalVar: {
 			auto * pLVarAddr
 				= dynamic_cast<ircode::AddrLocalVariable *>(pAddrOperand);
-			convertLocalVar(pLVarAddr);
+			res = convertLocalVar(pLVarAddr);
 			break;
 		}
 		case ircode::AddrType::StaticValue: {
@@ -160,6 +165,7 @@ void FuncInfo::markOperand(ircode::AddrOperand * pAddrOperand) {
 		}
 		default:com::Throw("", CODEPOS);
 	}
+	return res;
 }
 
 }

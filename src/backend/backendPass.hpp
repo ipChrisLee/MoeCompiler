@@ -1,6 +1,8 @@
 #pragma once
 
 #include <unordered_set>
+#include <map>
+#include <set>
 
 #include "IR/IRAddr.hpp"
 #include "pass/pass-common.hpp"
@@ -58,7 +60,10 @@ class FuncInfo {
 	std::set<backend::RId> restoreRReg;  //  include pc, which means `return addr`
 	std::set<backend::SId> backupAndRestoreSReg;
 
-	void markOperand(ircode::AddrOperand * pAddrOperand);
+	//  Fixed opnd, like arg and return value, can not change its position.
+	std::set<backend::Opnd *> fixedOpnd;
+
+	backend::Opnd * markOperand(ircode::AddrOperand * pAddrOperand);
   public:
 	//  IRFuncDef of this function
 	ircode::IRFuncDef * pFuncDef;

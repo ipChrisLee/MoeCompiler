@@ -1,5 +1,6 @@
 from scripts.pyScript.helper.command_line_tool import run_command
 from scripts.pyScript.helper.settings import SysYSettings, TimeoutSettings
+import typing as typ
 
 
 class GCC:

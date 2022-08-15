@@ -162,7 +162,12 @@ int FuncInfo::run() {
 	for (auto * pInstr: pFuncDef->instrs) {
 		run(pInstr);
 	}
-	com::Assert(regAllocator.get(), "", CODEPOS);
+	if (pFuncDef->pAddrFun->justDeclare) {
+		allVarVRegR.emplace(opndPool.emplace_back(backend::VRegR(backend::RId::r0)));
+		allVarVRegR.emplace(opndPool.emplace_back(backend::VRegR(backend::RId::r1)));
+		allVarVRegR.emplace(opndPool.emplace_back(backend::VRegR(backend::RId::r2)));
+		allVarVRegR.emplace(opndPool.emplace_back(backend::VRegR(backend::RId::r3)));
+	}
 	regAllocator->set(
 		allVarVRegR, allVarVRegS, allVarStkPtr, defineUseTimelineVRegR,
 		defineUseTimelineVRegS, tim, paramsInfoOnCallingThis, argsStkSizeOnCallingThis,
@@ -676,7 +681,9 @@ int FuncInfo::run(ircode::InstrCall * pInstrCall) {
 	for (auto * pOperandAddr: pInstrCall->paramsPassing) {
 		markOperand(pOperandAddr);
 	}
-	if (pInstrCall->retAddr) { markOperand(pInstrCall->retAddr); }
+	if (pInstrCall->retAddr) {
+		markOperand(pInstrCall->retAddr);
+	}
 	return 0;
 }
 
@@ -949,4 +956,6 @@ std::string FuncInfo::toASM(ircode::InstrFptosi * pInstrFptosi) {
 	} else { com::Throw("", CODEPOS); }
 	return res;
 }
+
+
 }

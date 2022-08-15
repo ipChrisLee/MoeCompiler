@@ -174,41 +174,6 @@ def test_llvmir_run():
 	print(f'Result : {res.test_status.value}')
 
 
-def test_difftest():
-	res = GCC.compile_to_ass(
-		syFilePath=TestFilesSettings.FilePath.testSy,
-		sFilePath=TestFilesSettings.FilePath.testS,
-		optiLevel=2
-	)
-	if res.returncode != 0:
-		cprint(res.stderr, color=C.WA)
-		res.check_returncode()
-	Pi.run_tester(
-		sFilePath=TestFilesSettings.FilePath.testS,
-		inFilePath=TestFilesSettings.FilePath.testIn,
-		outFilePath=TestFilesSettings.FilePath.testOut,
-		resFilePath=TestFilesSettings.FilePath.testRes,
-		mySysYLib=True
-	)
-	Pi.get_from_pi('.tmp/buffer.txt', TestFilesSettings.FilePath.testOut)
-	res = Moe.compile(
-		syFilePath=TestFilesSettings.FilePath.testSy,
-		msFilePath=TestFilesSettings.FilePath.testMS,
-		optiLevel=args.moeOpti, timeout=TimeoutSettings.moe, emit_llvm=False,
-		float_dec_format=False
-	)
-	if res.returncode != 0:
-		cprint(res.stderr, color=C.WA)
-		res.check_returncode()
-	res = Pi.run_tester(
-		sFilePath=TestFilesSettings.FilePath.testMS,
-		inFilePath=TestFilesSettings.FilePath.testIn,
-		outFilePath=TestFilesSettings.FilePath.testOut,
-		resFilePath=TestFilesSettings.FilePath.testRes
-	)
-	print(f'Result : {res.test_status.value}')
-
-
 def test_gcc_table():
 	data: typ.Dict[str, dict] = {}
 	table: typ.List = []
@@ -275,13 +240,14 @@ def generate_std():
 		resFilePath=TestFilesSettings.FilePath.testRes,
 		mySysYLib=True
 	)
+	Pi.get_from_pi('.tmp/buffer.txt', TestFilesSettings.FilePath.testOut)
 
 
 if __name__ == '__main__':
 	args = argParser.parse_args()
 	argParser.print_help()
 	if args.move_sy is not None:
-		move_sy(args.move_sy[0])
+		move_sy(args.move_sy)
 	if args.difftest:
 		generate_std()
 	

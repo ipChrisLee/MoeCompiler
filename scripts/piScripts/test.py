@@ -128,8 +128,11 @@ def diff_test_pass(out: str, ans: str):
 
 
 def diff_message(out: str, ans: str):
-	return [i for i in range(min(len(out), len(ans))) if out[i] != ans[i]] + \
-	       [-1] if len(out) != len(ans) else []
+	i: int = 0
+	for i in range(min(len(out), len(ans))):
+		if out[i] != ans[i]:
+			return str(i) + "+"
+	return str(min(len(out), len(ans))) + "+"
 
 
 def from_stderr_to_time_cost(s: str):
