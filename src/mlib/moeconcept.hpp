@@ -5,6 +5,7 @@
 #include <functional>
 #include <memory>
 #include <type_traits>
+#include <list>
 
 #include "common.hpp"
 
@@ -155,7 +156,7 @@ namespace moeconcept {
 template<typename B>
 class Pool {
   private:
-	std::vector<B *> vec;
+	std::list<B *> vec;
   protected:
 	std::vector<std::unique_ptr<B>> pool;
 	std::function<void(B *)> afterEmplace;
@@ -165,6 +166,7 @@ class Pool {
 	}
 
 	Pool(const Pool &) = delete;
+	Pool(Pool &&) = default;
 
 	auto begin() { return vec.begin(); }
 
@@ -173,6 +175,17 @@ class Pool {
 	auto begin() const { return vec.begin(); }
 
 	auto end() const { return vec.end(); }
+
+	void erase(B * p) {
+		auto itP = vec.begin();
+		while (itP != vec.end()) {
+			if (*itP == p) {
+				vec.erase(itP);
+				break;
+			}
+			itP = std::next(itP);
+		}
+	}
 
 	template<
 		typename T,
