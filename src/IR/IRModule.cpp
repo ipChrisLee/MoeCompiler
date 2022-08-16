@@ -1,13 +1,15 @@
-//
-// Created by lee on 6/21/22.
-//
-
 #include "IRModule.hpp"
+#include "IR/IRAddr.hpp"
 
 
 namespace ircode {
 
 IRAddrPool::IRAddrPool() : pool() {
+	afterEmplace = [this](IRAddr * pAddr) {
+		if (auto * pp = dynamic_cast<AddrGlobalVariable *>(pAddr)) {
+			globalVars.emplace_back(pp);
+		}
+	};
 }
 
 std::string IRAddrPool::toLLVMIR() const {
@@ -27,6 +29,8 @@ std::string IRModule::toLLVMIR() const {
 	for (auto * funcDecl: funcPool) {
 		res += funcDecl->toLLVMIR();
 	}
+	res += llvmSyFunctionAttr;
+	res += llvmSyLibFunctionAttr;
 	return res;
 }
 
@@ -71,7 +75,7 @@ std::vector<AddrFunction *> IRModule::generateSysYDecl() {
 				AddrFunction("getfloat", sup::FloatType())
 			)
 		);
-		//  int getfarray(int [])
+		//  int getfarray(float [])
 		{
 			auto arg = std::vector<AddrPara *>();
 			arg.emplace_back(
@@ -81,7 +85,7 @@ std::vector<AddrFunction *> IRModule::generateSysYDecl() {
 			);
 			sysyFuncs.emplace_back(
 				addrPool.emplace_back(
-					AddrFunction("getfarray", std::move(arg), sup::FloatType())
+					AddrFunction("getfarray", std::move(arg), sup::IntType())
 				)
 			);
 		}
@@ -208,16 +212,6 @@ void IRInstrPool::printAll(std::ostream & os) const {
 	}
 }
 
-IRInstrPool::IRInstrPool() : pool() {
-}
-
-IRFuncBlock::IRFuncBlock() : instrs() {
-}
-
-std::string IRFuncBlock::toLLVMIR() const {
-	com::TODO("", CODEPOS);
-}
-
 
 IRFuncDef::IRFuncDef(AddrFunction * pAddrFun)
 	: pAddrFun(pAddrFun) {
@@ -227,21 +221,9 @@ std::string IRFuncDef::toLLVMIR() const {
 	if (pAddrFun->justDeclare) {
 		return pAddrFun->declLLVMIR() + "\n\n";
 	}
-	std::string res =
-		pAddrFun->declLLVMIR() +
-			"{\n";
-	if (!loadFinished) {
-		com::Throw(
-			"You should call finishLoading before call other functions.", CODEPOS
-		);
-	} else {
-		if (blocks.empty()) {
-			for (const auto & pInstr: instrs) {
-				res += pInstr->toLLVMIR() + "\n";
-			}
-		} else {
-			for (const auto * block: blocks) { res += block->toLLVMIR() + "\n"; }
-		}
+	std::string res = pAddrFun->declLLVMIR() + "{\n";
+	for (const auto & pInstr: instrs) {
+		res += pInstr->toLLVMIR() + "\n";
 	}
 	res += "}\n\n";
 	return res;
@@ -282,15 +264,7 @@ void IRFuncDef::emplace_back(std::list<IRInstr *> && appendList) {
 	instrs.splice(instrs.end(), std::move(appendList));
 }
 
-IRFuncBlock * IRFuncDef::emplace_back(IRFuncBlock && irFuncBlock) {
-	pool.emplace_back(std::make_unique<IRFuncBlock>(std::move(irFuncBlock)));
-	return pool.rbegin()->get();
-}
-
-IRFuncDef * IRFuncDefPool::emplace_back(IRFuncDef && funcDef) {
-	pool.emplace_back(std::make_unique<IRFuncDef>(std::move(funcDef)));
-	funcDefs.emplace_back(pool.rbegin()->get());
-	return pool.rbegin()->get();
+IRFuncDefPool::IRFuncDefPool() {
 }
 
 }
@@ -411,7 +385,6 @@ std::list<ircode::IRInstr *> genBinaryOperationInstrs(
 						"In C, comparison between bool is converted to comparison between int.",
 						CODEPOS
 					);
-					break;
 				}
 				default:com::Throw("??", CODEPOS);
 			}
@@ -435,23 +408,44 @@ std::list<ircode::IRInstr *> genUnaryOperationInstrs(
 		case Type::Bool_t: {
 			auto instrsRes = std::list<ircode::IRInstr *>();
 			if (op == "!") {
-				auto * pZero = ir.addrPool.emplace_back(
-					ircode::AddrStaticValue(opR->getType())
-				);
 				switch (opR->getType().type) {
-					case Type::Bool_t:
-					case Type::Int_t: {
+					case Type::Bool_t: {
+						auto * pZExt = ir.addrPool.emplace_back(
+							ircode::AddrVariable(IntType())
+						);
 						instrsRes.emplace_back(
 							ir.instrPool.emplace_back(
-								ircode::InstrICmp(opD, opR, ICMP::NE, pZero)
+								ircode::InstrZExt(opR, pZExt)
+							)
+						);
+						auto * pZero = ir.addrPool.emplace_back(
+							ircode::AddrStaticValue(IntType())
+						);
+						instrsRes.emplace_back(
+							ir.instrPool.emplace_back(
+								ircode::InstrICmp(opD, pZExt, ICMP::EQ, pZero)
+							)
+						);
+						break;
+					}
+					case Type::Int_t: {
+						auto * pZero = ir.addrPool.emplace_back(
+							ircode::AddrStaticValue(IntType())
+						);
+						instrsRes.emplace_back(
+							ir.instrPool.emplace_back(
+								ircode::InstrICmp(opD, opR, ICMP::EQ, pZero)
 							)
 						);
 						break;
 					}
 					case Type::Float_t: {
+						auto * pZero = ir.addrPool.emplace_back(
+							ircode::AddrStaticValue(FloatType())
+						);
 						instrsRes.emplace_back(
 							ir.instrPool.emplace_back(
-								ircode::InstrFCmp(opD, opR, FCMP::UNE, pZero)
+								ircode::InstrFCmp(opD, opR, FCMP::OEQ, pZero)
 							)
 						);
 						break;

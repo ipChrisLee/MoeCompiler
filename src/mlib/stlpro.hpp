@@ -5,6 +5,7 @@
 
 #include "common.hpp"
 
+
 namespace STLPro {
 namespace vector {
 template<typename T>
@@ -34,6 +35,15 @@ void PushBackByNumberAndInstance(
 }
 }
 namespace list {
+template<typename T, typename ... LTS>
+void merge_to(std::list<T> & l, LTS && ... ls) {
+	static_assert(
+		(std::is_same<std::list<T>, typename std::remove_reference<LTS>::type>::value && ...) &&
+			(!std::is_lvalue_reference<LTS>::value && ...)
+	);
+	(l.splice(l.end(), std::move(ls)), ...);
+}
+
 template<typename T>
 void move_all_to_front(std::list<T> & ls, const T & t) {
 	std::list<T> found;
@@ -73,4 +83,20 @@ void move_all_to_front(std::list<T> & ls, UnaryPredicate f) {
 }
 
 }
+namespace string {
+inline std::string to_string(const char * s) { return s; }
+
+inline std::string to_string(const std::string & s) { return s; }
+
+}
+}
+
+template<typename Iter>
+auto get(Iter & it) {
+	return it.operator*();
+}
+
+template<typename Iter>
+auto get(Iter && it) {
+	return it.operator*();
 }

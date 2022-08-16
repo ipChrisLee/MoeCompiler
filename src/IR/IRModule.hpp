@@ -1,7 +1,8 @@
 #pragma once
 
 #include <list>
-#include <span.h>
+
+#include <moeconcept.hpp>
 
 #include "IR/IRInstr.hpp"
 #include "IR/IRAddr.hpp"
@@ -13,7 +14,7 @@ namespace ircode {
 
 class IRModule;
 
-class IRAddrPool : public sup::LLVMable {
+class IRAddrPool : public sup::LLVMable, public moeconcept::Pool<IRAddr> {
   protected:
 	std::vector<std::unique_ptr<IRAddr>> pool;
 	std::vector<AddrGlobalVariable *> globalVars;
@@ -23,60 +24,16 @@ class IRAddrPool : public sup::LLVMable {
 
 	IRAddrPool(const IRAddrPool &) = delete;
 
-	template<
-		typename T,
-		class = typename std::enable_if<
-			!std::is_lvalue_reference<T>::value &&
-				std::is_base_of<IRAddr, T>::value
-		>::type
-	>
-	T * emplace_back(T && addr) {
-		pool.emplace_back(
-			com::dynamic_cast_uPtr<IRAddr>(
-				com::cutToUniquePtr(std::forward<T>(addr))));
-		IRAddr * p = pool.rbegin()->get();
-		if (auto p2 = dynamic_cast<AddrGlobalVariable *>(p)) {
-			globalVars.template emplace_back(p2);
-		}
-		return dynamic_cast<T *>(pool.rbegin()->get());
-	}
-
 	std::string toLLVMIR() const override;
 
 	const std::vector<AddrGlobalVariable *> & getGlobalVars() const;
 };
 
-class IRInstrPool {
-  protected:
-	std::vector<std::unique_ptr<IRInstr>> pool;
+class IRInstrPool : public moeconcept::Pool<IRInstr> {
   public:
-	IRInstrPool();
+	IRInstrPool() = default;
 
 	IRInstrPool(const IRInstrPool &) = delete;
-
-	template<
-		typename T,
-		class = typename std::enable_if<
-			!std::is_lvalue_reference<T>::value && std::is_base_of<IRInstr, T>::value
-		>::type
-	>
-	[[nodiscard]] T * emplace_back(std::unique_ptr<T> && instr) {
-		pool.template emplace_back(std::move(instr));
-		return dynamic_cast<T *>(pool.rbegin()->get());
-	}
-
-	template<
-		typename T,
-		class = typename std::enable_if<
-			!std::is_lvalue_reference<T>::value && std::is_base_of<IRInstr, T>::value
-		>::type
-	>
-	[[nodiscard]] T * emplace_back(T && instr) {
-		pool.emplace_back(
-			com::dynamic_cast_uPtr<IRInstr>(
-				com::cutToUniquePtr(std::forward<T>(instr))));
-		return dynamic_cast<T *>(pool.rbegin()->get());
-	}
 
 	/**
 	 * @brief This is just for debugging.
@@ -86,36 +43,9 @@ class IRInstrPool {
 
 class IRFuncDef;
 
-class IRFuncDefPool {
-  protected:
-	std::vector<std::unique_ptr<IRFuncDef>> pool;
+class IRFuncDefPool : public moeconcept::Pool<IRFuncDef> {
   public:
-	std::vector<IRFuncDef *> funcDefs;
-
-	IRFuncDef * emplace_back(IRFuncDef &&);
-
-	auto begin() { return funcDefs.begin(); }
-
-	auto begin() const { return funcDefs.begin(); }
-
-	auto end() { return funcDefs.end(); }
-
-	auto end() const { return funcDefs.end(); }
-};
-
-/**
- * @brief Block of instructions.
- * @note If @c instrs form a basic block, @c thisIsBasicBlock will be @c true .
- */
-class IRFuncBlock : public sup::LLVMable {
-  public:
-	std::list<IRInstr *> instrs;
-
-	IRFuncBlock();
-
-	IRFuncBlock(IRFuncBlock &&) = default;
-
-	std::string toLLVMIR() const override;
+	IRFuncDefPool();
 };
 
 /**
@@ -127,19 +57,15 @@ class IRFuncDef : public sup::LLVMable {
 
 	AddrJumpLabel * addEntryLabelInstr(IRModule & ir);
 
-	std::vector<std::unique_ptr<IRFuncBlock>> pool;
 
 	bool loadFinished = false;
   public:
 	AddrFunction * pAddrFun;
 	std::list<IRInstr *> instrs;
-	std::list<IRFuncBlock *> blocks;
 
 	IRInstr * emplace_back(IRInstr *);
 
 	void emplace_back(std::list<IRInstr *> &&);
-
-	IRFuncBlock * emplace_back(IRFuncBlock &&);
 
 	explicit IRFuncDef(AddrFunction * pAddrFun);
 

@@ -23,7 +23,15 @@ void IdxView::addOnDimN(int n, int a) {
 	if (n < 0) {
 		n = int(shape.size()) + n;
 	}
-	idx[n] += a;
+	for (int i = n; i >= 0; --i) {
+		idx[i] += a;
+		if (idx[i] >= shape[i]) {
+			a = idx[i] / shape[i];
+			idx[i] = idx[i] % shape[i];
+		} else {
+			break;
+		}
+	}
 }
 
 void IdxView::set0AfterNDim(int n) {
@@ -35,32 +43,33 @@ void IdxView::set0AfterNDim(int n) {
 	}
 }
 
+void IdxView::set0AfterNDimAndCarry(int n) {
+	for (int i = n + 1; i < int(idx.size()); ++i) {
+		idx[i] = 0;
+	}
+	addOnDimN(n);
+}
+
 int IdxView::getStride() const {
 	return std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<>());
 }
 
 int IdxView::getPos() const {
-	int step = 1, pos = 0;
-	for (auto iIdx = idx.rbegin(), iShape = shape.rbegin();
-	     iIdx != idx.rend(); ++iIdx
-		) {
-		pos += *iIdx * step;
-		step *= *iShape;
-	}
-	return pos;
+	return sup::idxToPos(idx, shape);
 }
 
-std::string IdxView::idxToStr() const {
-	auto _ = std::string();
-	std::for_each(
-		idx.begin(), idx.end(), [&_](int x) { _ += to_string(x); }
-	);
-	return _;
+bool IdxView::isAll0AfterNDim(int n) {
+	for (int i = n + 1; i < int(idx.size()); ++i) {
+		if (idx[i] != 0) {
+			return false;
+		}
+	}
+	return true;
 }
 
 std::list<ircode::IRInstr *> fromArrayItemsToInstrs(
 	ircode::IRModule & ir,
-	std::vector<ArrayItem<ircode::AddrOperand *>> && items,
+	std::set<ArrayItem<ircode::AddrOperand *>> && items,
 	const std::vector<int> & shape,
 	ircode::AddrVariable * varMemBaseAddr,
 	const TypeInfo & typeOfElement
@@ -70,7 +79,7 @@ std::list<ircode::IRInstr *> fromArrayItemsToInstrs(
 			items.size() == 1,
 			"Items should have only one item when defining scalar var.", CODEPOS
 		);
-		auto item = std::move(items[0]);
+		auto item = *items.begin();
 		items.clear();
 		auto instrs = std::move(item.instrsToInit);
 		auto [pConversionAddr, _, convertInstrs] = genAddrConversion(
@@ -106,8 +115,35 @@ std::list<ircode::IRInstr *> fromArrayItemsToInstrs(
 			ircode::InstrGetelementptr(pBegin, varMemBaseAddr, std::move(idx0))
 		)
 	);
+	auto iPos = 0;
+	auto posNow = 0;
 	for (auto & item: items) {
-		instrsRes.splice(instrsRes.end(), std::move(item.instrsToInit));
+		posNow = sup::idxToPos(item.idx, shape);
+		for (; iPos < posNow; iPos++) {
+			auto * pValAddr = ir.addrPool.emplace_back(
+				ircode::AddrStaticValue(typeOfElement)
+			);
+			auto pValMem = ir.addrPool.emplace_back(
+				ircode::AddrVariable(PointerType(typeOfElement))
+			);
+			auto bias = static_cast<ircode::AddrOperand *>(ir.addrPool.emplace_back(
+				ircode::AddrStaticValue(
+					IntType(), IntStaticValue(iPos)
+				)
+			));
+			instrsRes.emplace_back(
+				ir.instrPool.emplace_back(
+					ircode::InstrGetelementptr(pValMem, pBegin, {bias})
+				)
+			);
+			instrsRes.emplace_back(
+				ir.instrPool.emplace_back(
+					ircode::InstrStore(pValAddr, pValMem)
+				)
+			);
+		}
+		auto instrsToInit = item.instrsToInit;
+		instrsRes.splice(instrsRes.end(), std::move(instrsToInit));
 		//  type conversion
 		auto [pValAddr, type, conversionInstrs] =
 			genAddrConversion(ir, item.val, typeOfElement);
@@ -117,7 +153,32 @@ std::list<ircode::IRInstr *> fromArrayItemsToInstrs(
 		);
 		auto bias = static_cast<ircode::AddrOperand *>(ir.addrPool.emplace_back(
 			ircode::AddrStaticValue(
-				IntType(), IntStaticValue(item.getPos(shape))
+				IntType(), IntStaticValue(posNow)
+			)
+		));
+		instrsRes.emplace_back(
+			ir.instrPool.emplace_back(
+				ircode::InstrGetelementptr(pValMem, pBegin, {bias})
+			)
+		);
+		instrsRes.emplace_back(
+			ir.instrPool.emplace_back(
+				ircode::InstrStore(pValAddr, pValMem)
+			)
+		);
+		iPos = posNow + 1;
+	}
+	posNow = sup::lastPosOfShape(shape);
+	for (; iPos < posNow; iPos++) {
+		auto * pValAddr = ir.addrPool.emplace_back(
+			ircode::AddrStaticValue(typeOfElement)
+		);
+		auto pValMem = ir.addrPool.emplace_back(
+			ircode::AddrVariable(PointerType(typeOfElement))
+		);
+		auto bias = static_cast<ircode::AddrOperand *>(ir.addrPool.emplace_back(
+			ircode::AddrStaticValue(
+				IntType(), IntStaticValue(iPos)
 			)
 		));
 		instrsRes.emplace_back(
@@ -140,7 +201,7 @@ std::list<ircode::IRInstr *> fromArrayItemsToInstrs(
 
 std::unique_ptr<sup::StaticValue> fromArrayItemsToStaticValue(
 	ircode::IRModule & ir,
-	const std::vector<ArrayItem<std::unique_ptr<StaticValue>>> & items,
+	const std::set<ArrayItem<std::unique_ptr<StaticValue>>> & items,
 	const std::vector<int> & shape,
 	const TypeInfo & typeOfElement
 ) {
@@ -149,60 +210,35 @@ std::unique_ptr<sup::StaticValue> fromArrayItemsToStaticValue(
 			items.size() == 1, "There should be only one element when defining var.",
 			CODEPOS
 		);
-		return convertOnSV(*items[0].val, typeOfElement);
+		return convertOnSV(*items.begin()->val, typeOfElement);
 	}
 	std::vector<std::unique_ptr<StaticValue>> staticValueArray;
-	std::unique_ptr<StaticValue> defaultVal;
-	std::unique_ptr<StaticValue> res;
 	switch (typeOfElement.type) {
 		case Type::Int_t: {
-			defaultVal = std::make_unique<IntStaticValue>(0);
-			break;
+			auto res = std::make_unique<IntArrayStaticValue>(shape);
+			for (auto & item: items) {
+				auto * pVal = com::dynamic_cast_uPtr_get<IntStaticValue>(item.val);
+				if (pVal->value) {
+					res->insertValue(item.idx, *pVal);
+				}
+			}
+			return res;
 		}
 		case Type::Float_t: {
-			defaultVal = std::make_unique<FloatStaticValue>(0);
-			break;
-		}
-		case Type::Bool_t: {
-			defaultVal = std::make_unique<BoolStaticValue>(false);
-			break;
-		}
-		default: com::Throw("type should be one of int, float, bool.", CODEPOS);
-	}
-	int iPos = 0;
-	for (auto & item: items) {
-		int n = item.getPos(shape) - iPos;
-		while (n--) {
-			staticValueArray.emplace_back(
-				com::dynamic_cast_uPtr<StaticValue>(defaultVal->cloneToUniquePtr())
-			);
-		}
-		staticValueArray.emplace_back(
-			com::dynamic_cast_uPtr<StaticValue>(item.val->cloneToUniquePtr())
-		);
-		iPos = item.getPos(shape) + 1;
-	}
-	int n = shapeToStride(shape) - iPos;
-	while (n--) {
-		staticValueArray.emplace_back(
-			com::dynamic_cast_uPtr<StaticValue>(defaultVal->cloneToUniquePtr())
-		);
-	}
-	switch (typeOfElement.type) {
-		case Type::Int_t: {
-			res = std::make_unique<IntArrayStaticValue>(shape, staticValueArray);
-			break;
-		}
-		case Type::Float_t: {
-			res = std::make_unique<FloatArrayStaticValue>(shape, staticValueArray);
-			break;
+			auto res = std::make_unique<FloatArrayStaticValue>(shape);
+			for (auto & item: items) {
+				auto * pVal = com::dynamic_cast_uPtr_get<FloatStaticValue>(item.val);
+				if (bool(pVal->value)) {
+					res->insertValue(item.idx, *pVal);
+				}
+			}
+			return res;
 		}
 		case Type::Bool_t: {
 			com::Throw("bool not supported.", CODEPOS);
 		}
 		default: com::Throw("type should be one of int, float, bool.", CODEPOS);
 	}
-	return res;
 }
 
 

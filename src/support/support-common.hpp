@@ -1,13 +1,15 @@
 #pragma once
+
 #include <string>
 
 #include <common.hpp>
 #include <SysY.hpp>
 
+
 namespace sup {
 struct LLVMable {
 	[[nodiscard]] virtual std::string toLLVMIR() const = 0;
-	
+
 	// [[nodiscard]] virtual std::string toLLVMIRWithoutType() const {
 	// 	com::addRuntimeWarning(
 	// 		com::concatToString(
@@ -19,7 +21,7 @@ struct LLVMable {
 	// 	);
 	// 	return toLLVMIR();
 	// }
-	
+
 	virtual ~LLVMable() = default;
 };
 }

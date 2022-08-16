@@ -1,7 +1,4 @@
-//
-// Created by lee on 6/7/22.
-//
-
+#include <numeric>
 #include "TypeInfo.hpp"
 #include "cprt.hpp"
 
@@ -21,6 +18,10 @@ std::string BoolType::toLLVMIR() const {
 
 std::unique_ptr<moeconcept::Cutable> BoolType::_cutToUniquePtr() {
 	return std::make_unique<BoolType>(std::move(*this));
+}
+
+int BoolType::getSize() const {
+	return 1;
 }
 
 TypeInfo::TypeInfo(Type type) : type(type) {
@@ -69,6 +70,10 @@ std::unique_ptr<moeconcept::Cutable> IntType::_cutToUniquePtr() {
 	return std::make_unique<IntType>(std::move(*this));
 }
 
+int IntType::getSize() const {
+	return 4;
+}
+
 std::unique_ptr<moeconcept::Cloneable>
 FloatType::_cloneToUniquePtr() const {
 	return std::make_unique<FloatType>(*this);
@@ -84,6 +89,10 @@ std::string FloatType::toLLVMIR() const {
 std::unique_ptr<moeconcept::Cutable> FloatType::_cutToUniquePtr() {
 	return std::make_unique<FloatType>(std::move(*this));
 
+}
+
+int FloatType::getSize() const {
+	return 4;
 }
 
 std::unique_ptr<moeconcept::Cloneable>
@@ -120,6 +129,10 @@ std::unique_ptr<moeconcept::Cutable> IntArrayType::_cutToUniquePtr() {
 	return std::make_unique<IntArrayType>(std::move(*this));
 }
 
+int IntArrayType::getSize() const {
+	return std::accumulate(shape.begin(), shape.end(), 4, std::multiplies<>());
+}
+
 
 std::unique_ptr<moeconcept::Cloneable>
 FloatArrayType::_cloneToUniquePtr() const {
@@ -154,6 +167,10 @@ FloatArrayType::operator==(const TypeInfo & typeInfo) const {
 std::unique_ptr<moeconcept::Cutable> FloatArrayType::_cutToUniquePtr() {
 	return std::make_unique<FloatArrayType>(std::move(*this));
 
+}
+
+int FloatArrayType::getSize() const {
+	return std::accumulate(shape.begin(), shape.end(), 4, std::multiplies<>());
 }
 
 
@@ -200,11 +217,19 @@ std::unique_ptr<moeconcept::Cutable> PointerType::_cutToUniquePtr() {
 	return std::make_unique<PointerType>(std::move(*this));
 }
 
+int PointerType::getSize() const {
+	return 4;
+}
+
 VoidType::VoidType() : TypeInfo(Type::Void_t) {
 }
 
 std::string VoidType::toLLVMIR() const {
 	return "void";
+}
+
+int VoidType::getSize() const {
+	return 0;
 }
 
 std::unique_ptr<TypeInfo> typeDeduce(const TypeInfo & _from, size_t dep) {//NOLINT
@@ -270,6 +295,66 @@ std::unique_ptr<TypeInfo> typeDeduce(const TypeInfo & _from, size_t dep) {//NOLI
 			com::Throw("This type is not supported to deduce type.", CODEPOS);
 		}
 	}
+}
+
+std::unique_ptr<TypeInfo> typeDeduceForBackend(const TypeInfo & _from, size_t dep) {
+	auto type = _from.type;
+	switch (type) {
+		case Type::FloatArray_t: {
+			const auto & from = dynamic_cast<const FloatArrayType &>(_from);
+			auto dims = from.shape.size();
+			if (dims == dep) {
+				return std::make_unique<FloatType>();
+			} else if (dims >= dep + 1) {
+				auto shape = std::vector(
+					from.shape.begin() + dep, from.shape.end()
+				);
+				return std::make_unique<FloatArrayType>(std::move(shape));
+			} else {
+				com::Throw("dep should be less than dims", CODEPOS);
+			}
+		}
+		case Type::IntArray_t: {
+			const auto & from = dynamic_cast<const IntArrayType &>(_from);
+			auto dims = from.shape.size();
+			if (dims == dep) {
+				return std::make_unique<IntType>();
+			} else if (dims >= dep + 1) {
+				auto shape = std::vector(
+					from.shape.begin() + dep, from.shape.end()
+				);
+				return std::make_unique<IntArrayType>(std::move(shape));
+			} else {
+				com::Throw("dep should be less than dims", CODEPOS);
+			}
+		}
+		case Type::Int_t: {
+			com::Assert(
+				dep == 0, "When type `from` is int, dep should be one.", CODEPOS
+			);
+			return std::make_unique<IntType>();
+		}
+		case Type::Float_t: {
+			com::Assert(
+				dep == 0, "When type `from` is float, dep should be one.", CODEPOS
+			);
+			return std::make_unique<FloatType>();
+		}
+		case Type::Pointer_t: {
+			auto & from = dynamic_cast<const PointerType &>(_from);
+			if (dep > 0) {
+				return typeDeduceForBackend(*from.pointTo, dep - 1);
+			} else if (dep == 0) {
+				return com::dynamic_cast_uPtr<TypeInfo>(from.cloneToUniquePtr());
+			} else {
+				com::Throw("", CODEPOS);
+			}
+		}
+		default: {
+			com::Throw("This type is not supported to deduce type.", CODEPOS);
+		}
+	}
+
 }
 
 }

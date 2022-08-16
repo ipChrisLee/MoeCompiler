@@ -13,6 +13,7 @@ file(GLOB_RECURSE cppFiles
 		"src/support/*.cpp"
 		"src/IR/*.cpp"
 		"src/frontend/*.cpp"
+		"src/backend/*.cpp"
 		"src/pass/*.cpp"
 		)
 
@@ -23,6 +24,7 @@ file(GLOB_RECURSE cppFiles
 include_directories(src)
 include_directories(src/mlib)
 include_directories(src/third_party/antlr4-runtime)
+include_directories(src/third_party/antlr4-runtime/src)
 
 #   Compile and Options
 # From
@@ -39,7 +41,7 @@ add_link_options(-lpthread -lm -v -pthread)
 
 #   Library Subdirectories
 add_subdirectory(src/mlib)                      #   moe lib
-add_subdirectory(src/third_party/Google_Test)   #   Google-Test
+#add_subdirectory(src/third_party/Google_Test)   #   Google-Test
 add_subdirectory(src/third_party/antlr4-runtime)
 
 #   Target of compiler
