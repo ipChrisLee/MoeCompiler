@@ -107,11 +107,10 @@ class LinearScanAllocator : public RegisterAllocator {
 
 	int run() override;
 
-	std::random_device _rd;
+	static int rdSeed;
 	std::mt19937 _g;
   public:
-	explicit LinearScanAllocator(OpndPool & opndPool) :
-		RegisterAllocator(opndPool), _rd(), _g(_rd()) {}
+	explicit LinearScanAllocator(OpndPool & opndPool);
 
 };
 

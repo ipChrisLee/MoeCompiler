@@ -14,7 +14,7 @@ int IRInstr::cnt = 0;
 IRInstr::IRInstr(const IRInstr & irInstr) :
 	id(++cnt), instrType(irInstr.instrType) {
 	com::addRuntimeWarning(
-		"You should NOT call copy constructor of IRInstr.", CODEPOS
+		"You should NOT call copy constructor of IRInstr.", CODEPOS, com::addWarningOnlyOnce
 	);
 }
 

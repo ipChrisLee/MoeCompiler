@@ -308,4 +308,10 @@ int LinearScanAllocator::run() {
 	return 0;
 }
 
+int LinearScanAllocator::rdSeed = 20001220;
+
+LinearScanAllocator::LinearScanAllocator(OpndPool & opndPool) :
+	RegisterAllocator(opndPool), _g(rdSeed) {
+}
+
 }
