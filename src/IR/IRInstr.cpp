@@ -3,6 +3,7 @@
 #include <utility>
 
 #include "IRInstr.hpp"
+#include "IRModule.hpp"
 
 
 using namespace sup;
@@ -62,15 +63,15 @@ InstrAlloca::InstrAlloca(AddrLocalVariable * allocaTo) :
 	}
 }
 
-void InstrAlloca::changeOperand(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
+void InstrAlloca::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
 	//  do nothing
 }
 
-AddrVariable * InstrAlloca::getDest() const {
+AddrVariable * InstrAlloca::getDef() const {
 	return allocaTo;
 }
 
-std::vector<ircode::AddrOperand *> InstrAlloca::getOperands() const {
+std::vector<ircode::AddrOperand *> InstrAlloca::getUse() const {
 	//  do nothing
 	return { };
 }
@@ -91,14 +92,14 @@ InstrLabel::InstrLabel(AddrJumpLabel * pAddrLabel) :
 	IRInstr(InstrType::Label), pAddrLabel(pAddrLabel) {
 }
 
-void InstrLabel::changeOperand(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
+void InstrLabel::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
 }
 
-AddrVariable * InstrLabel::getDest() const {
+AddrVariable * InstrLabel::getDef() const {
 	return nullptr;
 }
 
-std::vector<ircode::AddrOperand *> InstrLabel::getOperands() const {
+std::vector<ircode::AddrOperand *> InstrLabel::getUse() const {
 	return { };
 }
 
@@ -126,17 +127,17 @@ InstrStore::InstrStore(AddrOperand * from, AddrVariable * to) :
 	);
 }
 
-void InstrStore::changeOperand(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
+void InstrStore::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
 	if (chgFrom == from) {
-		from = to;
+		from = chgTo;
 	}
 }
 
-AddrVariable * InstrStore::getDest() const {
+AddrVariable * InstrStore::getDef() const {
 	return to;
 }
 
-std::vector<ircode::AddrOperand *> InstrStore::getOperands() const {
+std::vector<ircode::AddrOperand *> InstrStore::getUse() const {
 	return {from};
 }
 
@@ -163,17 +164,17 @@ std::string InstrRet::toLLVMIR() const {
 	}
 }
 
-void InstrRet::changeOperand(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
+void InstrRet::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
 	if (chgFrom == retAddr) {
 		retAddr = chgTo;
 	}
 }
 
-AddrVariable * InstrRet::getDest() const {
+AddrVariable * InstrRet::getDef() const {
 	return nullptr;
 }
 
-std::vector<ircode::AddrOperand *> InstrRet::getOperands() const {
+std::vector<ircode::AddrOperand *> InstrRet::getUse() const {
 	if (retAddr) {
 		return {retAddr};
 	} else {
@@ -193,7 +194,7 @@ InstrBinaryOp::InstrBinaryOp(
 	);
 }
 
-void InstrBinaryOp::changeOperand(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
+void InstrBinaryOp::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
 	if (left == chgFrom) {
 		left = chgTo;
 	}
@@ -202,11 +203,11 @@ void InstrBinaryOp::changeOperand(ircode::AddrOperand * chgFrom, ircode::AddrOpe
 	}
 }
 
-AddrVariable * InstrBinaryOp::getDest() const {
+AddrVariable * InstrBinaryOp::getDef() const {
 	return res;
 }
 
-std::vector<ircode::AddrOperand *> InstrBinaryOp::getOperands() const {
+std::vector<ircode::AddrOperand *> InstrBinaryOp::getUse() const {
 	return {left, right};
 }
 
@@ -262,17 +263,17 @@ InstrConversionOp::InstrConversionOp(
 }
 
 void
-InstrConversionOp::changeOperand(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
+InstrConversionOp::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
 	if (from == chgFrom) {
 		from = chgTo;
 	}
 }
 
-AddrVariable * InstrConversionOp::getDest() const {
+AddrVariable * InstrConversionOp::getDef() const {
 	return to;
 }
 
-std::vector<ircode::AddrOperand *> InstrConversionOp::getOperands() const {
+std::vector<ircode::AddrOperand *> InstrConversionOp::getUse() const {
 	return {from};
 }
 
@@ -321,15 +322,15 @@ std::string InstrLoad::toLLVMIR() const {
 		+ from->getType().toLLVMIR() + " " + from->toLLVMIR() + ", align 4";
 }
 
-void InstrLoad::changeOperand(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
+void InstrLoad::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
 	// ?
 }
 
-AddrVariable * InstrLoad::getDest() const {
+AddrVariable * InstrLoad::getDef() const {
 	return to;
 }
 
-std::vector<ircode::AddrOperand *> InstrLoad::getOperands() const {
+std::vector<ircode::AddrOperand *> InstrLoad::getUse() const {
 	// ?
 	return { };
 }
@@ -367,14 +368,14 @@ InstrBr::InstrBr(
 	);
 }
 
-void InstrBr::changeOperand(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
+void InstrBr::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
 }
 
-AddrVariable * InstrBr::getDest() const {
+AddrVariable * InstrBr::getDef() const {
 	return nullptr;
 }
 
-std::vector<ircode::AddrOperand *> InstrBr::getOperands() const {
+std::vector<ircode::AddrOperand *> InstrBr::getUse() const {
 	return { };
 }
 
@@ -479,7 +480,7 @@ InstrCall::InstrCall(
 	);
 }
 
-void InstrCall::changeOperand(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
+void InstrCall::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
 	for (auto & p: paramsPassing) {
 		if (p == chgFrom) {
 			p = chgTo;
@@ -488,11 +489,11 @@ void InstrCall::changeOperand(ircode::AddrOperand * chgFrom, ircode::AddrOperand
 
 }
 
-AddrVariable * InstrCall::getDest() const {
+AddrVariable * InstrCall::getDef() const {
 	return retAddr;
 }
 
-std::vector<ircode::AddrOperand *> InstrCall::getOperands() const {
+std::vector<ircode::AddrOperand *> InstrCall::getUse() const {
 	return paramsPassing;
 }
 
@@ -595,20 +596,28 @@ std::string InstrGetelementptr::toLLVMIR() const {
 }
 
 void
-InstrGetelementptr::changeOperand(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
+InstrGetelementptr::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
 	for (auto & p: idxs) {
 		if (p == chgFrom) {
 			p = chgTo;
 		}
 	}
+	auto * chgFromVar = dynamic_cast<ircode::AddrVariable *>(chgFrom);
+	auto * chgToVar = dynamic_cast<ircode::AddrVariable *>(chgTo);
+	if (from == chgFromVar) {
+		com::Assert(chgToVar, "", CODEPOS);
+		from = chgToVar;
+	}
 }
 
-AddrVariable * InstrGetelementptr::getDest() const {
+AddrVariable * InstrGetelementptr::getDef() const {
 	return to;
 }
 
-std::vector<ircode::AddrOperand *> InstrGetelementptr::getOperands() const {
-	return idxs;
+std::vector<ircode::AddrOperand *> InstrGetelementptr::getUse() const {
+	auto res = idxs;
+	res.emplace_back(from);
+	return res;
 }
 
 InstrCompare::InstrCompare(
@@ -630,7 +639,7 @@ std::string InstrCompare::toLLVMIR() const {
 	com::Throw("This method should not be called.", CODEPOS);
 }
 
-void InstrCompare::changeOperand(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
+void InstrCompare::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
 	if (leftOp == chgFrom) {
 		leftOp = chgTo;
 	}
@@ -639,11 +648,11 @@ void InstrCompare::changeOperand(ircode::AddrOperand * chgFrom, ircode::AddrOper
 	}
 }
 
-AddrVariable * InstrCompare::getDest() const {
+AddrVariable * InstrCompare::getDef() const {
 	return dest;
 }
 
-std::vector<ircode::AddrOperand *> InstrCompare::getOperands() const {
+std::vector<ircode::AddrOperand *> InstrCompare::getUse() const {
 	return {leftOp, rightOp};
 }
 
@@ -789,8 +798,8 @@ std::string InstrZExt::toLLVMIR() const {
 		from->toLLVMIR() + " to " + to->getType().toLLVMIR();
 }
 
-InstrPhi::InstrPhi(ircode::AddrVariable * newDefVar) :
-	IRInstr(InstrType::Phi), newDefVar(newDefVar) {
+InstrPhi::InstrPhi(ircode::AddrVariable * newDefVar, ircode::AddrLocalVariable * mappingLV) :
+	IRInstr(InstrType::Phi), mappingLV(mappingLV), newDefVar(newDefVar) {
 }
 
 std::string InstrPhi::toLLVMIR() const {
@@ -802,14 +811,18 @@ std::string InstrPhi::toLLVMIR() const {
 	}
 	res.pop_back();
 	res.pop_back();
+	if (mappingLV) {
+		res += "; " + mappingLV->toLLVMIR();
+	}
 	return res;
 }
 
 void InstrPhi::insertPair(ircode::AddrJumpLabel * pLabel, ircode::AddrOperand * pOperandAddr) {
+	com::Assert(pOperandAddr, "", CODEPOS);
 	vecPair.emplace(pLabel, pOperandAddr);
 }
 
-void InstrPhi::changeOperand(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
+void InstrPhi::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
 	for (auto & p: vecPair) {
 		if (p.second == chgFrom) {
 			p.second = chgTo;
@@ -817,16 +830,179 @@ void InstrPhi::changeOperand(ircode::AddrOperand * chgFrom, ircode::AddrOperand 
 	}
 }
 
-AddrVariable * InstrPhi::getDest() const {
+AddrVariable * InstrPhi::getDef() const {
 	return newDefVar;
 }
 
-std::vector<ircode::AddrOperand *> InstrPhi::getOperands() const {
+std::vector<ircode::AddrOperand *> InstrPhi::getUse() const {
 	auto res = std::vector<ircode::AddrOperand *>();
 	for (auto p: vecPair) {
 		res.emplace_back(p.second);
 	}
 	return res;
 }
+
+
+InstrParaMov::InstrParaMov(
+	ircode::AddrVariable * to, AddrPara * from, ircode::IRModule & ir
+) :
+	IRInstr(ircode::InstrType::ParaMov), to(to), from(from) {
+	com::Assert(
+		from->addrType == AddrType::ParaVar && to->addrType == AddrType::Var, "", CODEPOS
+	);
+	com::Assert(to->getType() == from->getType(), "", CODEPOS);
+	switch (from->getType().type) {
+		case sup::Type::Float_t: {
+			auto * pZeroAddr = ir.addrPool.emplace_back(
+				ircode::AddrStaticValue(sup::FloatType())
+			);
+			stand = ir.instrPool.emplace_back(
+				ircode::InstrFAdd(from, pZeroAddr, to)
+			);
+			break;
+		}
+		case sup::Type::Pointer_t: {
+			auto * pZeroAddr = ir.addrPool.emplace_back(
+				ircode::AddrStaticValue(sup::IntType())
+			);
+			stand = ir.instrPool.emplace_back(
+				ircode::InstrGetelementptr(
+					to, from, {static_cast<ircode::AddrOperand *>(pZeroAddr)}
+				)
+			);
+			break;
+		}
+		case sup::Type::Int_t: {
+			auto * pZeroAddr = ir.addrPool.emplace_back(
+				ircode::AddrStaticValue(sup::IntType())
+			);
+			stand = ir.instrPool.emplace_back(
+				ircode::InstrAdd(from, pZeroAddr, to)
+			);
+			break;
+		}
+		default:com::Throw("", CODEPOS);
+	}
+}
+
+std::string InstrParaMov::toLLVMIR() const {
+	return stand->toLLVMIR() + ";\t\tthis is para move";
+}
+
+void InstrParaMov::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
+}
+
+std::vector<ircode::AddrOperand *> InstrParaMov::getUse() const {
+	return { };
+}
+
+AddrVariable * InstrParaMov::getDef() const {
+	return to;
+}
+
+InstrParallelCopy::InstrParallelCopy() : IRInstr(ircode::InstrType::Copy) {
+}
+
+std::string InstrParallelCopy::toLLVMIR() const {
+	auto res = std::string("\t;\tCOPY ");
+	for (auto [from, to, stand]: copies) {
+		res += "[" + stand->toLLVMIR() + "] ; ";
+	}
+	return res;
+}
+
+void
+InstrParallelCopy::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
+	for (auto & [from, to, stand]: copies) {
+		if (from == chgFrom) {
+			from = chgTo;
+			stand->changeUse(from, chgTo);
+		}
+	}
+}
+
+std::vector<ircode::AddrOperand *> InstrParallelCopy::getUse() const {
+	auto res = std::vector<ircode::AddrOperand *>();
+	for (auto [p, _1, _2]: copies) {
+		res.emplace_back(p);
+	}
+	return res;
+}
+
+AddrVariable * InstrParallelCopy::getDef() const {
+	com::Throw("You need to recognize `parallel copy` if you use `getDef`.", CODEPOS);
+}
+
+void InstrParallelCopy::insert(
+	ircode::AddrOperand * from, ircode::AddrVariable * to, ircode::IRModule & ir
+) {
+	com::Assert(
+		com::enum_fun::in(
+			from->addrType, {AddrType::Var, AddrType::ParaVar, AddrType::StaticValue}
+		) && to->addrType == AddrType::Var, "", CODEPOS
+	);
+	com::Assert(to->getType() == from->getType(), "", CODEPOS);
+	auto * stand = static_cast<ircode::IRInstr *>(nullptr);
+	switch (from->getType().type) {
+		case sup::Type::Float_t: {
+			auto * pZeroAddr = ir.addrPool.emplace_back(
+				ircode::AddrStaticValue(sup::FloatType())
+			);
+			stand = ir.instrPool.emplace_back(
+				ircode::InstrFAdd(from, pZeroAddr, to)
+			);
+			break;
+		}
+		case sup::Type::Pointer_t: {
+			auto * pVarFrom = dynamic_cast<ircode::AddrVariable *>(from);
+			com::Assert(pVarFrom, "", CODEPOS);
+			auto * pZeroAddr = ir.addrPool.emplace_back(
+				ircode::AddrStaticValue(sup::IntType())
+			);
+			stand = ir.instrPool.emplace_back(
+				ircode::InstrGetelementptr(
+					to, pVarFrom, {static_cast<ircode::AddrOperand *>(pZeroAddr)}
+				)
+			);
+			break;
+		}
+		case sup::Type::Int_t: {
+			auto * pZeroAddr = ir.addrPool.emplace_back(
+				ircode::AddrStaticValue(sup::IntType())
+			);
+			stand = ir.instrPool.emplace_back(
+				ircode::InstrAdd(from, pZeroAddr, to)
+			);
+			break;
+		}
+		default:com::Throw("", CODEPOS);
+	}
+	copies.emplace_back(from, to, stand);
+}
+
+
+InstrMarkVars::InstrMarkVars() : IRInstr(InstrType::Mark) {
+}
+
+std::string InstrMarkVars::toLLVMIR() const {
+	auto res = std::string("\t;\tMARK ");
+	for (auto pVar: vecPVar) {
+		res += "[" + pVar->toLLVMIR() + "] ; ";
+	}
+	return res;
+}
+
+void InstrMarkVars::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
+	com::Throw("", CODEPOS);
+}
+
+std::vector<ircode::AddrOperand *> InstrMarkVars::getUse() const {
+	com::Throw("", CODEPOS);
+}
+
+AddrVariable * InstrMarkVars::getDef() const {
+	com::Throw("", CODEPOS);
+}
+
 }
 

@@ -93,6 +93,13 @@ myFuncTestCaseSet = TestCaseSet(
 		'testcases/my_function_test', 2022, TestType.Function
 	), "m2022"
 )
+easyFunctionTestCaseSet = TestCaseSet(
+	set.union(
+		load_testcases_under_folder_path(
+			"testcases/SysYTestCase/function_test2022", 2022, TestType.Function
+		),
+	), "function"
+)
 
 allFunctionTestsCaseSet = TestCaseSet(
 	set.union(

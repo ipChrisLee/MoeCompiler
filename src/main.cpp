@@ -34,6 +34,8 @@ int Main(int argc, char ** argv) {
 	}
 	if (SysY::options.emitLLVM.get()) {
 		SysY::dest << ir.toLLVMIR() << std::endl;
+	} else if (SysY::options.emitDeSsa.get()) {
+		SysY::dest << ir.toLLVMIR() << std::endl;
 	} else {
 		auto assembler = pass::ToASM(ir);
 		assembler.run();

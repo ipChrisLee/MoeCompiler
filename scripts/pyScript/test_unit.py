@@ -7,7 +7,8 @@ from scripts.pyScript.helper.settings import TestUnitSettings, JudgmentSettings
 import actions
 import typing as typ
 from case_and_case_set import emptyTestCaseSet, allFunctionTestsCaseSet, \
-	functionWithoutFloat, myFuncTestCaseSet, allPerformanceTestsCaseSet
+	functionWithoutFloat, myFuncTestCaseSet, allPerformanceTestsCaseSet, \
+	easyFunctionTestCaseSet
 from scripts.pyScript.helper.settings import SysYSettings
 from pathlib import Path
 
@@ -143,6 +144,15 @@ allTestUnits: typ.Dict[str, TestUnit] = dict(
 			]
 		),
 		TestUnit(
+			name='test_moe_function_frontend_easy',
+			testCaseSet=easyFunctionTestCaseSet,
+			terminalVerbose=True,
+			helpInfo='Test MoeCompiler for easy function tests.',
+			acts=[
+				actions.CompileToLLVMIRAndUseLLCAndRunOnPi(optiLevel=0)
+			]
+		),
+		TestUnit(
 			name='test_moe_perf',
 			testCaseSet=allPerformanceTestsCaseSet,
 			terminalVerbose=True,
@@ -158,6 +168,15 @@ allTestUnits: typ.Dict[str, TestUnit] = dict(
 			helpInfo='Test MoeCompiler for my function test.',
 			acts=[
 				actions.CompileToASMAndRunOnPi(optiLevel=0)
+			]
+		),
+		TestUnit(
+			name='test_moe_function_frontend',
+			testCaseSet=allFunctionTestsCaseSet,
+			terminalVerbose=True,
+			helpInfo='Test MoeCompiler frontend on all functional test.',
+			acts=[
+				actions.CompileToLLVMIRAndUseLLCAndRunOnPi(optiLevel=0)
 			]
 		),
 	])

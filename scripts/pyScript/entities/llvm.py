@@ -23,8 +23,8 @@ class Clang:
 	):
 		return run_command(
 			[
-				'clang', '-Xclang', '-O0', '-S', '-x', 'c',
-				'-emit-llvm',
+				'clang', '-Xclang', '-emit-llvm', '-S', '-x', 'c',
+				'-disable-O0-optnone',
 				'-include', SysYSettings.syLibHeaderPath,
 				'-target', 'armv7a-unknown-linux-gnueabihf', '-march=armv7-a',
 				'-mfloat-abi=hard',
@@ -41,7 +41,7 @@ class Clang:
 	):
 		return run_command(
 			[
-				'clang', '-Xclang', f'-O{optiLevel}', '-S', '-x', 'c',
+				'clang', '-Xclang', '-S', '-x', 'c',
 				'-include', SysYSettings.syLibHeaderPath,
 				'-target', 'armv7a-unknown-linux-gnueabihf', '-march=armv7-a',
 				'-mfloat-abi=hard',
@@ -59,7 +59,7 @@ class Opt:
 		passes=None
 	):
 		if passes is None:
-			passes = ['-mem2reg']
+			passes = ['mem2reg']
 		return run_command(
 			[
 				'opt', '-S', f'{llFilePath}',

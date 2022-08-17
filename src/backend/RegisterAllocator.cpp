@@ -237,10 +237,50 @@ SId LinearScanAllocator::chooseWhereToSpillSReg() {
 
 void LinearScanAllocator::linear_scan() {
 	for (int i = 1; i <= totalTim; ++i) {
-		com::Assert(
-			defVRegRAt.find(i) == defVRegRAt.end() || defVRegSAt.find(i) == defVRegSAt.end(),
-			"", CODEPOS
-		);
+		if (defVRegRAt.find(i) != defVRegRAt.end()) {
+			auto & vec = defVRegRAt[i];
+			for (auto * definingVRegR: vec) {
+				if (freeRIds.empty()) {
+					//  TODO: spill basing on some rate.
+					//  Now: random choose
+					auto newPos = chooseWhereToSpillRReg();
+					auto * spilledVRegR = livingVRegR[newPos];
+					if (fixedOpnd.find(spilledVRegR) != fixedOpnd.end()) {
+						definingVRegR->rid = backend::RId::stk;
+					} else {
+						spilledVRegR->rid = backend::RId::stk;
+						definingVRegR->rid = newPos;
+						livingVRegR[newPos] = definingVRegR;
+					}
+				} else {
+					auto newPos = *freeRIds.rbegin();
+					freeRIds.erase(newPos);
+					definingVRegR->rid = newPos;
+					livingVRegR[newPos] = definingVRegR;
+				}
+			}
+		}
+		if (defVRegSAt.find(i) != defVRegSAt.end()) {
+			auto & vec = defVRegSAt[i];
+			for (auto * definingVRegS: vec) {
+				if (freeSIds.empty()) {
+					auto newPos = chooseWhereToSpillSReg();
+					auto * spilledVRegS = livingVRegS[newPos];
+					if (fixedOpnd.find(spilledVRegS) != fixedOpnd.end()) {
+						definingVRegS->sid = backend::SId::stk;
+					} else {
+						spilledVRegS->sid = backend::SId::stk;
+						definingVRegS->sid = newPos;
+						livingVRegS[newPos] = definingVRegS;
+					}
+				} else {
+					auto newPos = *freeSIds.rbegin();
+					freeSIds.erase(newPos);
+					definingVRegS->sid = newPos;
+					livingVRegS[newPos] = definingVRegS;
+				}
+			}
+		}
 		if (lstUseVRegRAt.find(i) != lstUseVRegRAt.end()) {
 			auto & vec = lstUseVRegRAt[i];
 			for (auto * pVRegRLstUse: vec) {
@@ -257,49 +297,6 @@ void LinearScanAllocator::linear_scan() {
 					freeSIds.emplace(pVRegSLstUse->sid);
 					livingVRegS.erase(pVRegSLstUse->sid);
 				}
-			}
-		}
-		if (defVRegRAt.find(i) != defVRegRAt.end()) {
-			auto & vec = defVRegRAt[i];
-			com::Assert(vec.size() == 1, "", CODEPOS);
-			auto * definingVRegR = vec[0];
-			if (freeRIds.empty()) {
-				//  TODO: spill basing on some rate.
-				//  Now: random choose
-				auto newPos = chooseWhereToSpillRReg();
-				auto * spilledVRegR = livingVRegR[newPos];
-				if (fixedOpnd.find(spilledVRegR) != fixedOpnd.end()) {
-					definingVRegR->rid = backend::RId::stk;
-				} else {
-					spilledVRegR->rid = backend::RId::stk;
-					definingVRegR->rid = newPos;
-					livingVRegR[newPos] = definingVRegR;
-				}
-			} else {
-				auto newPos = *freeRIds.rbegin();
-				freeRIds.erase(newPos);
-				definingVRegR->rid = newPos;
-				livingVRegR[newPos] = definingVRegR;
-			}
-		} else if (defVRegSAt.find(i) != defVRegSAt.end()) {
-			auto & vec = defVRegSAt[i];
-			com::Assert(vec.size() == 1, "", CODEPOS);
-			auto * definingVRegS = vec[0];
-			if (freeSIds.empty()) {
-				auto newPos = chooseWhereToSpillSReg();
-				auto * spilledVRegS = livingVRegS[newPos];
-				if (fixedOpnd.find(spilledVRegS) != fixedOpnd.end()) {
-					definingVRegS->sid = backend::SId::stk;
-				} else {
-					spilledVRegS->sid = backend::SId::stk;
-					definingVRegS->sid = newPos;
-					livingVRegS[newPos] = definingVRegS;
-				}
-			} else {
-				auto newPos = *freeSIds.rbegin();
-				freeSIds.erase(newPos);
-				definingVRegS->sid = newPos;
-				livingVRegS[newPos] = definingVRegS;
 			}
 		}
 	}

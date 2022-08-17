@@ -54,6 +54,12 @@ argParser.add_argument(
 	help='Just test moe.\n(.sy =(moe)=> .ms =(pi)=> .res.json)'
 )
 argParser.add_argument(
+	'--gen',
+	action='store_true',
+	dest='gen',
+	help='Just use moe to compile.\n(.sy =(moe)=> .mll && .sy =(moe)=> .ms)'
+)
+argParser.add_argument(
 	'--llvm',
 	action='store_true',
 	dest='llvm',
@@ -86,7 +92,7 @@ def test_frontend():
 	res = Moe.compile(
 		syFilePath=TestFilesSettings.FilePath.testSy,
 		msFilePath=TestFilesSettings.FilePath.testMLL,
-		optiLevel=args.moeOpti, timeout=TimeoutSettings.moe, emit_llvm=True,
+		optiLevel=args.moeOpti, timeout=TimeoutSettings.moe, emit_llvm=True, emit_dessa=False,
 		float_dec_format=False
 	)
 	if res.returncode != 0:
@@ -108,11 +114,27 @@ def test_frontend():
 	print(f'Result : {res.test_status.value}')
 
 
+def test_gen():
+	Moe.compile(
+		syFilePath=TestFilesSettings.FilePath.testSy,
+		msFilePath=TestFilesSettings.FilePath.testMLL,
+		optiLevel=args.moeOpti, timeout=TimeoutSettings.moe, emit_llvm=False, emit_dessa=True,
+		float_dec_format=False
+	).check_returncode()
+	Moe.compile(
+		syFilePath=TestFilesSettings.FilePath.testSy,
+		msFilePath=TestFilesSettings.FilePath.testMS,
+		optiLevel=args.moeOpti, timeout=TimeoutSettings.moe, emit_llvm=False, emit_dessa=False,
+		float_dec_format=False
+	).check_returncode()
+	
+
+
 def test_moe():
 	Moe.compile(
 		syFilePath=TestFilesSettings.FilePath.testSy,
 		msFilePath=TestFilesSettings.FilePath.testMLL,
-		optiLevel=args.moeOpti, timeout=TimeoutSettings.moe, emit_llvm=True,
+		optiLevel=args.moeOpti, timeout=TimeoutSettings.moe, emit_llvm=False, emit_dessa=True,
 		float_dec_format=False
 	).check_returncode()
 	Moe.compile(
@@ -141,7 +163,7 @@ def test_llvm():
 	Opt.opt(
 		llFilePath=TestFilesSettings.FilePath.testLL,
 		newLLFilePath=TestFilesSettings.FilePath.testOptLL,
-		passes=['-mem2reg']
+		passes=['mem2reg']
 	).check_returncode()
 	LLC.compile_llvmir(
 		llFilePath=TestFilesSettings.FilePath.testLL,
@@ -272,3 +294,5 @@ if __name__ == '__main__':
 		test_llvmir_run()
 	elif args.gcc_table:
 		test_gcc_table()
+	elif args.gen:
+		test_gen()

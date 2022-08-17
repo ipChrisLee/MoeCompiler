@@ -43,6 +43,7 @@ class Moe:
 		emit_llvm: bool,
 		float_dec_format: bool,
 		without_any_pass: bool = False,
+		emit_dessa: bool = False,
 		optiLevel: int = 0,
 		timeout: float = 90
 	) -> subprocess.CompletedProcess:
@@ -54,6 +55,7 @@ class Moe:
 				f'-O{optiLevel}',
 				'-o', msFilePath,
 				'--emit-llvm' if emit_llvm else '',
+				'--emit-dessa' if emit_dessa else '',
 				'--float-dec-format' if float_dec_format else '',
 				'--without-any-pass' if without_any_pass else '',
 			],

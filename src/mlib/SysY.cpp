@@ -32,9 +32,10 @@ void parseArgs(int argc, char ** argv) {
 			{"float-dec-format",     no_argument, nullptr, 0},
 			{"show-runtime-warning", no_argument, nullptr, 0},
 			{"without-any-pass",     no_argument, nullptr, 0},
+			{"emit-dessa",           no_argument, nullptr, 0},
 			{nullptr, 0,                          nullptr, 0}
 		};
-		c = getopt_long(argc, argv, "-o:SO:", longOptions, &optionIndex);
+		c = getopt_long(argc, argv, "-o:SO:d", longOptions, &optionIndex);
 		if (c == -1) {
 			break;
 		}
@@ -65,7 +66,11 @@ void parseArgs(int argc, char ** argv) {
 						{
 							"without-any-pass",     []() {
 							options.withoutAnyPass.set(true);
-						}}
+						}},
+						{
+							"emit-dessa",           []() {
+							options.emitDeSsa.set(true);
+						}},
 					}
 				);
 				break;
@@ -75,6 +80,7 @@ void parseArgs(int argc, char ** argv) {
 			}
 			case 'd': {
 				com::mdb::setSysEnable() = true;
+				break;
 			}
 			case 'O': {
 				options.optimizationLevel.set(std::stoi(optarg));

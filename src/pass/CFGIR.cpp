@@ -1,4 +1,7 @@
 #include <queue>
+#include <utility>
+
+#include "mdb.hpp"
 
 #include "CFGIR.hpp"
 
@@ -14,6 +17,10 @@ CFG::CFG(ircode::IRModule & ir, ircode::IRFuncDef * pFuncDefThis) :
 
 Node::Node(ircode::AddrJumpLabel * pIRLabel) : pIRLabel(pIRLabel) {
 	com::Assert(pIRLabel, "", CODEPOS);
+}
+
+void Node::insertBeforeTerm(ircode::IRInstr * pInstr) {
+	instrs.emplace(std::prev(instrs.end()), pInstr);
 }
 
 std::list<ircode::IRInstr *> Node::toLLVMIRForm() {
@@ -84,88 +91,6 @@ void CFG::simplifyCFG() {
 	dfs(pEntryNode);
 }
 
-void CFG::calculateIDomAndDF() {
-	//  "A Simple, Fast Dominance Algorithm"
-	//  I can't understand it, I am shocked.
-	//  doms array
-	auto doms = std::vector<int>();
-	auto dfn = std::map<Node *, int>();
-	auto postorder = std::map<int, Node *>();
-	auto vis = std::map<Node *, bool>();
-	std::function<void(Node *)>
-		dfs = [&postorder, &doms, &dfs, &vis, &dfn](Node * pNow) {
-		vis[pNow] = true;
-		for (auto * pNxt: pNow->succOnCFG) {
-			if (!vis[pNxt]) {
-				dfs(pNxt);
-			}
-		}
-		auto id = int(doms.size());
-		dfn[pNow] = id;
-		postorder[id] = pNow;
-		doms.emplace_back(-1);
-	};
-	dfs(pEntryNode);
-	auto intersect = [&doms](int b1, int b2) {
-		while (b1 != b2) {
-			while (b1 < b2) {
-				b1 = doms[b1];
-			}
-			while (b2 < b1) {
-				b2 = doms[b2];
-			}
-		}
-		return b1;
-	};
-	doms[dfn[pEntryNode]] = dfn[pEntryNode];
-	auto changed = true;
-	while (changed) {
-		changed = false;
-		for (auto iB = 0; iB < int(doms.size()) - 1; ++iB) {
-			const auto * nB = postorder[iB];
-			auto itNewIDom = nB->predOnCFG.begin();
-			while (itNewIDom != nB->predOnCFG.end()) {
-				if (doms[dfn[get(itNewIDom)]] != -1) {
-					break;
-				}
-				itNewIDom = std::next(itNewIDom);
-			}
-			if (itNewIDom == nB->predOnCFG.end()) { continue; }
-			auto iNewIDom = dfn[get(itNewIDom)];
-			for (auto it = nB->predOnCFG.begin(); it != nB->predOnCFG.end(); ++it) {
-				if (it == itNewIDom) { break; }
-				auto iP = dfn[get(it)];
-				if (doms[iP] != -1) {
-					iNewIDom = intersect(iP, iNewIDom);
-				}
-			}
-			if (doms[iB] != iNewIDom) {
-				doms[iB] = iNewIDom;
-				changed = true;
-			}
-		}
-	}
-	for (auto i = 0; i < int(doms.size()); ++i) {
-		auto * nN = postorder[i];
-		auto * nD = postorder[doms[i]];
-		iDom.emplace(nD, nN);
-	}
-	for (auto iB = 0; iB < int(doms.size()); ++iB) {
-		auto * nB = postorder[iB];
-		if (nB->predOnCFG.size() >= 2) {
-			for (auto * nP: nB->predOnCFG) {
-				auto * nRunner = nP;
-				auto iRunner = dfn[nRunner];
-				while (iRunner != doms[iB]) {
-					domF[nRunner].emplace(nB);
-					iRunner = doms[iRunner];
-					nRunner = postorder[iRunner];
-				}
-			}
-		}
-	}
-}
-
 void CFG::add_edge(Node * pNodeFrom, Node * pNodeTo) {
 	pNodeFrom->succOnCFG.emplace(pNodeTo);
 	pNodeTo->predOnCFG.emplace(pNodeFrom);
@@ -213,8 +138,57 @@ Node * CFG::try_merge_node(Node * pNodeFrom, PNode & pNodeTo) {
 }
 
 std::list<ircode::IRInstr *> CFG::toDeSSAForm() {
-	com::Throw("", CODEPOS);
-	return { };
+	calculateIDomAndDFAndDom();
+	mem2reg();
+	resolvePhi();
+	addMarker();
+	auto res = std::list<ircode::IRInstr *>();
+	auto vis = std::map<Node *, bool>();
+	auto pExitNode = static_cast<Node *>(nullptr);
+	auto q = std::queue<Node *>();
+	q.emplace(pEntryNode);
+	while (!q.empty()) {
+		auto * pNodeNow = q.front();
+		q.pop();
+		if (vis[pNodeNow]) { continue; }
+		vis[pNodeNow] = true;
+		auto * pLstInstr = get(pNodeNow->instrs.rbegin());
+		if (pLstInstr->instrType == ircode::InstrType::Br) {
+			res.splice(res.end(), std::list(pNodeNow->instrs)); //  avoid move
+			res.emplace_back(
+				ir.instrPool.emplace_back(
+					ircode::InstrMarkVars(ircode::InstrMarkVars(pNodeNow->markInstr))
+				)
+			);
+			auto * pBr = dynamic_cast<ircode::InstrBr *>(pLstInstr);
+			if (!pBr->pCond && pBr->pLabelTrue && !pBr->pLabelFalse) {
+				auto * pNodeNxt = getNodeByLabel(pBr->pLabelTrue);
+				if (!vis[pNodeNxt]) {
+					q.push(pNodeNxt);
+				}
+			} else if (pBr->pCond && pBr->pLabelTrue && pBr->pLabelFalse) {
+				auto * pNodeNxt = getNodeByLabel(pBr->pLabelFalse);
+				if (!vis[pNodeNxt]) {
+					q.push(pNodeNxt);
+				}
+				pNodeNxt = getNodeByLabel(pBr->pLabelTrue);
+				if (!vis[pNodeNxt]) {
+					q.push(pNodeNxt);
+				}
+			} else { com::Throw("", CODEPOS); }
+		} else if (pLstInstr->instrType == ircode::InstrType::Ret) {
+			pExitNode = pNodeNow;
+			com::Assert(pNodeNow->succOnCFG.empty(), "", CODEPOS);
+		} else { com::Throw("", CODEPOS); }
+	}
+	com::Assert(pExitNode, "", CODEPOS);
+	res.splice(res.end(), std::list(pExitNode->instrs));
+	res.emplace_back(
+		ir.instrPool.emplace_back(
+			ircode::InstrMarkVars(ircode::InstrMarkVars(pExitNode->markInstr))
+		)
+	);
+	return res;
 }
 
 std::list<ircode::IRInstr *> CFG::toLLVMIRFrom() {
@@ -241,8 +215,7 @@ std::list<ircode::IRInstr *> CFG::toLLVMIRFrom() {
 
 int CFG::opti() {
 	simplifyCFG();
-	calculateIDomAndDF();
-	mem2reg();
+	calculateIDomAndDFAndDom();
 	//  TODO : Some other global/local opti
 	return 0;
 }
@@ -292,6 +265,18 @@ CFGIR::CFGPool::CFGPool(std::map<ircode::IRFuncDef *, CFG *> & mp) :
 		mp.emplace(pCFG->pFuncDefThis, pCFG);
 	};
 }
+
+DUChain::PosInfo::PosInfo(Node * pNode, std::list<ircode::IRInstr *>::iterator it) :
+	pNode(pNode), it(std::move(it)) {
+}
+
+DUChain::DUChain(Node * pNodeDef, ItPIRInstr_t instrDef) : def(pNodeDef, std::move(instrDef)) {
+}
+
+void DUChain::insertUseInfo(Node * pNodeUse, ItPIRInstr_t instrUse) {
+	use.emplace_back(pNodeUse, std::move(instrUse));
+}
+
 }
 
 #pragma clang diagnostic pop

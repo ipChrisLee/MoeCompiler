@@ -19,6 +19,7 @@ int passMain(ircode::IRModule & ir) {
 	std::vector<std::unique_ptr<IRPass>> preprocessPasses;
 	preprocessPasses.emplace_back(std::make_unique<AddBrToNextBB>(ir));
 	preprocessPasses.emplace_back(std::make_unique<EliminateBrAfterBr>(ir));
+	preprocessPasses.emplace_back(std::make_unique<AddParaMovInstr>(ir));
 	for (auto & p: preprocessPasses) {
 		if (auto retCode = p->run()) {
 			return retCode;

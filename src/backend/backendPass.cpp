@@ -1,4 +1,5 @@
 #include "backendPass.hpp"
+#include <climits>
 
 
 namespace pass {
@@ -453,6 +454,18 @@ int FuncInfo::run(ircode::IRInstr * pInstr) {
 			retVal = run(dynamic_cast<ircode::InstrConversionOp *>(pInstr));
 			break;
 		}
+		case ircode::InstrType::ParaMov: {
+			retVal = run(dynamic_cast<ircode::InstrParaMov *>(pInstr));
+			break;
+		}
+		case ircode::InstrType::Copy: {
+			retVal = run(dynamic_cast<ircode::InstrParallelCopy *>(pInstr));
+			break;
+		}
+		case ircode::InstrType::Mark: {
+			retVal = run(dynamic_cast<ircode::InstrMarkVars *>(pInstr));
+			break;
+		}
 		default: {
 			com::Throw("", CODEPOS);
 		}
@@ -529,6 +542,18 @@ std::string FuncInfo::toASM(ircode::IRInstr * pInstr) {
 		}
 		case ircode::InstrType::Fptosi: {
 			res += toASM(dynamic_cast<ircode::InstrFptosi *>(pInstr));
+			break;
+		}
+		case ircode::InstrType::ParaMov: {
+			res += toASM(dynamic_cast<ircode::InstrParaMov *>(pInstr));
+			break;
+		}
+		case ircode::InstrType::Copy: {
+			res += toASM(dynamic_cast<ircode::InstrParallelCopy *>(pInstr));
+			break;
+		}
+		case ircode::InstrType::Mark: {
+			res += toASM(dynamic_cast<ircode::InstrMarkVars *>(pInstr));
 			break;
 		}
 		default: {
@@ -956,6 +981,5 @@ std::string FuncInfo::toASM(ircode::InstrFptosi * pInstrFptosi) {
 	} else { com::Throw("", CODEPOS); }
 	return res;
 }
-
 
 }
