@@ -1,0 +1,8 @@
+{
+    "exit_code": 0,
+    "info": "Test passed!",
+    "test_status": "AC",
+    "stderr": "TOTAL: 0H-0M-0S-0us\n",
+    "time_now": "22:34:42",
+    "time_cost": NaN
+}

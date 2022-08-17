@@ -1,3 +1,5 @@
 testSyFile/**
-buffer.txt
-test.s
+./**
+!.gitignore
+!buffer.txt
+!empty.txt
