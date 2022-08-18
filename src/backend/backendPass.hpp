@@ -290,8 +290,8 @@ class FuncInfo {
 
 	int run(ircode::InstrParallelCopy * pInstrCopy);
 	std::string toASM(ircode::InstrParallelCopy * pInstrCopy);
-	std::string toASM_Copy_Int(ircode::AddrOperand * pFrom, ircode::AddrVariable * pTo);
-	std::string toASM_Copy_Float(ircode::AddrOperand * pFrom, ircode::AddrVariable * pTo);
+	std::string toASM_Copy_Int(ircode::InstrParallelCopy * pInstrCopy);
+	std::string toASM_Copy_Float(ircode::InstrParallelCopy * pInstrCopy);
 
 	int run(ircode::InstrMarkVars * pInstrMark);
 	std::string toASM(ircode::InstrMarkVars * pInstrMark);

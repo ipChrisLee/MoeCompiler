@@ -1,4 +1,5 @@
 #include "backend/backendPass.hpp"
+#include <stack>
 
 
 namespace pass {
@@ -13,117 +14,375 @@ int FuncInfo::run(ircode::InstrParallelCopy * pInstrCopy) {
 
 std::string FuncInfo::toASM(ircode::InstrParallelCopy * pInstrCopy) {
 	auto res = std::string();
-	for (auto [pFrom, pTo, _]: pInstrCopy->copies) {
-		switch (pTo->getType().type) {
-			case sup::Type::Float_t: {
-				res += toASM_Copy_Float(pFrom, pTo);
+	res += toASM_Copy_Int(pInstrCopy);
+	res += toASM_Copy_Float(pInstrCopy);
+	return res;
+}
+
+std::string FuncInfo::toASM_Copy_Float(ircode::InstrParallelCopy * pInstrCopy) {
+	auto res = std::string();
+	struct stat {
+		backend::SId where = backend::SId::err;
+		int32_t offset = INT_MIN;
+
+		bool operator<(const stat & s) const {
+			if (int(where) != int(s.where)) {
+				return int(where) < int(s.where);
+			} else {
+				return offset < s.offset;
+			}
+		}
+	};
+	auto statsId = std::map<stat, int>();
+	auto idToStats = std::vector<stat>();
+	auto add_stat = [&statsId, &idToStats](backend::SId sid, int32_t offset) {
+		stat s = {sid, offset};
+		if (statsId.count(s)) {
+			return statsId[s];
+		} else {
+			statsId[s] = int(idToStats.size());
+			idToStats.emplace_back(s);
+			return int(idToStats.size()) - 1;
+		}
+	};
+	auto G = std::map<int, std::vector<int>>();
+	auto din = std::map<int, int>();
+	auto dout = std::map<int, int>();
+	auto fromImmToStat = std::vector<std::pair<float, stat>>();
+	for (auto [pAddrFrom, pAddrTo, _]: pInstrCopy->copies) {
+		if (!com::enum_fun::in(
+			pAddrTo->getType().type, {sup::Type::Float_t}
+		)) { continue; }
+		auto statIdFrom = 0, statIdTo = 0;
+		auto fromImm = false;
+		auto imm = 0.0f;
+		switch (pAddrFrom->addrType) {
+			case ircode::AddrType::StaticValue: {
+				auto * pSVFrom = dynamic_cast<ircode::AddrStaticValue *>(pAddrFrom);
+				imm = dynamic_cast<const sup::FloatStaticValue &>(
+					pSVFrom->getStaticValue()
+				).value;
+				fromImm = true;
 				break;
 			}
-			case sup::Type::Int_t: {
-				res += toASM_Copy_Int(pFrom, pTo);
+			case ircode::AddrType::Var: {
+				auto * pVarFrom = dynamic_cast<ircode::AddrVariable *>(pAddrFrom);
+				auto * pVRegS = convertFloatVariable(pVarFrom);
+				statIdFrom = add_stat(pVRegS->sid, pVRegS->offset);
 				break;
 			}
 			default:com::Throw("", CODEPOS);
 		}
-
+		switch (pAddrTo->addrType) {
+			case ircode::AddrType::Var: {
+				auto * pVarTo = dynamic_cast<ircode::AddrVariable *>(pAddrTo);
+				auto * pVRegS = convertFloatVariable(pVarTo);
+				statIdTo = add_stat(pVRegS->sid, pVRegS->offset);
+				break;
+			}
+			default:com::Throw("", CODEPOS);
+		}
+		if (fromImm) {
+			fromImmToStat.emplace_back(imm, idToStats[statIdTo]);
+		} else {
+			G[statIdFrom].emplace_back(statIdTo);
+			din[statIdTo] += 1;
+			dout[statIdFrom] += 1;
+		}
+	}
+	auto moveData = [&res](stat statFrom, stat statTo) {
+		if (backend::isGPR(statFrom.where)) {
+			if (backend::isGPR(statTo.where)) { //  from reg to reg
+				res += backend::toASM("vmov", statTo.where, statFrom.where);
+			} else if (statTo.where == backend::SId::stk) {  //  from reg to stk
+				genASMSaveFromSRegToOffset(
+					res, statFrom.where, statTo.offset, backend::RId::lhs
+				);
+			} else { com::Throw("", CODEPOS); }
+		} else if (statFrom.where == backend::SId::stk) {
+			if (backend::isGPR(statTo.where)) { //  from stk to reg
+				genASMDerefStkPtrToSReg(res, statFrom.offset, statTo.where, backend::RId::lhs);
+			} else if (statTo.where == backend::SId::stk) {  //  from stk to stk
+				genASMDerefStkPtr(res, statFrom.offset, backend::RId::lhs);
+				genASMSaveFromRRegToOffset(
+					res, backend::RId::lhs, statTo.offset, backend::RId::rhs
+				);
+			} else { com::Throw("", CODEPOS); }
+		}
+	};
+	auto inLoop = std::map<int, bool>();
+	auto vis = std::map<int, bool>();
+	std::function<int(int)> dfsCheckLoop = [&dfsCheckLoop, &inLoop, &G, &vis](int u) -> int {
+		auto d = -1;
+		vis[u] = true;
+		for (auto v: G[u]) {
+			if (!vis[v]) {
+				auto dd = dfsCheckLoop(v);
+				if (dd != -1) {
+					d = dd;
+					inLoop[u] = true;
+				}
+			} else {
+				d = v;
+			}
+		}
+		if (d == u) { d = -1; }
+		return d;
+	};
+	for (const auto & [s, statIdSrc]: statsId) {
+		if (!vis[statIdSrc]) {
+			dfsCheckLoop(statIdSrc);
+		}
+	}
+	vis.clear();
+	for (const auto & [s, statIdSrc]: statsId) {
+		if (vis[statIdSrc]) { continue; }
+		if (G[statIdSrc].size() == 1 && G[statIdSrc][0] == statIdSrc) { continue; }
+		auto st = std::deque<std::pair<int, int>>();
+		if (din[statIdSrc] == 0 && !inLoop[statIdSrc]) { //  statIdSrc is front of a chain.
+			auto q = std::queue<int>();
+			q.push(statIdSrc);
+			while (!q.empty()) {
+				auto u = q.front();
+				q.pop();
+				com::Assert(!vis[u], "", CODEPOS);
+				vis[u] = true;
+				for (auto v: G[u]) {
+					com::Assert(!vis[v], "", CODEPOS);
+					st.emplace_front(u, v);
+					q.push(v);
+				}
+			}
+		} else if (din[statIdSrc] == 1 && inLoop[statIdSrc]) {
+			//  statIdSrc is in loop, and may be front of chain
+			auto q = std::queue<int>();
+			q.push(statIdSrc);
+			while (!q.empty()) {
+				auto u = q.front();
+				q.pop();
+				com::Assert(!vis[u], "", CODEPOS);
+				vis[u] = true;
+				for (auto v: G[u]) {
+					if (v == statIdSrc) {
+						st.emplace_front(u, -1);
+						continue;
+					}
+					com::Assert(!vis[v], "", CODEPOS);
+					st.emplace_front(u, v);
+					q.push(v);
+				}
+			}
+			st.emplace_back(-1, statIdSrc);
+		} else if (din[statIdSrc] == 1 && !inLoop[statIdSrc]) {
+			//  in chain, do nothing
+		} else { com::Throw("", CODEPOS); }
+		while (!st.empty()) {
+			auto [from, to] = st.front();
+			st.pop_front();
+			if (from == -1) {
+				//  from lhs to dest
+				moveData({backend::SId::stk, -4}, idToStats[to]);
+			} else if (to == -1) {
+				//  from reg to lhs
+				moveData(idToStats[from], {backend::SId::stk, -4});
+			} else {
+				moveData(idToStats[from], idToStats[to]);
+			}
+		}
+	}
+	for (auto [imm, s]: fromImmToStat) {
+		if (backend::isGPR(s.where)) {
+			genASMLoadFloat(res, imm, s.where, backend::RId::lhs);
+		} else if (s.where == backend::SId::stk) {
+			genASMLoadFloatToRReg(res, imm, backend::RId::lhs);
+			genASMSaveFromRRegToOffset(res, backend::RId::lhs, s.offset, backend::RId::rhs);
+		}
 	}
 	return res;
 }
 
-std::string
-FuncInfo::toASM_Copy_Float(ircode::AddrOperand * pFrom, ircode::AddrVariable * pTo) {
+std::string FuncInfo::toASM_Copy_Int(ircode::InstrParallelCopy * pInstrCopy) {
 	auto res = std::string();
-	auto * pVRegSTo = convertFloatVariable(pTo);
-	if (pVRegSTo->sid == backend::SId::stk) {
-		switch (pFrom->addrType) {
-			case ircode::AddrType::StaticValue: {
-				auto * pSVAddr = dynamic_cast<ircode::AddrStaticValue *>(pFrom);
-				auto value = dynamic_cast<const sup::FloatStaticValue &>(
-					pSVAddr->getStaticValue()
-				).value;
-				genASMLoadFloatToRReg(res, value, backend::RId::lhs);
-				genASMSaveFromRRegToOffset(
-					res, backend::RId::lhs, pVRegSTo->offset, backend::RId::rhs
-				);
-				break;
-			}
-			case ircode::AddrType::Var: {
-				auto * pVarAddrFrom = dynamic_cast<ircode::AddrVariable *>(pFrom);
-				auto * pVRegSFrom = convertFloatVariable(pVarAddrFrom);
-				genASMSaveFromVRegSToVRegS(
-					res, pVRegSFrom, pVRegSTo, backend::RId::lhs, backend::RId::rhs
-				);
-				break;
-			}
-			default:com::Throw("", CODEPOS);
-		}
-	} else if (backend::isGPR(pVRegSTo->sid)) {
-		switch (pFrom->addrType) {
-			case ircode::AddrType::StaticValue: {
-				auto * pSVAddr = dynamic_cast<ircode::AddrStaticValue *>(pFrom);
-				auto value = dynamic_cast<const sup::FloatStaticValue &>(
-					pSVAddr->getStaticValue()
-				).value;
-				genASMLoadFloat(res, value, pVRegSTo->sid, backend::RId::lhs);
-				break;
-			}
-			case ircode::AddrType::Var: {
-				auto * pVarAddrFrom = dynamic_cast<ircode::AddrVariable *>(pFrom);
-				auto * pVRegSFrom = convertFloatVariable(pVarAddrFrom);
-				genASMSaveFromVRegSToSReg(res, pVRegSFrom, pVRegSTo->sid, backend::RId::lhs);
-				break;
-			}
-			default:com::Throw("", CODEPOS);
-		}
-	} else { com::Throw("", CODEPOS); }
-	return res;
-}
+	struct stat {
+		backend::RId where = backend::RId::err;
+		int32_t offset = INT_MIN;
 
-std::string FuncInfo::toASM_Copy_Int(ircode::AddrOperand * pFrom, ircode::AddrVariable * pTo) {
-	auto res = std::string();
-	auto * pVRegRTo = convertIntVariable(pTo);
-	if (pVRegRTo->rid == backend::RId::stk) {
-		switch (pFrom->addrType) {
+		bool operator<(const stat & s) const {
+			if (int(where) != int(s.where)) {
+				return int(where) < int(s.where);
+			} else {
+				return offset < s.offset;
+			}
+		}
+	};
+	auto statsId = std::map<stat, int>();
+	auto idToStats = std::vector<stat>();
+	auto add_stat = [&statsId, &idToStats](backend::RId rid, int32_t offset) {
+		stat s = {rid, offset};
+		if (statsId.count(s)) {
+			return statsId[s];
+		} else {
+			statsId[s] = int(idToStats.size());
+			idToStats.emplace_back(s);
+			return int(idToStats.size()) - 1;
+		}
+	};
+	auto G = std::map<int, std::vector<int>>();
+	auto din = std::map<int, int>();
+	auto dout = std::map<int, int>();
+	auto fromImmToStat = std::vector<std::pair<int32_t, stat>>();
+	for (auto [pAddrFrom, pAddrTo, _]: pInstrCopy->copies) {
+		if (!com::enum_fun::in(
+			pAddrTo->getType().type, {sup::Type::Int_t, sup::Type::Pointer_t}
+		)) { continue; }
+		auto statIdFrom = 0, statIdTo = 0;
+		auto fromImm = false;
+		auto imm = 0;
+		switch (pAddrFrom->addrType) {
 			case ircode::AddrType::StaticValue: {
-				auto * pSVAddr = dynamic_cast<ircode::AddrStaticValue *>(pFrom);
-				auto value = dynamic_cast<const sup::IntStaticValue &>(
-					pSVAddr->getStaticValue()
+				auto * pSVFrom = dynamic_cast<ircode::AddrStaticValue *>(pAddrFrom);
+				imm = dynamic_cast<const sup::IntStaticValue &>(
+					pSVFrom->getStaticValue()
 				).value;
-				genASMLoadInt(res, value, backend::RId::lhs);
+				fromImm = true;
+				break;
+			}
+			case ircode::AddrType::Var: {
+				auto * pVarFrom = dynamic_cast<ircode::AddrVariable *>(pAddrFrom);
+				auto * pVRegR = convertIntVariable(pVarFrom);
+				statIdFrom = add_stat(pVRegR->rid, pVRegR->offset);
+				break;
+			}
+			default:com::Throw("", CODEPOS);
+		}
+		switch (pAddrTo->addrType) {
+			case ircode::AddrType::Var: {
+				auto * pVarTo = dynamic_cast<ircode::AddrVariable *>(pAddrTo);
+				auto * pVRegR = convertIntVariable(pVarTo);
+				statIdTo = add_stat(pVRegR->rid, pVRegR->offset);
+				break;
+			}
+			default:com::Throw("", CODEPOS);
+		}
+		if (fromImm) {
+			fromImmToStat.emplace_back(imm, idToStats[statIdTo]);
+		} else {
+			G[statIdFrom].emplace_back(statIdTo);
+			din[statIdTo] += 1;
+			dout[statIdFrom] += 1;
+		}
+	}
+	auto moveData = [&res](stat statFrom, stat statTo) {
+		//  statTo.where can be rhs
+		if (backend::isGPR(statFrom.where)) {
+			if (backend::isGPR(statTo.where)) { //  from reg to reg
+				res += backend::toASM("mov", statTo.where, statFrom.where);
+			} else if (statTo.where == backend::RId::stk) {  //  from reg to stk
 				genASMSaveFromRRegToOffset(
-					res, backend::RId::lhs, pVRegRTo->offset, backend::RId::rhs
+					res, statFrom.where, statTo.offset, backend::RId::lhs
 				);
-				break;
-			}
-			case ircode::AddrType::Var: {
-				auto * pVarAddrFrom = dynamic_cast<ircode::AddrVariable *>(pFrom);
-				auto * pVRegRFrom = convertIntVariable(pVarAddrFrom);
-				genASMSaveFromVRegRToVRegR(
-					res, pVRegRFrom, pVRegRTo, backend::RId::lhs, backend::RId::rhs
+			} else { com::Throw("", CODEPOS); }
+		} else if (statFrom.where == backend::RId::stk) {
+			if (backend::isGPR(statTo.where)) { //  from stk to reg
+				genASMDerefStkPtr(res, statFrom.offset, statTo.where);
+			} else if (statTo.where == backend::RId::stk) {  //  from stk to stk
+				genASMDerefStkPtr(res, statFrom.offset, backend::RId::lhs);
+				genASMSaveFromRRegToOffset(
+					res, backend::RId::lhs, statTo.offset, backend::RId::rhs
 				);
-				break;
-			}
-			default:com::Throw("", CODEPOS);
+			} else { com::Throw("", CODEPOS); }
 		}
-	} else if (backend::isGPR(pVRegRTo->rid)) {
-		switch (pFrom->addrType) {
-			case ircode::AddrType::StaticValue: {
-				auto * pSVAddr = dynamic_cast<ircode::AddrStaticValue *>(pFrom);
-				auto value = dynamic_cast<const sup::IntStaticValue &>(
-					pSVAddr->getStaticValue()
-				).value;
-				genASMLoadInt(res, value, pVRegRTo->rid);
-				break;
+	};
+	auto inLoop = std::map<int, bool>();
+	auto vis = std::map<int, bool>();
+	std::function<int(int)> dfsCheckLoop = [&dfsCheckLoop, &inLoop, &G, &vis](int u) -> int {
+		auto d = -1;
+		vis[u] = true;
+		for (auto v: G[u]) {
+			if (!vis[v]) {
+				auto dd = dfsCheckLoop(v);
+				if (dd != -1) {
+					d = dd;
+					inLoop[u] = true;
+				}
+			} else {
+				d = v;
 			}
-			case ircode::AddrType::Var: {
-				auto * pVarAddrFrom = dynamic_cast<ircode::AddrVariable *>(pFrom);
-				auto * pVRegRFrom = convertIntVariable(pVarAddrFrom);
-				genASMSaveFromVRegRToRReg(res, pVRegRFrom, pVRegRTo->rid);
-				break;
-			}
-			default:com::Throw("", CODEPOS);
 		}
-	} else { com::Throw("", CODEPOS); }
+		if (d == u) { d = -1; }
+		return d;
+	};
+	for (const auto & [s, statIdSrc]: statsId) {
+		if (!vis[statIdSrc]) {
+			dfsCheckLoop(statIdSrc);
+		}
+	}
+	vis.clear();
+	for (const auto & [s, statIdSrc]: statsId) {
+		if (vis[statIdSrc]) { continue; }
+		if (G[statIdSrc].size() == 1 && G[statIdSrc][0] == statIdSrc) { continue; }
+		auto st = std::deque<std::pair<int, int>>();
+		if (din[statIdSrc] == 0 && !inLoop[statIdSrc]) { //  statIdSrc is front of a chain.
+			auto q = std::queue<int>();
+			q.push(statIdSrc);
+			while (!q.empty()) {
+				auto u = q.front();
+				q.pop();
+				com::Assert(!vis[u], "", CODEPOS);
+				vis[u] = true;
+				for (auto v: G[u]) {
+					com::Assert(!vis[v], "", CODEPOS);
+					st.emplace_front(u, v);
+					q.push(v);
+				}
+			}
+		} else if (din[statIdSrc] == 1 && inLoop[statIdSrc]) {
+			//  statIdSrc is in loop, and may be front of chain
+			auto q = std::queue<int>();
+			q.push(statIdSrc);
+			while (!q.empty()) {
+				auto u = q.front();
+				q.pop();
+				com::Assert(!vis[u], "", CODEPOS);
+				vis[u] = true;
+				for (auto v: G[u]) {
+					if (v == statIdSrc) {
+						st.emplace_front(u, -1);
+						continue;
+					}
+					com::Assert(!vis[v], "", CODEPOS);
+					st.emplace_front(u, v);
+					q.push(v);
+				}
+			}
+			st.emplace_back(-1, statIdSrc);
+		} else if (din[statIdSrc] == 1 && !inLoop[statIdSrc]) {
+			//  in chain, do nothing
+		} else { com::Throw("", CODEPOS); }
+		while (!st.empty()) {
+			auto [from, to] = st.front();
+			st.pop_front();
+			if (from == -1) {
+				//  from lhs to dest
+				moveData({backend::RId::stk, -4}, idToStats[to]);
+			} else if (to == -1) {
+				//  from reg to lhs
+				moveData(idToStats[from], {backend::RId::stk, -4});
+			} else {
+				moveData(idToStats[from], idToStats[to]);
+			}
+		}
+	}
+	for (auto [imm, s]: fromImmToStat) {
+		if (backend::isGPR(s.where)) {
+			genASMLoadInt(res, imm, s.where);
+		} else if (s.where == backend::RId::stk) {
+			genASMLoadInt(res, imm, backend::RId::lhs);
+			genASMSaveFromRRegToOffset(
+				res, backend::RId::lhs, s.offset, backend::RId::rhs
+			);
+		}
+	}
 	return res;
 }
 
