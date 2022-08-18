@@ -3,6 +3,7 @@
 #include <map>
 #include <stack>
 #include <unordered_set>
+#include <unordered_map>
 #include <queue>
 #include <random>
 
@@ -117,23 +118,37 @@ class LinearScanAllocator: public RegisterAllocator {
 
 };
 
-typedef struct vRegRSet{
-	std::vector<VRegR *> pvRegRs;
-	RId rid;
+typedef struct vRegSet{
 	std::vector<int> globalDefineUseTimeleline;
 	size_t spillcost;
-	bool available[AVAILABLE_RREGR];
+	bool  *available;
 	bool allocated;
 	int nints;
-	std::vector<vRegRSet *> neighbors;
-	std::vector<vRegRSet *> dn_neighbors;
-	vRegRSet(){
+	vRegSet(int size_r){
+		available=new bool[size_r];
 		spillcost=0;
 		nints=0;
 		allocated=false;
-		for(int j=0;j<AVAILABLE_RREGR;++j) available[j]=true;
+		for(int j=0;j<size_r;++j) available[j]=true;
 	}
+} vRegSet;
+
+typedef struct vRegRSet :vRegSet{
+	std::vector<VRegR *> pvRegRs;
+	RId rid;
+	std::vector<vRegRSet *> neighbors;
+	std::vector<vRegRSet *> dn_neighbors;
+	vRegRSet():vRegSet(AVAILABLE_RREGR){}
+
 } vRegRSet;
+
+typedef struct vRegSSet :vRegSet{
+	std::vector<VRegS *> pvRegSs;
+	SId sid;
+	std::vector<vRegSSet *> neighbors;
+	std::vector<vRegSSet *> dn_neighbors;
+	vRegSSet():vRegSet(AVAILABLE_RREGS){}
+} vRegSSet;
 
 struct Hashfunc{
 	size_t operator()(const backend::LocalAddr & addr) const{
@@ -144,9 +159,14 @@ struct Hashfunc{
 class FigureShadingAllocator : public RegisterAllocator{
   protected:
 	int run() override;
-	bool live_At(const vRegRSet *s1,const vRegRSet *s2);
+  	std::unordered_map<LocalAddr , backend::vRegRSet *,Hashfunc> rcontent;
+	std::unordered_map<LocalAddr , backend::vRegSSet *,Hashfunc> s_rcontent;
+	bool live_At(const vRegSet *s1,const vRegSet *s2);
+	void prepare_Matrixs();
 	void prune_Graph(std::unordered_map<LocalAddr , backend::vRegRSet *,Hashfunc> &rcontent);
+	void prune_Graph(std::unordered_map<LocalAddr , backend::vRegSSet *,Hashfunc> &rcontent);
 	std::set<std::pair<vRegRSet *,vRegRSet *>> conflictMatrixR;
+	std::set<std::pair<vRegSSet *,vRegSSet *>> conflictMatrixS;
   public:
 	explicit FigureShadingAllocator(OpndPool & opndPool) : RegisterAllocator(opndPool) {}
 };

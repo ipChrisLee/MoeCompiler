@@ -121,6 +121,7 @@ backend::Opnd * FuncInfo::markOperand(ircode::AddrOperand * pAddrOperand) {
 				case sup::Type::Float_t: {
 					auto * pVRegS = convertFloatVariable(pAddrVar);
 					defineUseTimelineVRegS[pVRegS].emplace_back(tim);
+					pVRegS->expense+=std::pow(10,loop_labels);
 					res = pVRegS;
 					break;
 				}

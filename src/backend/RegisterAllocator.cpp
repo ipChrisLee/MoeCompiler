@@ -388,31 +388,96 @@ void FigureShadingAllocator::prune_Graph(std::unordered_map<LocalAddr , backend:
 
 }
 
-bool FigureShadingAllocator::live_At(const vRegRSet *s1,const vRegRSet *s2){
+void FigureShadingAllocator::prune_Graph(std::unordered_map<LocalAddr , backend::vRegSSet *,Hashfunc> &rcontent){
+		for(auto content:rcontent){
+		for(auto content_p:rcontent){
+			if(conflictMatrixS.count(std::make_pair(content.second,content_p.second))||
+				conflictMatrixS.count(std::make_pair(content_p.second,content.second))
+				){
+					content.second->nints++;
+					content.second->neighbors.push_back(content_p.second);
+				}
+		}
+	}
+	bool token;
+	int adjnodes=rcontent.size();
+	std::stack<vRegSSet *> adjStack;
+	while(adjnodes!=0){
+		token=false;
+		for(auto content:rcontent){
+			if(content.second->allocated) continue;
+			if(content.second->nints<AVAILABLE_RREGS){
+				token=true;
+				--adjnodes;
+				content.second->allocated=true;
+				for(auto neighbor:content.second->neighbors){
+					neighbor->nints--;
+					neighbor->dn_neighbors.push_back(content.second);
+				}
+				adjStack.push(content.second);
+			}
+		}
+		size_t lowest=0;
+		vRegSSet * lowestadj;
+		if(!token&&adjnodes!=0){
+			for(auto content:rcontent){
+				if(content.second->allocated) continue;
+				if(lowest==0||content.second->spillcost<lowest){
+					lowest=content.second->spillcost;
+					lowestadj=content.second;
+				}
+			}
+			--adjnodes;
+			lowestadj->allocated=true;
+			for(auto neighbor:lowestadj->neighbors){
+				neighbor->nints--;
+				neighbor->dn_neighbors.push_back(lowestadj);
+			}
+			adjStack.push(lowestadj);
+		}
+	}
+	SId baseline=SId::s16;
+	while(!adjStack.empty()){
+		auto node=adjStack.top();
+		adjStack.pop();
+		int j;
+		for(j=0;j<AVAILABLE_RREGS;j++){
+			if(node->available[j]) break;
+		}
+		if(j<AVAILABLE_RREGS){
+			node->sid=(SId)((int)baseline+j);
+			for(auto neighbor:node->dn_neighbors){
+				neighbor->available[j]=false;
+			}
+		}
+		else node->sid=SId::stk;
+	}
+	for(auto content:rcontent){
+		for(auto pvReg:content.second->pvRegSs) pvReg->sid=content.second->sid;
+	}
+	for(auto content :rcontent){
+		std::cerr<<content.first.local_v->getName()<<"."<<content.first.local_v->id<<":"
+			<<(int)(content.second->sid)<<std::endl;
+		for(int tml:content.second->globalDefineUseTimeleline) std::cerr<<tml<<" ";
+		std::cerr<<std::endl;
+		std::cerr<<"--expense="<<content.second->spillcost<<"\n";
+	}
+}
+
+bool FigureShadingAllocator::live_At(const vRegSet *s1,const vRegSet *s2){
 		if(s1->globalDefineUseTimeleline.back()<s2->globalDefineUseTimeleline.front()
 		||(s1->globalDefineUseTimeleline.front()>s2->globalDefineUseTimeleline.back()))
 		return false;
 	else return true;	
 }
 
-int FigureShadingAllocator::run(){
-	std::unordered_map<LocalAddr , backend::vRegRSet *,Hashfunc> rcontent;
+void FigureShadingAllocator::prepare_Matrixs(){
 	//std::map<ircode::AddrPara * ,RId> callers; 
 	for (auto * pVRegR: allVarVRegR) {
 		if(!pVRegR->laddr){
 			pVRegR->rid=RId::stk;
 			continue;
 		}
-		/*if(!pVRegR->laddr->valorarray_t){
-			std::cerr<<"%"<<pVRegR->laddr->local_v->getName()<<":";
-			for(int id:pVRegR->laddr->idx) std::cerr<<id<<' ';
-			std::cerr<<'\n';
-			for(int l:defineUseTimelineVRegR[pVRegR]) std::cerr<<l<<' ';
-			std::cerr<<'\n';
-		}*/
-		//std::cerr<<pVRegR->id;
-		//pVRegR->prt();
-		//backend::vRegRSet *set;
 		if(!rcontent.count(*(pVRegR->laddr))) rcontent[*(pVRegR->laddr)]=new vRegRSet();
 		auto set=rcontent[*(pVRegR->laddr)];
 		set->pvRegRs.push_back(pVRegR);
@@ -430,14 +495,53 @@ int FigureShadingAllocator::run(){
 				conflictMatrixR.insert(std::make_pair(it1->second,it2->second));
 		}
 	}
+	for(auto * pVRegS: allVarVRegS) {
+		if(!pVRegS->laddr){
+			pVRegS->sid=SId::stk;
+			continue;
+		}
+		if(!s_rcontent.count(*(pVRegS->laddr))) s_rcontent[*(pVRegS->laddr)]=new vRegSSet();
+		auto set=s_rcontent[*(pVRegS->laddr)];
+		set->pvRegSs.push_back(pVRegS);
+		set->spillcost+=pVRegS->expense;
+		std::vector<int> current=defineUseTimelineVRegS[pVRegS];
+		set->globalDefineUseTimeleline.insert(set->globalDefineUseTimeleline.end(),
+			current.begin(),current.end());	
+	}
+	std::unordered_map<LocalAddr,backend::vRegSSet *,Hashfunc>::iterator its1,its2;
+	for(its1=s_rcontent.begin();its1!=s_rcontent.end();++its1){
+		std::sort(its1->second->globalDefineUseTimeleline.begin(),
+			its1->second->globalDefineUseTimeleline.end());
+		for(its2=s_rcontent.begin();its2!=its1;++its2){
+			if(live_At(its1->second,its2->second)) 
+				conflictMatrixS.insert(std::make_pair(its1->second,its2->second));
+		}
+	}
+}
+
+int FigureShadingAllocator::run(){
+	prepare_Matrixs();
 	prune_Graph(rcontent);
+	prune_Graph(s_rcontent);
 	conflictMatrixR.clear();
-	for (auto * pVRegS: allVarVRegS) {
+	conflictMatrixS.clear();
+	/*for (auto * pVRegS: allVarVRegS) {
 		pVRegS->sid = SId::stk;
 		//pVRegS->prt();
 		//std::cerr<<pVRegS->id;
-	}
+	}*/
+
 	return 0;
 }
 
 }
+		/*if(!pVRegR->laddr->valorarray_t){
+			std::cerr<<"%"<<pVRegR->laddr->local_v->getName()<<":";
+			for(int id:pVRegR->laddr->idx) std::cerr<<id<<' ';
+			std::cerr<<'\n';
+			for(int l:defineUseTimelineVRegR[pVRegR]) std::cerr<<l<<' ';
+			std::cerr<<'\n';
+		}*/
+		//std::cerr<<pVRegR->id;
+		//pVRegR->prt();
+		//backend::vRegRSet *set;
