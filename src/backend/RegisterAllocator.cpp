@@ -237,24 +237,6 @@ SId LinearScanAllocator::chooseWhereToSpillSReg() {
 
 void LinearScanAllocator::linear_scan() {
 	for (int i = 1; i <= totalTim; ++i) {
-		if (lstUseVRegRAt.find(i) != lstUseVRegRAt.end()) {
-			auto & vec = lstUseVRegRAt[i];
-			for (auto * pVRegRLstUse: vec) {
-				if (isGPR(pVRegRLstUse->rid)) {
-					freeRIds.emplace(pVRegRLstUse->rid);
-					livingVRegR.erase(pVRegRLstUse->rid);
-				}
-			}
-		}
-		if (lstUseVRegSAt.find(i) != lstUseVRegSAt.end()) {
-			auto & vec = lstUseVRegSAt[i];
-			for (auto * pVRegSLstUse: vec) {
-				if (isGPR(pVRegSLstUse->sid)) {
-					freeSIds.emplace(pVRegSLstUse->sid);
-					livingVRegS.erase(pVRegSLstUse->sid);
-				}
-			}
-		}
 		if (defVRegRAt.find(i) != defVRegRAt.end()) {
 			auto & vec = defVRegRAt[i];
 			for (auto * definingVRegR: vec) {
@@ -296,6 +278,24 @@ void LinearScanAllocator::linear_scan() {
 					freeSIds.erase(newPos);
 					definingVRegS->sid = newPos;
 					livingVRegS[newPos] = definingVRegS;
+				}
+			}
+		}
+		if (lstUseVRegRAt.find(i) != lstUseVRegRAt.end()) {
+			auto & vec = lstUseVRegRAt[i];
+			for (auto * pVRegRLstUse: vec) {
+				if (isGPR(pVRegRLstUse->rid)) {
+					freeRIds.emplace(pVRegRLstUse->rid);
+					livingVRegR.erase(pVRegRLstUse->rid);
+				}
+			}
+		}
+		if (lstUseVRegSAt.find(i) != lstUseVRegSAt.end()) {
+			auto & vec = lstUseVRegSAt[i];
+			for (auto * pVRegSLstUse: vec) {
+				if (isGPR(pVRegSLstUse->sid)) {
+					freeSIds.emplace(pVRegSLstUse->sid);
+					livingVRegS.erase(pVRegSLstUse->sid);
 				}
 			}
 		}
