@@ -214,7 +214,7 @@ std::list<ircode::IRInstr *> CFG::toLLVMIRFrom() {
 }
 
 int CFG::opti() {
-//	simplifyCFG();
+	simplifyCFG();
 	calculateIDomAndDFAndDom();
 	//  TODO : Some other global/local opti
 	return 0;
