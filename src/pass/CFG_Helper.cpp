@@ -40,11 +40,6 @@ void CFG::collectInfoFromAllReachableInstr(
 		q.pop();
 		if (vis[u]) { continue; }
 		vis[u] = true;
-		for (auto [pLVAddr, pPhi]: u->phiInstrs) {
-			for (auto * pOpnd: pPhi->getUse()) {
-
-			}
-		}
 		auto itPInstr = u->instrs.begin();
 		while (itPInstr != u->instrs.end()) {
 			fun(u, itPInstr);
@@ -56,6 +51,40 @@ void CFG::collectInfoFromAllReachableInstr(
 			}
 		}
 	}
+}
+
+std::vector<ircode::AddrVariable *>
+CFG::replaceUse(ircode::AddrVariable * pFrom, ircode::AddrOperand * pTo) {
+	auto affectedVar = std::vector<ircode::AddrVariable *>();
+	if (pTo->addrType == ircode::AddrType::Var) {
+		com::TODO("", CODEPOS);
+	} else if (pTo->addrType == ircode::AddrType::StaticValue) {
+		auto & useChain = duChain.find(pFrom)->second.use;
+		auto itUsePos = useChain.begin();
+		while (itUsePos != useChain.end()) {
+			auto & usePos = get(itUsePos);
+			auto changed = get(usePos.it)->changeUse(pFrom, pTo);
+			if (changed) {
+				affectedVar.emplace_back(get(usePos.it)->getDef());
+				itUsePos = useChain.erase(itUsePos);
+			} else {
+				itUsePos = std::next(itUsePos);
+			}
+		}
+	}
+	affectedVar.erase(
+		std::remove_if(
+			affectedVar.begin(), affectedVar.end(), [](auto p) { return p == nullptr; }
+		), affectedVar.end()
+	);
+	return affectedVar;
+}
+
+void CFG::removeDef(ircode::AddrVariable * pFrom) {
+	com::Assert(duChain.find(pFrom)->second.use.empty(), "", CODEPOS);
+	const auto & posDef = duChain.find(pFrom)->second.def;
+	posDef.pNode->instrs.erase(posDef.it);
+	duChain.erase(pFrom);
 }
 
 }

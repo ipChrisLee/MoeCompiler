@@ -25,9 +25,6 @@ void Node::insertBeforeTerm(ircode::IRInstr * pInstr) {
 
 std::list<ircode::IRInstr *> Node::toLLVMIRForm() {
 	auto res = instrs;
-	for (auto [pLVAddr, pPhi]: phiInstrs) {
-		res.insert(std::next(res.begin()), pPhi);
-	}
 	return res;
 }
 
@@ -218,7 +215,8 @@ int CFG::opti() {
 	//  analyze cfg
 	calculateIDomAndDFAndDom();
 	getDUChain();
-	//  TODO : Some other global/local opti
+	//  opti
+	constantPropagation();
 	return 0;
 }
 
@@ -226,7 +224,7 @@ CFGIR::CFGIR(ircode::IRModule & ir) : ir(ir), cfgPool(funcDef2CFG) {
 }
 
 int CFGIR::opti() {
-	globalOpt();
+	globalVarOpt();
 	//  local passes:
 	for (auto * pFuncDef: ir.funcPool) {
 		if (pFuncDef->pAddrFun->justDeclare) {
@@ -249,17 +247,29 @@ int CFGIR::genLLVMFormRes() {
 }
 
 int CFGIR::genDeSSAFormRes() {
-	for (auto [pFuncDef, pCFG]: funcDef2CFG) {
-		pFuncDef->instrs = pCFG->toDeSSAForm();
+	auto deletedFuncDef = std::set<ircode::IRFuncDef *>();
+	for (auto * pFuncDef: ir.funcPool) {
+		if (pFuncDef->pAddrFun->justDeclare) {
+			continue;
+		} else if (funcDef2CFG.count(pFuncDef)) {
+			pFuncDef->instrs = funcDef2CFG[pFuncDef]->toDeSSAForm();
+		} else {
+			deletedFuncDef.insert(pFuncDef);
+		}
+	}
+	for (auto * pFuncDef: deletedFuncDef) {
+		ir.funcPool.erase(pFuncDef);
 	}
 	return 0;
 }
 
 
-CFGIR::CFGPool::CFGPool(std::map<ircode::IRFuncDef *, CFG *> & mp) :
-	Pool() {
+CFGIR::CFGPool::CFGPool(std::map<ircode::IRFuncDef *, CFG *> & mp) : Pool() {
 	afterEmplace = [&mp](CFG * pCFG) {
 		mp.emplace(pCFG->pFuncDefThis, pCFG);
+	};
+	onDelete = [&mp](CFG * pCFG) {
+		mp.erase(pCFG->pFuncDefThis);
 	};
 }
 
@@ -274,10 +284,6 @@ void DUChain::insertUseInfo(Node * pNodeUse, ItPIRInstr_t instrUse) {
 	use.emplace_back(pNodeUse, std::move(instrUse));
 }
 
-
-void DUChain::insertPhiUse(Node * pNodeUse, ircode::AddrLocalVariable *) {
-	phiU
-}
 
 }
 

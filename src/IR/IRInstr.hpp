@@ -41,6 +41,7 @@ enum class InstrType {
 	Mark,
 };
 
+
 bool isTerminalInstr(InstrType instrType);
 
 class IRInstr
@@ -65,7 +66,7 @@ class IRInstr
 
 	~IRInstr() override = default;
 
-	virtual void changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) = 0;
+	virtual bool changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) = 0;
 	[[nodiscard]] virtual std::vector<ircode::AddrOperand *> getUse() const = 0;
 	[[nodiscard]] virtual ircode::AddrVariable * getDef() const = 0;
 };
@@ -93,9 +94,9 @@ class InstrAlloca : public IRInstr {
 	InstrAlloca(InstrAlloca &&) = default;
 
 	[[nodiscard]] std::string toLLVMIR() const override;
-	void changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) override;
+	bool changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) override;
 	[[nodiscard]] AddrVariable * getDef() const override;
-	std::vector<ircode::AddrOperand *> getUse() const override;
+	[[nodiscard]] std::vector<ircode::AddrOperand *> getUse() const override;
 };
 
 class InstrStore : public IRInstr {
@@ -112,7 +113,7 @@ class InstrStore : public IRInstr {
 	InstrStore(InstrStore &&) = default;
 
 	[[nodiscard]] std::string toLLVMIR() const override;
-	void changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) override;
+	bool changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) override;
 	[[nodiscard]] AddrVariable * getDef() const override;
 	[[nodiscard]] std::vector<ircode::AddrOperand *> getUse() const override;
 };
@@ -130,7 +131,7 @@ class InstrLoad : public IRInstr {
 	InstrLoad(InstrLoad &&) = default;
 
 	[[nodiscard]] std::string toLLVMIR() const override;
-	void changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) override;
+	bool changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) override;
 	[[nodiscard]] AddrVariable * getDef() const override;
 	[[nodiscard]] std::vector<ircode::AddrOperand *> getUse() const override;
 };
@@ -148,7 +149,7 @@ class InstrLabel : public IRInstr {
 	InstrLabel(InstrLabel &&) = default;
 
 	[[nodiscard]] std::string toLLVMIR() const override;
-	void changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) override;
+	bool changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) override;
 	[[nodiscard]] std::vector<ircode::AddrOperand *> getUse() const override;
 	[[nodiscard]] AddrVariable * getDef() const override;
 };
@@ -168,8 +169,8 @@ class InstrBr : public IRInstr {
 	InstrBr(InstrBr &&) = default;
 
 	[[nodiscard]] std::string toLLVMIR() const override;
-	void changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) override;
-	std::vector<ircode::AddrOperand *> getUse() const override;
+	bool changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) override;
+	[[nodiscard]] std::vector<ircode::AddrOperand *> getUse() const override;
 	[[nodiscard]] AddrVariable * getDef() const override;
 };
 
@@ -186,8 +187,8 @@ class InstrRet : public IRInstr {
 	InstrRet(InstrRet &&) = default;
 
 	[[nodiscard]] std::string toLLVMIR() const override;
-	void changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) override;
-	std::vector<ircode::AddrOperand *> getUse() const override;
+	bool changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) override;
+	[[nodiscard]] std::vector<ircode::AddrOperand *> getUse() const override;
 	[[nodiscard]] AddrVariable * getDef() const override;
 };
 
@@ -199,18 +200,19 @@ class InstrBinaryOp : public IRInstr {
 	//  Will check if three addrs have same types.
 	InstrBinaryOp(
 		AddrOperand * left, AddrOperand * right, AddrVariable * res,
-		InstrType instrType
+		InstrType instrType, std::string op
 	);
 
   public:
 	AddrOperand * left, * right;
 	AddrVariable * res;
+	std::string op;
 
 	InstrBinaryOp(const InstrBinaryOp &) = default;
 	InstrBinaryOp(InstrBinaryOp &&) = default;
 
 	[[nodiscard]] std::string toLLVMIR() const override = 0;
-	void changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) override;
+	bool changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) override;
 	[[nodiscard]] std::vector<ircode::AddrOperand *> getUse() const override;
 	[[nodiscard]] AddrVariable * getDef() const override;
 };
@@ -231,7 +233,7 @@ class InstrConversionOp : public IRInstr {
 	InstrConversionOp(InstrConversionOp &&) = default;
 
 	[[nodiscard]] std::string toLLVMIR() const override = 0;
-	void changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) override;
+	bool changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) override;
 	[[nodiscard]] std::vector<ircode::AddrOperand *> getUse() const override;
 	[[nodiscard]] AddrVariable * getDef() const override;
 };
@@ -399,7 +401,7 @@ class InstrCall : public IRInstr {
 	InstrCall(InstrCall &&) = default;
 
 	[[nodiscard]] std::string toLLVMIR() const override;
-	void changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) override;
+	bool changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) override;
 	std::vector<ircode::AddrOperand *> getUse() const override;
 	AddrVariable * getDef() const override;
 };
@@ -419,7 +421,7 @@ class InstrGetelementptr : public IRInstr {
 	InstrGetelementptr(InstrGetelementptr &&) = default;
 
 	std::string toLLVMIR() const override;
-	void changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) override;
+	bool changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) override;
 	std::vector<ircode::AddrOperand *> getUse() const override;
 	AddrVariable * getDef() const override;
 };
@@ -440,7 +442,7 @@ class InstrCompare : public IRInstr {
 	InstrCompare(InstrCompare &&) = default;
 
 	[[nodiscard]] std::string toLLVMIR() const override;
-	void changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) override;
+	bool changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) override;
 	[[nodiscard]] std::vector<ircode::AddrOperand *> getUse() const override;
 	[[nodiscard]] AddrVariable * getDef() const override;
 };
@@ -544,7 +546,7 @@ class InstrPhi : public IRInstr {
 	InstrPhi(InstrPhi &&) = default;
 
 	[[nodiscard]] std::string toLLVMIR() const override;
-	void changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) override;
+	bool changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) override;
 	std::vector<ircode::AddrOperand *> getUse() const override;
 	AddrVariable * getDef() const override;
 };
@@ -564,7 +566,7 @@ class InstrParaMov : public IRInstr {
 	InstrParaMov(InstrParaMov &&) = default;
 
 	[[nodiscard]] std::string toLLVMIR() const override;
-	void changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) override;
+	bool changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) override;
 	[[nodiscard]] std::vector<ircode::AddrOperand *> getUse() const override;
 	[[nodiscard]] AddrVariable * getDef() const override;
 };
@@ -584,7 +586,7 @@ class InstrParallelCopy : public IRInstr {
 	void insert(ircode::AddrOperand * from, ircode::AddrVariable * to, ircode::IRModule & ir);
 
 	[[nodiscard]] std::string toLLVMIR() const override;
-	void changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) override;
+	bool changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) override;
 	[[nodiscard]] std::vector<ircode::AddrOperand *> getUse() const override;
 	[[nodiscard]] AddrVariable * getDef() const override;
 };
@@ -619,7 +621,7 @@ class InstrMarkVars : public IRInstr {
 	InstrMarkVars(InstrMarkVars &&) = default;
 
 	[[nodiscard]] std::string toLLVMIR() const override;
-	void changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) override;
+	bool changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) override;
 	[[nodiscard]] std::vector<ircode::AddrOperand *> getUse() const override;
 	[[nodiscard]] AddrVariable * getDef() const override;
 };

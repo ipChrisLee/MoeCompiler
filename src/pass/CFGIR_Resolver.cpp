@@ -23,8 +23,7 @@ void CFG::mem2reg() {
 		);
 	};
 	auto setOfLV = std::set<ircode::AddrLocalVariable *>();
-	auto setOfBBDefLV = std::map<ircode::AddrLocalVariable *, std::set<Node *>>
-		();
+	auto setOfBBDefLV = std::map<ircode::AddrLocalVariable *, std::set<Node *>>();
 	//  find local var definition position
 	[&setOfLV, &setOfBBDefLV, &promotable, this]() {
 		for (auto * pInstr: pEntryNode->instrs) {
@@ -61,6 +60,8 @@ void CFG::mem2reg() {
 		}
 	}();
 
+	auto phiInstrs
+		= std::map<Node *, std::map<ircode::AddrLocalVariable *, ircode::InstrPhi *>>();
 	//  Insert Phi
 	for (auto * pLV: setOfLV) {
 		auto setOfBBToInsertPhi = std::set<Node *>();   //  F
@@ -80,7 +81,8 @@ void CFG::mem2reg() {
 					auto * pPhiInstr = ir.instrPool.emplace_back(
 						ircode::InstrPhi(pNewPhiVar, pLV)
 					);
-					bbY->phiInstrs[pLV] = pPhiInstr;
+					phiInstrs[bbY][pLV] = pPhiInstr;
+//					bbY->phiInstrs[pLV] = pPhiInstr;
 					//  F <- F U {Y}
 					setOfBBToInsertPhi.emplace(bbY);
 					//  Y not in Defs(v)
@@ -93,7 +95,7 @@ void CFG::mem2reg() {
 	}
 
 	//  Rename Variable
-	[&setOfLV, this]() {
+	[&phiInstrs, &setOfLV, this]() {
 		//  lvAddrLastVar[pLV][pNode]=pVal : at exit of pNode, value of pLV is pVal.
 		auto
 			lvAddrLastVar =
@@ -117,12 +119,13 @@ void CFG::mem2reg() {
 		auto vis = std::map<Node *, bool>();
 		std::function<void(Node *)> dfs =
 			[
-				&vis, &dfs, &lvAddrLastVar, &mappingWithOp, &setOfLV,
+				&vis, &dfs, &lvAddrLastVar, &mappingWithOp, &setOfLV, &phiInstrs,
 				&findLVMappingValDownToEntry, this
 			](Node * pNodeNow) {
 				vis[pNodeNow] = true;
 				//  phi node may kill use of a local var.
-				for (auto [pLVAddr, pPhi]: pNodeNow->phiInstrs) {
+//				for (auto [pLVAddr, pPhi]: pNodeNow->phiInstrs)
+				for (auto [pLVAddr, pPhi]: phiInstrs[pNodeNow]) {
 					lvAddrLastVar[pLVAddr][pNodeNow] = pPhi->newDefVar;
 				}
 				//  For all instrs:
@@ -190,7 +193,8 @@ void CFG::mem2reg() {
 				//      Insert value pair to phi instr of pNodeNxt
 				//      If pNodeNxt haven't been visited, visit it.
 				for (auto * pNodeNxt: pNodeNow->succOnCFG) {
-					for (auto [pLVAddr, pPhi]: pNodeNxt->phiInstrs) {
+					for (auto [pLVAddr, pPhi]: phiInstrs[pNodeNxt]) {
+//					for (auto [pLVAddr, pPhi]: pNodeNxt->phiInstrs) {
 						pPhi->insertPair(
 							pNodeNow->pIRLabel,
 							findLVMappingValDownToEntry(pLVAddr, pNodeNow)
@@ -203,6 +207,13 @@ void CFG::mem2reg() {
 			};
 		dfs(pEntryNode);
 	}();
+
+	//  Insert phi at beginning of node.
+	for (auto & [pNode, lvValPair]: phiInstrs) {
+		for (auto & [pLVAddr, pPhi]: lvValPair) {
+			pNode->instrs.emplace(std::next(pNode->instrs.begin()), pPhi);
+		}
+	}
 }
 
 void CFG::resolvePhi() {
@@ -217,15 +228,24 @@ void CFG::resolvePhi() {
 			continue;
 		}
 		vis[pNodeNow] = true;
-		for (auto [pLVAddr, pPhi]: pNodeNow->phiInstrs) {
-			auto * pPhiVal = pPhi->newDefVar;
-			for (auto [pJumpLabel, pVal]: pPhi->vecPair) {
-				auto * pPreNode = getNodeByLabel(pJumpLabel);
-				copyInstrs[pPreNode].insert(
-					pVal, pPhiVal, ir
-				);
+		for (auto * pInstr: pNodeNow->instrs) {
+			if (pInstr->instrType == ircode::InstrType::Phi) {
+				auto * pPhi = dynamic_cast<ircode::InstrPhi *>(pInstr);
+				auto * pPhiVal = pPhi->newDefVar;
+				for (auto [pJumpLabel, pVal]: pPhi->vecPair) {
+					auto * pPreNode = getNodeByLabel(pJumpLabel);
+					copyInstrs[pPreNode].insert(pVal, pPhiVal, ir);
+				}
 			}
 		}
+		pNodeNow->instrs.erase(
+			std::remove_if(
+				pNodeNow->instrs.begin(), pNodeNow->instrs.end(),
+				[](ircode::IRInstr * pInstr) {
+					return pInstr->instrType == ircode::InstrType::Phi;
+				}
+			), pNodeNow->instrs.end()
+		);
 		for (auto * pNodeNxt: pNodeNow->succOnCFG) {
 			if (!vis[pNodeNxt]) {
 				q.push(pNodeNxt);

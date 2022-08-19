@@ -92,11 +92,11 @@ inline std::string to_string(const std::string & s) { return s; }
 }
 
 template<typename Iter>
-auto get(Iter & it) {
+auto & get(Iter & it) {
 	return it.operator*();
 }
 
 template<typename Iter>
-auto get(Iter && it) {
+auto & get(Iter && it) {
 	return it.operator*();
 }

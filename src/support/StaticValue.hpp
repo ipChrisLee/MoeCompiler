@@ -262,6 +262,10 @@ calcOfInt(int il, int ir, const std::string & op);
 std::unique_ptr<StaticValue>
 calcOfBool(bool bl, bool br, const std::string & op);
 
+//  calc on int/float
+std::unique_ptr<StaticValue>
+calcOfSV(const StaticValue & left, const StaticValue & right, const std::string & op);
+
 std::unique_ptr<StaticValue>
 fromTypeInfoToStaticValue(const TypeInfo & typeInfo);
 

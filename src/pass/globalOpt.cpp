@@ -3,7 +3,7 @@
 
 namespace pass {
 
-void CFGIR::globalOpt() {
+void CFGIR::globalVarOpt() {
 	//  for int/float:
 	//      if a variable is only used (load), promote to constant
 	//          This is implemented with replacing `%x=load %p` by `%x=add 1,0`

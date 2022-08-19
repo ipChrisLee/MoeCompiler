@@ -749,4 +749,25 @@ fromTypeInfoToStaticValue(const TypeInfo & typeInfo) {
 		default: com::Throw("", CODEPOS);
 	}
 }
+
+std::unique_ptr<StaticValue>
+calcOfSV(const StaticValue & left, const StaticValue & right, const std::string & op) {
+	com::Assert(
+		left.getType() == right.getType() &&
+			com::enum_fun::in(
+				left.getType().type, {sup::Type::Float_t, sup::Type::Int_t}
+			),
+		"", CODEPOS
+	);
+	if (left.getType().type == sup::Type::Int_t) {
+		auto iLeft = dynamic_cast<const IntStaticValue &>(left);
+		auto iRight = dynamic_cast<const IntStaticValue &>(right);
+		return calcOfInt(iLeft.value, iRight.value, op);
+	} else if (left.getType().type == sup::Type::Float_t) {
+		auto fLeft = dynamic_cast<const FloatStaticValue &>(left);
+		auto fRight = dynamic_cast<const FloatStaticValue &>(right);
+		return calcOfFloat(fLeft.value, fRight.value, op);
+	} else { return nullptr; }
+}
+
 }

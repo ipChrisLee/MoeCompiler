@@ -9,6 +9,7 @@
 using namespace sup;
 namespace ircode {
 
+
 int IRInstr::cnt = 0;
 
 IRInstr::IRInstr(const IRInstr & irInstr) :
@@ -63,8 +64,9 @@ InstrAlloca::InstrAlloca(AddrLocalVariable * allocaTo) :
 	}
 }
 
-void InstrAlloca::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
+bool InstrAlloca::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
 	//  do nothing
+	return false;
 }
 
 AddrVariable * InstrAlloca::getDef() const {
@@ -92,7 +94,8 @@ InstrLabel::InstrLabel(AddrJumpLabel * pAddrLabel) :
 	IRInstr(InstrType::Label), pAddrLabel(pAddrLabel) {
 }
 
-void InstrLabel::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
+bool InstrLabel::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
+	return false;
 }
 
 AddrVariable * InstrLabel::getDef() const {
@@ -127,9 +130,12 @@ InstrStore::InstrStore(AddrOperand * from, AddrVariable * to) :
 	);
 }
 
-void InstrStore::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
+bool InstrStore::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
 	if (chgFrom == from) {
 		from = chgTo;
+		return true;
+	} else {
+		return false;
 	}
 }
 
@@ -164,9 +170,12 @@ std::string InstrRet::toLLVMIR() const {
 	}
 }
 
-void InstrRet::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
+bool InstrRet::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
 	if (chgFrom == retAddr) {
 		retAddr = chgTo;
+		return true;
+	} else {
+		return false;
 	}
 }
 
@@ -184,9 +193,9 @@ std::vector<ircode::AddrOperand *> InstrRet::getUse() const {
 
 InstrBinaryOp::InstrBinaryOp(
 	AddrOperand * left, AddrOperand * right, AddrVariable * res,
-	InstrType instrType
+	InstrType instrType, std::string op
 ) :
-	IRInstr(instrType), left(left), right(right), res(res) {
+	IRInstr(instrType), left(left), right(right), res(res), op(std::move(op)) {
 	com::Assert(
 		left->getType() == right->getType() && right->getType() == res->getType(),
 		"Type of operand and result should be same!",
@@ -194,13 +203,17 @@ InstrBinaryOp::InstrBinaryOp(
 	);
 }
 
-void InstrBinaryOp::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
+bool InstrBinaryOp::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
+	auto changed = false;
 	if (left == chgFrom) {
 		left = chgTo;
+		changed = true;
 	}
 	if (right == chgFrom) {
 		right = chgTo;
+		changed = true;
 	}
+	return changed;
 }
 
 AddrVariable * InstrBinaryOp::getDef() const {
@@ -212,7 +225,7 @@ std::vector<ircode::AddrOperand *> InstrBinaryOp::getUse() const {
 }
 
 InstrAdd::InstrAdd(AddrOperand * left, AddrOperand * right, AddrVariable * res) :
-	InstrBinaryOp(left, right, res, InstrType::Add) {
+	InstrBinaryOp(left, right, res, InstrType::Add, "+") {
 	com::Assert(
 		left->getType() == IntType(),
 		"Type of addr in `add` should be `IntType`!", CODEPOS
@@ -242,7 +255,7 @@ std::unique_ptr<moeconcept::Cutable> InstrFAdd::_cutToUniquePtr() {
 }
 
 InstrFAdd::InstrFAdd(AddrOperand * left, AddrOperand * right, AddrVariable * res) :
-	InstrBinaryOp(left, right, res, InstrType::FAdd) {
+	InstrBinaryOp(left, right, res, InstrType::FAdd, "+") {
 	com::Assert(
 		left->getType() == FloatType(),
 		"Type of addr in `fadd` should be `FloatType`!", CODEPOS
@@ -262,10 +275,13 @@ InstrConversionOp::InstrConversionOp(
 	IRInstr(instrType), from(from), to(to) {
 }
 
-void
+bool
 InstrConversionOp::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
 	if (from == chgFrom) {
 		from = chgTo;
+		return true;
+	} else {
+		return false;
 	}
 }
 
@@ -322,8 +338,9 @@ std::string InstrLoad::toLLVMIR() const {
 		+ from->getType().toLLVMIR() + " " + from->toLLVMIR() + ", align 4";
 }
 
-void InstrLoad::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
+bool InstrLoad::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
 	// ?
+	return false;
 }
 
 AddrVariable * InstrLoad::getDef() const {
@@ -368,7 +385,8 @@ InstrBr::InstrBr(
 	);
 }
 
-void InstrBr::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
+bool InstrBr::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
+	return false;
 }
 
 AddrVariable * InstrBr::getDef() const {
@@ -380,7 +398,7 @@ std::vector<ircode::AddrOperand *> InstrBr::getUse() const {
 }
 
 InstrMul::InstrMul(AddrOperand * left, AddrOperand * right, AddrVariable * res) :
-	InstrBinaryOp(left, right, res, InstrType::Mul) {
+	InstrBinaryOp(left, right, res, InstrType::Mul, "*") {
 	com::Assert(
 		left->getType() == IntType(),
 		"Type of addr in `mul` should be `IntType`!", CODEPOS
@@ -393,9 +411,8 @@ std::string InstrMul::toLLVMIR() const {
 		left->toLLVMIR() + ", " + right->toLLVMIR();
 }
 
-InstrFMul::InstrFMul(AddrOperand * left, AddrOperand * right, AddrVariable * res)
-	:
-	InstrBinaryOp(left, right, res, InstrType::FMul) {
+InstrFMul::InstrFMul(AddrOperand * left, AddrOperand * right, AddrVariable * res) :
+	InstrBinaryOp(left, right, res, InstrType::FMul, "*") {
 	com::Assert(
 		left->getType() == FloatType(),
 		"Type of addr in `fmul` should be `FloatType`!", CODEPOS
@@ -408,7 +425,7 @@ std::string InstrFMul::toLLVMIR() const {
 }
 
 InstrSub::InstrSub(AddrOperand * left, AddrOperand * right, AddrVariable * res) :
-	InstrBinaryOp(left, right, res, InstrType::Sub) {
+	InstrBinaryOp(left, right, res, InstrType::Sub, "-") {
 	com::Assert(
 		left->getType() == IntType(),
 		"Type of addr in `sub` should be `IntType`!", CODEPOS
@@ -422,7 +439,7 @@ std::string InstrSub::toLLVMIR() const {
 }
 
 InstrFSub::InstrFSub(AddrOperand * left, AddrOperand * right, AddrVariable * res) :
-	InstrBinaryOp(left, right, res, InstrType::FSub) {
+	InstrBinaryOp(left, right, res, InstrType::FSub, "-") {
 	com::Assert(
 		left->getType() == FloatType(),
 		"Type of addr in `fsub` should be `FloatType`!", CODEPOS
@@ -480,13 +497,15 @@ InstrCall::InstrCall(
 	);
 }
 
-void InstrCall::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
+bool InstrCall::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
+	auto changed = false;
 	for (auto & p: paramsPassing) {
 		if (p == chgFrom) {
 			p = chgTo;
+			changed = true;
 		}
 	}
-
+	return changed;
 }
 
 AddrVariable * InstrCall::getDef() const {
@@ -515,9 +534,8 @@ std::string InstrFptosi::toLLVMIR() const {
 			from->toLLVMIR() + " to " + to->getType().toLLVMIR();
 }
 
-InstrSDiv::InstrSDiv(AddrOperand * left, AddrOperand * right, AddrVariable * res)
-	:
-	InstrBinaryOp(left, right, res, InstrType::SDiv) {
+InstrSDiv::InstrSDiv(AddrOperand * left, AddrOperand * right, AddrVariable * res) :
+	InstrBinaryOp(left, right, res, InstrType::SDiv, "/") {
 	com::Assert(
 		left->getType() == IntType(),
 		"Type of addr in `div` should be `IntType`!", CODEPOS
@@ -531,7 +549,7 @@ std::string InstrSDiv::toLLVMIR() const {
 }
 
 InstrFDiv::InstrFDiv(AddrOperand * left, AddrOperand * right, AddrVariable * res) :
-	InstrBinaryOp(left, right, res, InstrType::FDiv) {
+	InstrBinaryOp(left, right, res, InstrType::FDiv, "/") {
 	com::Assert(
 		left->getType() == FloatType(),
 		"Type of addr in `fdiv` should be `FloatType`!", CODEPOS
@@ -543,9 +561,8 @@ std::string InstrFDiv::toLLVMIR() const {
 		" = fdiv float " + left->toLLVMIR() + ", " + right->toLLVMIR();
 }
 
-InstrSrem::InstrSrem(AddrOperand * left, AddrOperand * right, AddrVariable * res)
-	:
-	InstrBinaryOp(left, right, res, InstrType::SRem) {
+InstrSrem::InstrSrem(AddrOperand * left, AddrOperand * right, AddrVariable * res) :
+	InstrBinaryOp(left, right, res, InstrType::SRem, "%") {
 	com::Assert(
 		left->getType() == IntType(),
 		"Type of addr in `rem` should be `IntType`!", CODEPOS
@@ -595,11 +612,13 @@ std::string InstrGetelementptr::toLLVMIR() const {
 	return res;
 }
 
-void
+bool
 InstrGetelementptr::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
+	auto changed = false;
 	for (auto & p: idxs) {
 		if (p == chgFrom) {
 			p = chgTo;
+			changed = true;
 		}
 	}
 	auto * chgFromVar = dynamic_cast<ircode::AddrVariable *>(chgFrom);
@@ -607,7 +626,9 @@ InstrGetelementptr::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand
 	if (from == chgFromVar) {
 		com::Assert(chgToVar, "", CODEPOS);
 		from = chgToVar;
+		changed = true;
 	}
+	return changed;
 }
 
 AddrVariable * InstrGetelementptr::getDef() const {
@@ -639,13 +660,17 @@ std::string InstrCompare::toLLVMIR() const {
 	com::Throw("This method should not be called.", CODEPOS);
 }
 
-void InstrCompare::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
+bool InstrCompare::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
+	auto changed = false;
 	if (leftOp == chgFrom) {
 		leftOp = chgTo;
+		changed = true;
 	}
 	if (rightOp == chgFrom) {
 		rightOp = chgTo;
+		changed = true;
 	}
+	return changed;
 }
 
 AddrVariable * InstrCompare::getDef() const {
@@ -822,12 +847,15 @@ void InstrPhi::insertPair(ircode::AddrJumpLabel * pLabel, ircode::AddrOperand * 
 	vecPair.emplace(pLabel, pOperandAddr);
 }
 
-void InstrPhi::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
+bool InstrPhi::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
+	auto changed = false;
 	for (auto & p: vecPair) {
 		if (p.second == chgFrom) {
 			p.second = chgTo;
+			changed = true;
 		}
 	}
+	return changed;
 }
 
 AddrVariable * InstrPhi::getDef() const {
@@ -889,7 +917,8 @@ std::string InstrParaMov::toLLVMIR() const {
 	return stand->toLLVMIR() + ";\t\tthis is para move";
 }
 
-void InstrParaMov::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
+bool InstrParaMov::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
+	return false;
 }
 
 std::vector<ircode::AddrOperand *> InstrParaMov::getUse() const {
@@ -911,14 +940,16 @@ std::string InstrParallelCopy::toLLVMIR() const {
 	return res;
 }
 
-void
+bool
 InstrParallelCopy::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
+	auto changed = false;
 	for (auto & [from, to, stand]: copies) {
 		if (from == chgFrom) {
 			from = chgTo;
-			stand->changeUse(from, chgTo);
+			changed |= stand->changeUse(from, chgTo);
 		}
 	}
+	return changed;
 }
 
 std::vector<ircode::AddrOperand *> InstrParallelCopy::getUse() const {
@@ -992,7 +1023,7 @@ std::string InstrMarkVars::toLLVMIR() const {
 	return res;
 }
 
-void InstrMarkVars::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
+bool InstrMarkVars::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
 	com::Throw("", CODEPOS);
 }
 
