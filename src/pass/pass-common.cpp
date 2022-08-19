@@ -26,7 +26,6 @@ int passMain(ircode::IRModule & ir) {
 		}
 	}
 	CFGIR cfgIR(ir);
-	cfgIR.run();
 	cfgIR.opti();
 	if (SysY::options.emitLLVM) {
 		cfgIR.genLLVMFormRes();

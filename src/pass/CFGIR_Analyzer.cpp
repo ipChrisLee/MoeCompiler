@@ -103,4 +103,24 @@ void CFG::calculateIDomAndDFAndDom() {
 	}
 }
 
+void CFG::getDUChain() {
+	duChain.clear();
+	auto findDefine
+		= [this](Node * pNode, typename std::list<ircode::IRInstr *>::iterator pInstr) {
+			auto * pVar = get(pInstr)->getDef();
+			if (pVar) {
+				duChain.emplace(pVar, DUChain(pNode, pInstr));
+			}
+		};
+	collectInfoFromAllReachableInstr(findDefine);
+	auto findUse
+		= [this](Node * pNode, typename std::list<ircode::IRInstr *>::iterator itPInstr) {
+			for (auto * pOperand: get(itPInstr)->getUse()) {
+
+
+			}
+		};
+	collectInfoFromAllReachableInstr(findUse);
+}
+
 }

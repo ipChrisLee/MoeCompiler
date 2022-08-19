@@ -215,7 +215,9 @@ std::list<ircode::IRInstr *> CFG::toLLVMIRFrom() {
 
 int CFG::opti() {
 	simplifyCFG();
+	//  analyze cfg
 	calculateIDomAndDFAndDom();
+	getDUChain();
 	//  TODO : Some other global/local opti
 	return 0;
 }
@@ -223,7 +225,9 @@ int CFG::opti() {
 CFGIR::CFGIR(ircode::IRModule & ir) : ir(ir), cfgPool(funcDef2CFG) {
 }
 
-int CFGIR::run() {
+int CFGIR::opti() {
+	globalOpt();
+	//  local passes:
 	for (auto * pFuncDef: ir.funcPool) {
 		if (pFuncDef->pAddrFun->justDeclare) {
 			continue;
@@ -231,16 +235,9 @@ int CFGIR::run() {
 			cfgPool.emplace_back(CFG(ir, pFuncDef));
 		}
 	}
-	return 0;
-}
-
-int CFGIR::opti() {
-	//  local passes:
 	for (auto [pFuncDef, pCFG]: funcDef2CFG) {
 		pCFG->opti();
 	}
-	//  TODO : Global passes
-	//  can use Pool::erase to inline
 	return 0;
 }
 

@@ -32,7 +32,6 @@ int ToASM::run() {
 std::string ToASM::toASM() {
 	auto res = std::string(pass::ToASM::asmHeader) + "\n\n";
 	if (!ir.addrPool.getGlobalVars().empty()) {
-		res += std::string(gVarHeaderDataSection);
 		for (auto * pGVarAddr: ir.addrPool.getGlobalVars()) {
 			res += declGVar(pGVarAddr) + "\n";
 		}
