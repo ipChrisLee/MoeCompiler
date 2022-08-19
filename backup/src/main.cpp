@@ -11,6 +11,7 @@
 #include "frontend/SysAntlr/SysYLexer.h"
 #include "frontend/ASTVisitor.hpp"
 #include "pass/pass-common.hpp"
+#include "backend/backendPass.hpp"
 
 
 int Main(int argc, char ** argv) {
@@ -31,7 +32,13 @@ int Main(int argc, char ** argv) {
 	if (!SysY::options.withoutAnyPass.get()) {
 		pass::passMain(ir);
 	}
-	SysY::dest << ir.toLLVMIR() << std::endl;
+	if (SysY::options.emitLLVM.get()) {
+		SysY::dest << ir.toLLVMIR() << std::endl;
+	} else {
+		auto assembler = pass::ToASM(ir);
+		assembler.run();
+		SysY::dest << assembler.toASM() << std::endl;
+	}
 	return 0;
 }
 
@@ -46,9 +53,11 @@ int main(int argc, char ** argv) {
 	int retval = 0;
 	try {
 		retval = Main(argc, argv);
+	} catch (const com::MException & e) {
+		com::ccerr.cprintLn(e.what());
+		retval = e.exitCode;
 	} catch (const std::exception & e) {
 		com::ccerr.cprintLn(e.what());
-		retval = -1;
 	}
 	if (SysY::options.showRuntimeWarnings) {
 		com::showAllRuntimeWarnings();

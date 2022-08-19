@@ -6,7 +6,8 @@
 
 #include <cprt.hpp>
 #include <common.hpp>
-#include "../third_party/antlr4-runtime/antlr4-runtime.h"
+#include <antlr4-runtime.h>
+
 #include "IR/IRAddr.hpp"
 #include "IR/IRInstr.hpp"
 #include "IR/IRModule.hpp"
@@ -73,9 +74,10 @@ class ASTVisitor : public SysYBaseVisitor {
 			std::vector<int> shapeOfDefiningVar;
 			IdxView idxView;    //  Used on defining array.
 			int ndim = -1;           //  Used on defining array.
-			std::vector<ArrayItem<std::unique_ptr<sup::StaticValue>>>
-				staticArrayItems;
-			std::vector<ArrayItem<ircode::AddrOperand *>> localArrayItems;
+			ircode::AddrGlobalVariable * pAddrGlobalVarDefining = nullptr;
+			ircode::AddrLocalVariable * pAddrLocalVarDefining = nullptr;
+			std::set<ArrayItem<std::unique_ptr<sup::StaticValue>>> staticArrayItems;
+			std::set<ArrayItem<ircode::AddrOperand *>> localArrayItems;
 
 			bool definingArray() const { return !shapeOfDefiningVar.empty(); }
 
@@ -86,7 +88,7 @@ class ASTVisitor : public SysYBaseVisitor {
 		struct Func {
 			/*  address of retval of function.
 			 * */
-			ircode::AddrVariable * pRetvalMem = nullptr;
+			ircode::AddrLocalVariable * pRetvalMem = nullptr;
 			ircode::AddrJumpLabel * pRetBlockLabel = nullptr;
 			ircode::IRFuncDef * pFuncDef = nullptr;
 		};

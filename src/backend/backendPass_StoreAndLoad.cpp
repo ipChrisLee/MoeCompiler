@@ -25,23 +25,16 @@ int FuncInfo::run_Load_Int(ircode::InstrLoad * pInstrLoad) {
 	if (pInstrLoad->from->addrType == ircode::AddrType::Var) {
 		auto * pVRegRFrom = convertIntVariable(pInstrLoad->from);
 		defineUseTimelineVRegR[pVRegRFrom].emplace_back(tim);
-		pVRegRTo->laddr=pVRegRFrom->laddr;
 	} else if (pInstrLoad->from->addrType == ircode::AddrType::ParaVar) {
 		com::Throw("May should not occur?", CODEPOS);
 	} else if (pInstrLoad->from->addrType == ircode::AddrType::LocalVar) {
 		auto * pLVarAddr = dynamic_cast<ircode::AddrLocalVariable *>(
 			pInstrLoad->from
 		);
-		pVRegRTo->laddr=std::make_shared<backend::LocalAddr>(dynamic_cast<ircode::AddrVariable *>(
-			pInstrLoad->from),true
-		);
 		convertLocalVar(pLVarAddr);
 	} else if (pInstrLoad->from->addrType == ircode::AddrType::GlobalVar) {
 		auto * pGVarAddr = dynamic_cast<ircode::AddrGlobalVariable *>(
 			pInstrLoad->from
-		);
-		pVRegRTo->laddr=std::make_shared<backend::LocalAddr>(dynamic_cast<ircode::AddrVariable *>(
-			pInstrLoad->from),true
 		);
 		convertGlobalVar(pGVarAddr);
 	} else {
@@ -56,23 +49,16 @@ int FuncInfo::run_Load_Float(ircode::InstrLoad * pInstrLoad) {
 	if (pInstrLoad->from->addrType == ircode::AddrType::Var) {
 		auto * pVRegRFrom = convertIntVariable(pInstrLoad->from);
 		defineUseTimelineVRegR[pVRegRFrom].emplace_back(tim);
-		pVRegSTo->laddr=pVRegRFrom->laddr;
 	} else if (pInstrLoad->from->addrType == ircode::AddrType::ParaVar) {
 		com::Throw("May should not occur?", CODEPOS);
 	} else if (pInstrLoad->from->addrType == ircode::AddrType::LocalVar) {
 		auto * pLVarAddr = dynamic_cast<ircode::AddrLocalVariable *>(
 			pInstrLoad->from
 		);
-		pVRegSTo->laddr=std::make_shared<backend::LocalAddr>(dynamic_cast<ircode::AddrVariable *>(
-			pInstrLoad->from),true
-		);
 		convertLocalVar(pLVarAddr);
 	} else if (pInstrLoad->from->addrType == ircode::AddrType::GlobalVar) {
 		auto * pGVarAddr = dynamic_cast<ircode::AddrGlobalVariable *>(
 			pInstrLoad->from
-		);
-		pVRegSTo->laddr=std::make_shared<backend::LocalAddr>(dynamic_cast<ircode::AddrVariable *>(
-			pInstrLoad->from),true
 		);
 		convertGlobalVar(pGVarAddr);
 	} else {
@@ -293,11 +279,9 @@ int FuncInfo::run(ircode::InstrStore * pInstrStore) {
 
 int FuncInfo::run_Store_Int(ircode::InstrStore * pInstrStore) {
 	auto * pFrom = pInstrStore->from;
-	backend::VRegR * pvr= nullptr;
 	if (pFrom->addrType == ircode::AddrType::Var) {
 		auto * pVarFrom = dynamic_cast<ircode::AddrVariable *>(pFrom);
 		auto * pVRegR = convertIntVariable(pVarFrom);
-		pvr=pVRegR;
 		defineUseTimelineVRegR[pVRegR].emplace_back(tim);
 	} else if (pFrom->addrType == ircode::AddrType::ParaVar) {
 		auto * pVarFrom = dynamic_cast<ircode::AddrPara *>(pFrom);
@@ -313,34 +297,22 @@ int FuncInfo::run_Store_Int(ircode::InstrStore * pInstrStore) {
 		auto * pVarTo = dynamic_cast<ircode::AddrVariable *>(pTo);
 		com::Assert(pVarTo->getType().type == sup::Type::Pointer_t, "", CODEPOS);
 		auto * pVRegR = convertIntVariable(pVarTo);
-		if(pvr){
-			//delete pvr->laddr;
-			pvr->laddr=pVRegR->laddr;
-		}
 		defineUseTimelineVRegR[pVRegR].emplace_back(tim);
 	} else if (pTo->addrType == ircode::AddrType::LocalVar) {
 		auto * pLVarTo = dynamic_cast<ircode::AddrLocalVariable *>(pTo);
 		convertLocalVar(pLVarTo);
-		if(pvr){
-			pvr->laddr=std::make_shared<backend::LocalAddr>(pTo,true);
-		}
 	} else if (pTo->addrType == ircode::AddrType::GlobalVar) {
 		auto * pGVarTo = dynamic_cast<ircode::AddrGlobalVariable *>(pTo);
 		convertGlobalVar(pGVarTo);
-		if(pvr){
-			pvr->laddr=std::make_shared<backend::LocalAddr>(pTo,true);
-		}
 	} else { com::Throw("", CODEPOS); }
 	return 0;
 }
 
 int FuncInfo::run_Store_Float(ircode::InstrStore * pInstrStore) {
 	auto * pFrom = pInstrStore->from;
-	backend::VRegS * pvs=nullptr;
 	if (pFrom->addrType == ircode::AddrType::Var) {
 		auto * pVarFrom = dynamic_cast<ircode::AddrVariable *>(pFrom);
 		auto * pVRegS = convertFloatVariable(pVarFrom);
-		pvs=pVRegS;
 		defineUseTimelineVRegS[pVRegS].emplace_back(tim);
 	} else if (pFrom->addrType == ircode::AddrType::ParaVar) {
 		auto * pVarFrom = dynamic_cast<ircode::AddrPara *>(pFrom);
@@ -356,19 +328,12 @@ int FuncInfo::run_Store_Float(ircode::InstrStore * pInstrStore) {
 		auto * pVarTo = dynamic_cast<ircode::AddrVariable *>(pTo);
 		com::Assert(pVarTo->getType().type == sup::Type::Pointer_t, "", CODEPOS);
 		auto * pVRegR = convertIntVariable(pVarTo);
-		if(pvs) pvs->laddr=pVRegR->laddr;
 		defineUseTimelineVRegR[pVRegR].emplace_back(tim);
 	} else if (pTo->addrType == ircode::AddrType::LocalVar) {
 		auto * pLVarTo = dynamic_cast<ircode::AddrLocalVariable *>(pTo);
-		if(pvs){
-			pvs->laddr=std::make_shared<backend::LocalAddr>(pTo,true);
-		}
 		convertLocalVar(pLVarTo);
 	} else if (pTo->addrType == ircode::AddrType::GlobalVar) {
 		auto * pGVarTo = dynamic_cast<ircode::AddrGlobalVariable *>(pTo);
-		if(pvs){
-			pvs->laddr=std::make_shared<backend::LocalAddr>(pTo,true);
-		}
 		convertGlobalVar(pGVarTo);
 	} else { com::Throw("", CODEPOS); }
 	return 0;

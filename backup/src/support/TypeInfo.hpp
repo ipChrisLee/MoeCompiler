@@ -42,6 +42,8 @@ class TypeInfo
 	explicit TypeInfo(Type type);
 
 	[[nodiscard]] std::string toLLVMIR() const override = 0;
+
+	[[nodiscard]] virtual int getSize() const = 0;
 };
 
 class IntType :
@@ -60,6 +62,8 @@ class IntType :
 	IntType(IntType &&) = default;
 
 	[[nodiscard]] std::string toLLVMIR() const override;
+
+	[[nodiscard]] int getSize() const override;
 };
 
 class FloatType :
@@ -78,6 +82,8 @@ class FloatType :
 	FloatType(FloatType &&) = default;
 
 	[[nodiscard]] std::string toLLVMIR() const override;
+
+	[[nodiscard]] int getSize() const override;
 };
 
 class IntArrayType :
@@ -100,6 +106,8 @@ class IntArrayType :
 	[[nodiscard]] std::string toLLVMIR() const override;
 
 	bool operator==(const TypeInfo & typeInfo) const override;
+
+	int getSize() const override;
 };
 
 class FloatArrayType :
@@ -122,6 +130,8 @@ class FloatArrayType :
 	[[nodiscard]] std::string toLLVMIR() const override;
 
 	bool operator==(const TypeInfo & typeInfo) const override;
+
+	int getSize() const override;
 };
 
 class PointerType :
@@ -153,6 +163,8 @@ class PointerType :
 			return *pointTo;
 		}
 	}
+
+	[[nodiscard]] int getSize() const override;
 };
 
 class BoolType :
@@ -171,6 +183,8 @@ class BoolType :
 	BoolType(BoolType &&) = default;
 
 	[[nodiscard]] std::string toLLVMIR() const override;
+
+	[[nodiscard]] int getSize() const override;
 };
 
 class VoidType :
@@ -189,8 +203,12 @@ class VoidType :
 	VoidType(VoidType &&) = default;
 
 	[[nodiscard]] std::string toLLVMIR() const override;
+
+	[[nodiscard]] int getSize() const override;
 };
 
 std::unique_ptr<TypeInfo> typeDeduce(const TypeInfo & from, size_t dep);
+
+std::unique_ptr<TypeInfo> typeDeduceForBackend(const TypeInfo & from, size_t dep);
 
 }

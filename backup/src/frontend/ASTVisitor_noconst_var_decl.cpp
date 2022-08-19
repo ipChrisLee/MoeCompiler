@@ -24,7 +24,7 @@ antlrcpp::Any ASTVisitor::visitUninitVarDef(SysYParser::UninitVarDefContext * ct
 		bTypeToTypeInfoUPtr(info.var.btype, info.var.shapeOfDefiningVar);
 	if (info.stat.inGlobal) {
 		auto pAddr = ir.addrPool.emplace_back(
-			ircode::AddrGlobalVariable(*varTypInfo, varname)
+			ircode::AddrGlobalVariable(*varTypInfo, varname, false)
 		);
 		symbolTable.pScopeNow->bindDominateVar(
 			varname, IdType::GlobalVarName, pAddr
@@ -32,7 +32,7 @@ antlrcpp::Any ASTVisitor::visitUninitVarDef(SysYParser::UninitVarDefContext * ct
 		return nullptr;
 	} else {
 		auto pAddr = ir.addrPool.emplace_back(
-			ircode::AddrLocalVariable(*varTypInfo, varname)
+			ircode::AddrLocalVariable(*varTypInfo, varname, false)
 		);
 		auto instrsRes = std::list<ircode::IRInstr *>();
 		instrsRes.emplace_back(
@@ -74,17 +74,16 @@ antlrcpp::Any ASTVisitor::visitInitVarDef(SysYParser::InitVarDefContext * ctx) {
 		setWithAutoRestorer(info.var.idxView, IdxView(info.var.shapeOfDefiningVar));
 		setWithAutoRestorer(info.var.ndim, -1);
 		setWithAutoRestorer(info.var.staticArrayItems, {});
-		ctx->initVal()->accept(this);
 		//  Create addr of static var.
-		auto pSV = fromArrayItemsToStaticValue(
-			ir, info.var.staticArrayItems, info.var.shapeOfDefiningVar, *eleTypeInfo
-		);
 		auto pAddr = ir.addrPool.emplace_back(
-			ircode::AddrGlobalVariable(*varTypeInfo, varName, *pSV)
+			ircode::AddrGlobalVariable(*varTypeInfo, varName, false)
 		);
+		setWithAutoRestorer(info.var.pAddrGlobalVarDefining, std::move(pAddr));//NOLINT
 		symbolTable.pScopeNow->bindDominateVar(
 			varName, IdType::GlobalVarName, pAddr
 		);
+		//  visit
+		ctx->initVal()->accept(this);
 		return nullptr;
 	} else {
 		auto instrsRes = std::list<ircode::IRInstr *>();
@@ -93,23 +92,24 @@ antlrcpp::Any ASTVisitor::visitInitVarDef(SysYParser::InitVarDefContext * ctx) {
 		setWithAutoRestorer(info.var.idxView, IdxView(info.var.shapeOfDefiningVar));
 		setWithAutoRestorer(info.var.ndim, -1);
 		setWithAutoRestorer(info.var.localArrayItems, {});
-		ctx->initVal()->accept(this);
+		//  create addr
 		auto pVarAddr = ir.addrPool.emplace_back(
-			ircode::AddrLocalVariable(*varTypeInfo, varName)
+			ircode::AddrLocalVariable(*varTypeInfo, varName, false)
 		);
 		instrsRes.emplace_back(
 			ir.instrPool.emplace_back(
 				ircode::InstrAlloca(pVarAddr)
 			)
 		);
+		symbolTable.pScopeNow->bindDominateVar(
+			varName, IdType::LocalVarName, pVarAddr
+		);
+		ctx->initVal()->accept(this);
 		instrsRes.splice(
 			instrsRes.end(), fromArrayItemsToInstrs(
 				ir, std::move(info.var.localArrayItems), info.var.shapeOfDefiningVar,
 				pVarAddr, *eleTypeInfo
 			)
-		);
-		symbolTable.pScopeNow->bindDominateVar(
-			varName, IdType::LocalVarName, pVarAddr
 		);
 		retInstrs.save(std::move(instrsRes));
 		return nullptr;
@@ -121,16 +121,20 @@ ASTVisitor::visitScalarInitVal(SysYParser::ScalarInitValContext * ctx) {
 	// initVal -> exp # scalarInitVal
 	ctx->exp()->accept(this);
 	if (info.stat.inGlobal) {
-		info.var.staticArrayItems.emplace_back(
-			info.var.idxView.idx, retVal.restore<std::unique_ptr<StaticValue>>()
+		auto upStaticValue = retVal.restore<std::unique_ptr<StaticValue>>();
+		info.var.pAddrGlobalVarDefining->uPtrStaticValue->insertValue(
+			info.var.idxView.idx, *upStaticValue
 		);
 	} else {
 		auto * pAddr = retVal.restore<ircode::AddrOperand *>();
 		auto instrs = retInstrs.restore<std::list<ircode::IRInstr *>>();
-		info.var.localArrayItems.emplace_back(
-			info.var.idxView.idx, std::move(pAddr), std::move(instrs)//NOLINT
+		info.var.localArrayItems.insert(
+			ArrayItem<ircode::AddrOperand *>(
+				info.var.idxView.idx, std::move(pAddr), std::move(instrs)//NOLINT
+			)
 		);
 	}
+
 	if (info.var.definingArray()) {
 		info.var.idxView.addOnDimN(-1, 1);
 	}
@@ -139,16 +143,19 @@ ASTVisitor::visitScalarInitVal(SysYParser::ScalarInitValContext * ctx) {
 
 antlrcpp::Any ASTVisitor::visitListInitval(SysYParser::ListInitvalContext * ctx) {
 	// initVal -> '{' (initVal (',' initVal)* )? '}' # listInitval
+	auto added = false;
 	info.var.idxView.set0AfterNDim(info.var.ndim);
 	++info.var.ndim;
 	//  visiting elements index on `ndim`
-	for (auto p: ctx->initVal()) { p->accept(this); }
-	--info.var.ndim;
-	if (info.var.ndim != -1) {
-		info.var.idxView.addOnDimN(info.var.ndim, 1);
-		info.var.idxView.set0AfterNDim(info.var.ndim);
+	for (auto p: ctx->initVal()) {
+		p->accept(this);
+		added = true;
 	}
-	// TODO?
+	--info.var.ndim;
+	if (!info.var.idxView.isAll0AfterNDim(info.var.ndim) || !added) {
+		info.var.idxView.set0AfterNDimAndCarry(info.var.ndim);
+
+	}
 	return nullptr;
 }
 

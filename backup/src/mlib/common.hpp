@@ -37,6 +37,7 @@ std::string concatToString(std::initializer_list<std::string> listOfStr);
 class MException : public std::exception {
   public:
 	std::string msg = std::string();
+	int exitCode = -1;
 
 	MException() = default;
 
@@ -158,6 +159,11 @@ To * dynamic_cast_uPtr_get(std::unique_ptr<From> & fromP) {
 	return dynamic_cast<To *>(fromP.get());
 }
 
+template<typename To, typename From>
+To * dynamic_cast_uPtr_get(const std::unique_ptr<From> & fromP) {
+	return dynamic_cast<To *>(fromP.get());
+}
+
 template<typename T, typename ... Ts>
 constexpr bool isTypeTInTypesTs() {
 	return std::disjunction_v<std::is_same<T, Ts>...>;
@@ -276,6 +282,26 @@ bool in(T val, std::initializer_list<T> enumSet) {
 }
 
 }
+template<typename FT, typename ST>
+class BiMap {
+  protected:
+	std::map<FT, ST> f2s;
+	std::map<ST, FT> s2f;
+  public:
+	void emplace_back(const FT & fT, const ST & sT) {
+		f2s[fT] = sT;
+		s2f[sT] = fT;
+	}
+
+	ST & getST(const FT & fT) { return f2s[fT]; }
+
+	FT & getFT(const ST & sT) { return s2f[sT]; }
+
+
+	const std::map<FT, ST> & getF2S() const { return f2s; }
+
+	const std::map<ST, FT> & getS2F() const { return s2f; }
+};
 }
 
 #ifndef __CONCAT

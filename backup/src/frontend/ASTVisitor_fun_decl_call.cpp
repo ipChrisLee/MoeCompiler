@@ -11,7 +11,7 @@ antlrcpp::Any ASTVisitor::visitFuncDef(SysYParser::FuncDefContext * ctx) {
 	ctx->funcType()->accept(this);
 	auto funcType = retVal.restore<FuncType>();
 	auto funName = ctx->Identifier()->getText();
-	//  Visit funcFParams to get parameters information.
+	//  Visit funcFParams to get paramsInfoOnCallingThis information.
 	auto funcDeclScope = symbolTable.pScopeNow;
 	setWithAutoRestorer(symbolTable.pScopeNow, symbolTable.pScopeNow->addSonScope());
 	std::vector<ircode::AddrPara *> params;
@@ -21,7 +21,7 @@ antlrcpp::Any ASTVisitor::visitFuncDef(SysYParser::FuncDefContext * ctx) {
 	}
 	//  Create Addr of function and retval and ret bock label.
 	ircode::AddrFunction * pAddrFun = nullptr;
-	ircode::AddrVariable * pRetvalMem = nullptr;
+	ircode::AddrLocalVariable * pRetvalMem = nullptr;
 	setWithAutoRestorer(info.func.pRetBlockLabel,
 	                    ir.addrPool.emplace_back(ircode::AddrJumpLabel("return")));
 	switch (funcType) {
@@ -37,8 +37,8 @@ antlrcpp::Any ASTVisitor::visitFuncDef(SysYParser::FuncDefContext * ctx) {
 				ircode::AddrFunction(funName, params, FloatType())
 			);
 			pRetvalMem = ir.addrPool.emplace_back(
-				ircode::AddrVariable(
-					PointerType(FloatType()), "retval"
+				ircode::AddrLocalVariable(
+					FloatType(), "retval", false
 				)
 			);
 			break;
@@ -48,8 +48,8 @@ antlrcpp::Any ASTVisitor::visitFuncDef(SysYParser::FuncDefContext * ctx) {
 				ircode::AddrFunction(funName, params, IntType())
 			);
 			pRetvalMem = ir.addrPool.emplace_back(
-				ircode::AddrVariable(
-					PointerType(IntType()), "retval"
+				ircode::AddrLocalVariable(
+					IntType(), "retval", false
 				)
 			);
 			break;
@@ -65,7 +65,7 @@ antlrcpp::Any ASTVisitor::visitFuncDef(SysYParser::FuncDefContext * ctx) {
 	auto funcDef = ircode::IRFuncDef(pAddrFun);
 	for (const auto & pAddrPara: params) {
 		auto pParaMemAddr = ir.addrPool.emplace_back(
-			ircode::AddrLocalVariable(pAddrPara->getType(), pAddrPara->getName())
+			ircode::AddrLocalVariable(pAddrPara->getType(), pAddrPara->getName(), false)
 		);
 		symbolTable.pScopeNow->bindDominateVar(
 			pAddrPara->getName(), IdType::ParameterName, pParaMemAddr

@@ -1,4 +1,5 @@
 #include "backendPass.hpp"
+#include <climits>
 
 
 namespace pass {
@@ -159,7 +160,7 @@ std::string FuncInfo::toASM() {
 
 int FuncInfo::run() {
 	tim = 0;
-	loop_labels=0;
+	loop_label=0;
 	for (auto * pInstr: pFuncDef->instrs) {
 		run(pInstr);
 	}
@@ -454,6 +455,18 @@ int FuncInfo::run(ircode::IRInstr * pInstr) {
 			retVal = run(dynamic_cast<ircode::InstrConversionOp *>(pInstr));
 			break;
 		}
+		case ircode::InstrType::ParaMov: {
+			retVal = run(dynamic_cast<ircode::InstrParaMov *>(pInstr));
+			break;
+		}
+		case ircode::InstrType::Copy: {
+			retVal = run(dynamic_cast<ircode::InstrParallelCopy *>(pInstr));
+			break;
+		}
+		case ircode::InstrType::Mark: {
+			retVal = run(dynamic_cast<ircode::InstrMarkVars *>(pInstr));
+			break;
+		}
 		default: {
 			com::Throw("", CODEPOS);
 		}
@@ -532,6 +545,18 @@ std::string FuncInfo::toASM(ircode::IRInstr * pInstr) {
 			res += toASM(dynamic_cast<ircode::InstrFptosi *>(pInstr));
 			break;
 		}
+		case ircode::InstrType::ParaMov: {
+			res += toASM(dynamic_cast<ircode::InstrParaMov *>(pInstr));
+			break;
+		}
+		case ircode::InstrType::Copy: {
+			res += toASM(dynamic_cast<ircode::InstrParallelCopy *>(pInstr));
+			break;
+		}
+		case ircode::InstrType::Mark: {
+			res += toASM(dynamic_cast<ircode::InstrMarkVars *>(pInstr));
+			break;
+		}
 		default: {
 			com::Throw("", CODEPOS);
 		}
@@ -541,8 +566,8 @@ std::string FuncInfo::toASM(ircode::IRInstr * pInstr) {
 
 int FuncInfo::run(ircode::InstrLabel * pInstrLabel) {
 	convertLabel(pInstrLabel->pAddrLabel);
-	if(pInstrLabel->pAddrLabel->labelName==WHILE_ST) loop_labels++;
-	else if(pInstrLabel->pAddrLabel->labelName==WHILE_ED) loop_labels--;
+	if(pInstrLabel->pAddrLabel->labelName==WHILE_ST) loop_label++;
+	else if(pInstrLabel->pAddrLabel->labelName==WHILE_ED) loop_label--;
 	return 0;
 }
 
@@ -696,26 +721,6 @@ int FuncInfo::run(ircode::InstrGetelementptr * pInstrGetelementptr) {
 		markOperand(p);
 	}
 	markOperand(pInstrGetelementptr->to);
-	auto * pRegTo=convertIntVariable(pInstrGetelementptr->to);
-	if(pInstrGetelementptr->from->addrType==ircode::AddrType::LocalVar||
-			pInstrGetelementptr->from->addrType==ircode::AddrType::GlobalVar){
-		pRegTo->laddr=std::make_shared<backend::LocalAddr>(pInstrGetelementptr->from,false);
-	}
-	else {
-		auto * pRegFrom=convertIntVariable(pInstrGetelementptr->from);
-		pRegTo->laddr=std::make_shared<backend::LocalAddr>(*pRegFrom->laddr);
-	}
-	for(auto *p:pInstrGetelementptr->idxs){
-		if(p->addrType==ircode::AddrType::StaticValue){
-			auto pvalue=dynamic_cast<ircode::AddrStaticValue *>(p);
-			auto static_value=&pvalue->getStaticValue();
-			if(typeid(*static_value)==typeid(sup::IntStaticValue)){
-				auto intv=dynamic_cast<const sup::IntStaticValue *>(static_value);
-				pRegTo->laddr->idx.push_back(intv->value);
-			}
-		}
-		else pRegTo->laddr->idx.push_back(p->id);
-	}
 	return 0;
 }
 
@@ -979,6 +984,5 @@ std::string FuncInfo::toASM(ircode::InstrFptosi * pInstrFptosi) {
 	} else { com::Throw("", CODEPOS); }
 	return res;
 }
-
 
 }

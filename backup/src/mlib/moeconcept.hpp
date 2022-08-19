@@ -5,6 +5,7 @@
 #include <functional>
 #include <memory>
 #include <type_traits>
+#include <list>
 
 #include "common.hpp"
 
@@ -25,12 +26,12 @@ struct Stringable {
 };
 
 /*  Interface of storing object to string.
- *  e.g. :
+ *  e.get. :
  *      struct S : public storable{
  *          int x[2];
  *          S(){ x[0]=rand();x[1]=rand(); }
  *          virtual std::string defaultGetContent() override {
- *              return std::to_string(x[0])+","+std::to_string(x[1]);
+ *              return std::to_string(x[0])+","+std::to_asm(x[1]);
  *          }
  *          static int Main(){ S s;s.store("x.log");s.store("y.log",&S::defaultContent); }
  *      };
@@ -46,7 +47,7 @@ struct Storable {
 		ofs.close();
 		return ofs.good();
 	}
-	
+
 	virtual bool store(
 		const std::string & filePath
 	) final {
@@ -56,7 +57,7 @@ struct Storable {
 		ofs.close();
 		return ofs.good();
 	}
-	
+
 	virtual std::string defaultGetContent() {
 		return "Storable::defaultGetContent\n";
 	}
@@ -81,13 +82,13 @@ class Cloneable {
   protected:
 	[[nodiscard]] virtual std::unique_ptr<Cloneable>
 	_cloneToUniquePtr() const = 0;
-  
+
   public:
 	[[nodiscard]] virtual std::unique_ptr<Cloneable>
 	cloneToUniquePtr() const final {
 		std::unique_ptr<Cloneable> clonedUniquePtr = _cloneToUniquePtr();
-		Cloneable * clonedPtr =
-			clonedUniquePtr.get(); /* NOLINT */ // For `-Wpotentially-evaluated-expression`.
+		Cloneable * clonedPtr = clonedUniquePtr.get();//NOLINT
+		// For `-Wpotentially-evaluated-expression`.
 		if (typeid(*clonedPtr) != typeid(*this)) {
 			com::Throw(
 				com::concatToString(
@@ -98,22 +99,23 @@ class Cloneable {
 						typeid(*this).name(),
 						"]. Check if you have implemented `_cloneToUniquePtr` method of type",
 						typeid(*this).name(),
-						" first."}
+						" first."
+					}
 				));
 		}
 		return clonedUniquePtr;
 	}
-	
+
 	virtual ~Cloneable() = default;
 };
 
 class Cutable {
   protected:
 	[[nodiscard]] virtual std::unique_ptr<Cutable> _cutToUniquePtr() = 0;
-  
+
   public:
 	virtual ~Cutable() = default;
-	
+
 	friend std::unique_ptr<Cutable> com::cutToUniquePtr(Cutable && o);
 };
 
@@ -147,5 +149,71 @@ cloneable_cast_uPtr(std::unique_ptr<moeconcept::Cloneable> && fromP) {
 		));
 	return std::unique_ptr<To>(p);
 }
+
+}
+
+namespace moeconcept {
+template<typename B>
+class Pool {
+  private:
+	std::list<B *> vec;
+  protected:
+	std::vector<std::unique_ptr<B>> pool;
+	std::function<void(B *)> afterEmplace;
+  public:
+	explicit Pool(std::function<void(B *)> afterEmplace = nullptr) :
+		afterEmplace(afterEmplace) {
+	}
+
+	Pool(const Pool &) = delete;
+	Pool(Pool &&) = default;
+
+	auto begin() { return vec.begin(); }
+
+	auto end() { return vec.end(); }
+
+	auto begin() const { return vec.begin(); }
+
+	auto end() const { return vec.end(); }
+
+	void erase(B * p) {
+		auto itP = vec.begin();
+		while (itP != vec.end()) {
+			if (*itP == p) {
+				vec.erase(itP);
+				break;
+			}
+			itP = std::next(itP);
+		}
+	}
+
+	template<
+		typename T,
+		class = typename std::enable_if<
+			!std::is_lvalue_reference<T>::value && std::is_base_of<B, T>::value
+		>::type
+	>
+	T * emplace_back(T && t) {
+		pool.emplace_back(std::make_unique<T>(std::forward<T>(t)));
+		B * p = pool.rbegin()->get();
+		vec.template emplace_back(p);
+		if (afterEmplace) { afterEmplace(p); }
+		return reinterpret_cast<T *>(p);
+	}
+
+	template<
+		typename T,
+		class = typename std::enable_if<
+			!std::is_lvalue_reference<T>::value && std::is_base_of<B, T>::value
+		>::type
+	>
+	T * emplace_back(std::unique_ptr<B> && t) {
+		pool.emplace_back(std::forward<>(t));
+		B * p = pool.rbegin()->get();
+		vec.template emplace_back(p);
+		if (afterEmplace) { afterEmplace(p); }
+		return reinterpret_cast<T *>(p);
+	}
+};
 
 }

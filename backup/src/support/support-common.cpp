@@ -1,5 +1,6 @@
 #include "support-common.hpp"
 #include <sstream>
+#include <bitset>
 
 
 namespace sup {
@@ -76,8 +77,10 @@ std::string floatToString(float f) {
 	if (SysY::options.floatDecFormat.get()) {
 		sprintf(buf, "%f", f);
 	} else {
-		double d = f;
-		return valueToHexInBigEndian(&d, 8);
+		double d=f;
+		std::bitset<64> b = *reinterpret_cast<uint64_t *>(&d);
+		auto l=b.to_ullong();
+		return valueToHexInBigEndian(&l,8);
 	}
 	return buf;
 }

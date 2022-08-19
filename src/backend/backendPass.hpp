@@ -20,7 +20,7 @@ class FuncInfo {
   protected:
 	//  OpndPool for this func
 	backend::OpndPool & opndPool;
-	int loop_labels;
+
 	//  mir::AddrFunction           ->      FuncInfo(include Label)
 	std::map<ircode::AddrFunction *, FuncInfo *> & m_AddrFunc_FuncInfo;
 	//  mir::AddrGlobalVariable     ->      Label
@@ -66,6 +66,7 @@ class FuncInfo {
 
 	backend::Opnd * markOperand(ircode::AddrOperand * pAddrOperand);
   public:
+	size_t loop_label;
 	//  IRFuncDef of this function
 	ircode::IRFuncDef * pFuncDef;
 	//  backend::Label of this function
@@ -149,7 +150,7 @@ class FuncInfo {
 	genASMLoadFloat(std::string & res, float val, backend::SId to, backend::RId scratchRId);
 
 	static backend::RId
-	genASMLoadFloatToRReg(std::string & res, float val, backend::RId ridDest);
+	genASMLoadFloatToRReg(std::string & res, float val, backend::RId destId);
 
 	static backend::RId
 	genASMLoadLabel(std::string & res, backend::Label * pLabel, backend::RId to);
@@ -190,6 +191,18 @@ class FuncInfo {
 	static void
 	genASMSaveFromSRegToOffset(
 		std::string & res, backend::SId sidFrom, int offset, backend::RId scratchReg
+	);
+
+	static void
+	genASMSaveFromVRegRToVRegR(
+		std::string & res, backend::VRegR * pVRegRFrom, backend::VRegR * pVRegRTo,
+		backend::RId scratchRId, backend::RId scratchRId1
+	);
+
+	static void
+	genASMSaveFromVRegSToVRegS(
+		std::string & res, backend::VRegS * pVRegSFrom, backend::VRegS * pVRegSTo,
+		backend::RId scratchRId, backend::RId scratchRId1
 	);
 
 	[[nodiscard]] static std::string
@@ -274,6 +287,16 @@ class FuncInfo {
 	std::string toASM(ircode::InstrSitofp * pInstrSitofp);
 	std::string toASM(ircode::InstrFptosi * pInstrFptosi);
 
+	int run(ircode::InstrParaMov * pInstrParaMov);
+	std::string toASM(ircode::InstrParaMov * pInstrParaMov);
+
+	int run(ircode::InstrParallelCopy * pInstrCopy);
+	std::string toASM(ircode::InstrParallelCopy * pInstrCopy);
+	std::string toASM_Copy_Int(ircode::InstrParallelCopy * pInstrCopy);
+	std::string toASM_Copy_Float(ircode::InstrParallelCopy * pInstrCopy);
+
+	int run(ircode::InstrMarkVars * pInstrMark);
+	std::string toASM(ircode::InstrMarkVars * pInstrMark);
 };
 
 class ToASM : public IRPass {

@@ -7,6 +7,7 @@
 
 #include "IR/IRInstr.hpp"
 #include "IR/IRModule.hpp"
+#include "support/Idx.hpp"
 
 
 namespace frontend {
@@ -24,14 +25,11 @@ struct IdxView {
 	IdxView & operator=(IdxView && idxView) = default;
 
 	void addOnDimN(int n, int a = 1);
-
 	void set0AfterNDim(int n);
-
+	void set0AfterNDimAndCarry(int n);
+	bool isAll0AfterNDim(int n);
 	int getPos() const;
-
 	int getStride() const;
-
-	std::string idxToStr() const;
 };
 
 template<typename T>
@@ -39,6 +37,11 @@ struct ArrayItem {
 	//  `T` is `std::unique_ptr<sup::StaticValue>` for const array and global array.
 	//  `T` is `ircode::AddrOperand *` for local non-const array.
 	std::vector<int> idx;
+
+	bool operator<(const ArrayItem & other) const {
+		return idx < other.idx;
+	}
+
 	T val;
 	/**
 	 * @brief Instructions to init value in position idx.
@@ -51,23 +54,14 @@ struct ArrayItem {
 		std::vector<int> idx, T && val,
 		std::list<ircode::IRInstr *> instrsToInit = { }
 	) : idx(std::move(idx)), val(std::move(val)),
-	    instrsToInit(std::move(instrsToInit)) {}
-
-	int getPos(const std::vector<int> & shape) const {
-		int step = 1, pos = 0;
-		for (auto iIdx = idx.rbegin(), iShape = shape.rbegin(); iIdx != idx.rend();
-		     ++iIdx, ++iShape) {
-			pos += *iIdx * step;
-			step *= *iShape;
-		}
-		return pos;
+	    instrsToInit(std::move(instrsToInit)) {
 	}
 };
 
 
 std::list<ircode::IRInstr *> fromArrayItemsToInstrs(
 	ircode::IRModule & ir,
-	std::vector<ArrayItem<ircode::AddrOperand *>> && items,
+	std::set<ArrayItem<ircode::AddrOperand *>> && items,
 	const std::vector<int> & shape,
 	ircode::AddrVariable * varMemBaseAddr,
 	const sup::TypeInfo & typeOfElement
@@ -75,7 +69,7 @@ std::list<ircode::IRInstr *> fromArrayItemsToInstrs(
 
 std::unique_ptr<sup::StaticValue> fromArrayItemsToStaticValue(
 	ircode::IRModule & ir,
-	const std::vector<ArrayItem<std::unique_ptr<sup::StaticValue>>> & items,
+	const std::set<ArrayItem<std::unique_ptr<sup::StaticValue>>> & items,
 	const std::vector<int> & shape,
 	const sup::TypeInfo & typeOfElement
 );

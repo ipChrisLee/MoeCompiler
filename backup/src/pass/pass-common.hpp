@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <stlpro.hpp>
+
 #include "IR/IRModule.hpp"
 #include "IR/IRInstr.hpp"
 
@@ -28,10 +30,5 @@ class IRPass {
 };
 
 int passMain(ircode::IRModule & ir);
-
-template<typename Iter>
-typename std::iterator_traits<Iter>::value_type & g(Iter & it) {
-	return *it;
-}
 
 }

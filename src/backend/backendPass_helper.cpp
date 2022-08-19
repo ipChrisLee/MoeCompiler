@@ -449,7 +449,46 @@ std::string FuncInfo::genASMBranchInstrs(
 		res += backend::toASM("bx" + cond, scratchRId);
 		return res;
 	}
+}
 
+void FuncInfo::genASMSaveFromVRegRToVRegR(
+	std::string & res, backend::VRegR * pVRegRFrom, backend::VRegR * pVRegRTo,
+	backend::RId scratchRId, backend::RId scratchRId1
+) {
+	if (pVRegRFrom->rid == backend::RId::stk) {
+		if (pVRegRTo->rid == backend::RId::stk) {
+			genASMDerefStkPtr(res, pVRegRFrom->offset, scratchRId);
+			genASMSaveFromRRegToOffset(res, scratchRId, pVRegRTo->offset, scratchRId1);
+		} else if (backend::isGPR(pVRegRTo->rid)) {
+			genASMDerefStkPtr(res, pVRegRFrom->offset, pVRegRTo->rid);
+		} else { com::Throw("", CODEPOS); }
+	} else if (backend::isGPR(pVRegRFrom->rid)) {
+		if (pVRegRTo->rid == backend::RId::stk) {
+			genASMSaveFromRRegToOffset(res, pVRegRFrom->rid, pVRegRTo->offset, scratchRId);
+		} else if (backend::isGPR(pVRegRTo->rid)) {
+			res += backend::toASM("mov", pVRegRTo->rid, pVRegRFrom->rid);
+		} else { com::Throw("", CODEPOS); }
+	} else { com::Throw("", CODEPOS); }
+}
+
+void FuncInfo::genASMSaveFromVRegSToVRegS(
+	std::string & res, backend::VRegS * pVRegSFrom, backend::VRegS * pVRegSTo,
+	backend::RId scratchRId, backend::RId scratchRId1
+) {
+	if (pVRegSFrom->sid == backend::SId::stk) {
+		if (pVRegSTo->sid == backend::SId::stk) {
+			genASMDerefStkPtr(res, pVRegSFrom->offset, scratchRId);
+			genASMSaveFromRRegToOffset(res, scratchRId, pVRegSTo->offset, scratchRId1);
+		} else if (backend::isGPR(pVRegSTo->sid)) {
+			genASMDerefStkPtrToSReg(res, pVRegSFrom->offset, pVRegSTo->sid, scratchRId);
+		} else { com::Throw("", CODEPOS); }
+	} else if (backend::isGPR(pVRegSFrom->sid)) {
+		if (pVRegSTo->sid == backend::SId::stk) {
+			genASMSaveFromSRegToOffset(res, pVRegSFrom->sid, pVRegSTo->offset, scratchRId);
+		} else if (backend::isGPR(pVRegSTo->sid)) {
+			res += backend::toASM("vmov", pVRegSTo->sid, pVRegSFrom->sid);
+		} else { com::Throw("", CODEPOS); }
+	} else { com::Throw("", CODEPOS); }
 }
 
 }

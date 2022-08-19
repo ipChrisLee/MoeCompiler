@@ -68,6 +68,8 @@ class Options {
 
 	struct WithoutAnyPass : public Option<bool, false> {
 	} withoutAnyPass;
+	struct EmitDeSSA : public Option<bool, false> {
+	} emitDeSsa;
 };
 
 extern Options options;

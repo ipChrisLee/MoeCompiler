@@ -50,30 +50,14 @@ bool isCallerSave(RId rid);
 bool isCalleeSave(RId rid);
 std::string to_asm(RId rid);
 
-typedef struct LocalAddr{
-	ircode::AddrVariable * local_v;
-	bool valorarray_t;
-	std::vector<int> idx;
-	LocalAddr(ircode::AddrVariable * local_v ,bool va){
-		this->local_v=local_v;
-		valorarray_t=va;
-	}
-	//void setIdx(int idx){this->idx.insert(idx);}
-	bool operator==(const LocalAddr &op) const{
-		if(valorarray_t!=op.valorarray_t) return false;
-		else return (local_v->id==op.local_v->id)&&(valorarray_t==true?true:(idx==op.idx));
-	}
-}LocalAddr;
-
 class VRegR : public Opnd {
   protected:
   public:
-  	size_t expense=0;
+	size_t expense=0;
 	[[nodiscard]] OpndType getOpndType() const override;
 
 	RId rid;
 	int offset;
-	std::shared_ptr<LocalAddr> laddr;
 
 	explicit VRegR(RId rid, int offset = INT_MIN);
 };
@@ -100,11 +84,12 @@ std::string to_asm(SId sid);
 class VRegS : public Opnd {
   protected:
   public:
-	[[nodiscard]] OpndType getOpndType() const override;
 	size_t expense=0;
+	[[nodiscard]] OpndType getOpndType() const override;
+
 	SId sid;
 	int offset;
-	std::shared_ptr<LocalAddr> laddr;
+
 	explicit VRegS(SId sid, int offset = INT_MIN);
 };
 

@@ -18,6 +18,17 @@ namespace ircode {
 
 class AddrPara;
 
+enum class AddrType {
+	Err,
+	StaticValue,
+	Var,
+	LocalVar,
+	GlobalVar,
+	ParaVar,
+	JumpLabel,
+	Func,
+};
+
 class IRAddr :
 	public sup::LLVMable,
 	public moeconcept::Cloneable,
@@ -27,11 +38,12 @@ class IRAddr :
 
 	std::unique_ptr<Cutable> _cutToUniquePtr() override = 0;
 
+	IRAddr();
+
 	static int cnt;
   public:
 	const int id;
-
-	IRAddr();
+	AddrType addrType = AddrType::Err;
 
 	IRAddr(const IRAddr &);
 
@@ -50,11 +62,12 @@ class AddrOperand :
 	public IRAddr {
   protected:
 	std::unique_ptr<sup::TypeInfo> uPtrTypeInfo;
-  public:
 
 	explicit AddrOperand(const sup::TypeInfo & typeInfo);
 
 	explicit AddrOperand(std::unique_ptr<sup::TypeInfo> && uPtrTypeInfo);
+
+  public:
 
 	AddrOperand(const AddrOperand &);
 
@@ -176,21 +189,9 @@ class AddrGlobalVariable :
 	std::unique_ptr<Cutable> _cutToUniquePtr() override;
 
 	//  For every global variable, it has its own static init value!
+  public:
 	std::unique_ptr<sup::StaticValue> uPtrStaticValue;
 	bool isConst;
-  public:
-	/**
-	 * @brief Create new addr for variable from source code.
-	 * @param typeInfo type from source code. (no need to be pointer type.)
-	 * @param name name from source code.
-	 * @param staticValue static value from source code.
-	 * @param isConst if the variable in source code const.
-	 * @note The @c typeInfo should be same as @c staticValue.
-	 */
-	AddrGlobalVariable(
-		const sup::TypeInfo & typeInfo, std::string name,
-		const sup::StaticValue & staticValue, bool isConst = false
-	);
 
 	/**
 	 * @brief Create new addr for global variable with default static value.
@@ -198,7 +199,7 @@ class AddrGlobalVariable :
 	 * @param name name from source code.
 	 */
 	AddrGlobalVariable(
-		const sup::TypeInfo & typeInfo, std::string name, bool isConst = false
+		const sup::TypeInfo & typeInfo, std::string name, bool isConst
 	);
 
 	AddrGlobalVariable(const AddrGlobalVariable &);
@@ -224,21 +225,17 @@ class AddrLocalVariable :
 
 	std::unique_ptr<Cutable> _cutToUniquePtr() override CUTABLE_DEFAULT_IMPLEMENT;
 
+  public:
 	bool isConst;
 	std::unique_ptr<sup::StaticValue> uPtrStaticValue;
-  public:
-	AddrLocalVariable(const sup::TypeInfo & typeInfo, std::string name);
 
-	AddrLocalVariable(
-		const sup::TypeInfo & typeInfo, std::string name,
-		const sup::StaticValue & staticValue
-	);
+	AddrLocalVariable(const sup::TypeInfo & typeInfo, std::string name, bool isConst);
 
 	AddrLocalVariable(const AddrLocalVariable &);
 
 	AddrLocalVariable(AddrLocalVariable &&) = default;
 
-	// @V{id}.{name}
+	// @LV{id}.{name}
 	[[nodiscard]] std::string toLLVMIR() const override;
 
 	[[nodiscard]] bool isConstVar() const override { return isConst; }
@@ -257,9 +254,9 @@ class AddrJumpLabel :
 
 	std::unique_ptr<Cutable> _cutToUniquePtr() override;
 
-	std::string labelName;
   public:
-	inline std::string getLabelName(){return labelName;}
+	std::string labelName;
+
 	explicit AddrJumpLabel(std::string labelName = "");
 
 	AddrJumpLabel(const AddrJumpLabel &) = default;
@@ -284,10 +281,10 @@ class AddrFunction :
 
 	std::unique_ptr<Cutable> _cutToUniquePtr() override;
 
+  public:
 	std::unique_ptr<sup::TypeInfo> uPtrReturnTypeInfo; // nullptr for void
 	std::vector<AddrPara *> vecPtrAddrPara;
 	std::string name;
-  public:
 	bool justDeclare = false;
 
 	[[nodiscard]] const std::string & getName() const { return name; }
@@ -345,5 +342,8 @@ class AddrFunction :
 
 std::string convertLongName(std::string name);
 
+extern const char * llvmSyFunctionAttr;
+
+extern const char * llvmSyLibFunctionAttr;
 }
 

@@ -1,16 +1,15 @@
 #pragma once
 
 #include <map>
-#include <stack>
 #include <unordered_set>
-#include <unordered_map>
 #include <queue>
+#include <stack>
 #include <random>
 
 #include "backend/Opnd.hpp"
+
 #define AVAILABLE_RREGR 8
 #define AVAILABLE_RREGS 16
-
 namespace backend {
 
 using pii = std::pair<int, int>;
@@ -85,7 +84,7 @@ class AllOnStkAllocator : public RegisterAllocator {
 	explicit AllOnStkAllocator(OpndPool & opndPool) : RegisterAllocator(opndPool) {}
 };
 
-class LinearScanAllocator: public RegisterAllocator {
+class LinearScanAllocator : public RegisterAllocator {
   protected:
 	//==Information generated and used by Allocator
 	//  Interval of regs. [def-time, last-use-time]
@@ -110,11 +109,10 @@ class LinearScanAllocator: public RegisterAllocator {
 
 	int run() override;
 
-	std::random_device _rd;
+	static int rdSeed;
 	std::mt19937 _g;
   public:
-	explicit LinearScanAllocator(OpndPool & opndPool) :
-		RegisterAllocator(opndPool), _rd(), _g(_rd()) {}
+	explicit LinearScanAllocator(OpndPool & opndPool);
 
 };
 
@@ -134,7 +132,7 @@ typedef struct vRegSet{
 } vRegSet;
 
 typedef struct vRegRSet :vRegSet{
-	std::vector<VRegR *> pvRegRs;
+	VRegR *pvRegR;
 	RId rid;
 	std::vector<vRegRSet *> neighbors;
 	std::vector<vRegRSet *> dn_neighbors;
@@ -143,28 +141,22 @@ typedef struct vRegRSet :vRegSet{
 } vRegRSet;
 
 typedef struct vRegSSet :vRegSet{
-	std::vector<VRegS *> pvRegSs;
+	VRegS *pvRegS;
 	SId sid;
 	std::vector<vRegSSet *> neighbors;
 	std::vector<vRegSSet *> dn_neighbors;
 	vRegSSet():vRegSet(AVAILABLE_RREGS){}
 } vRegSSet;
 
-struct Hashfunc{
-	size_t operator()(const backend::LocalAddr & addr) const{
-		return std::hash<int>()(addr.local_v->id);
-	}
-};
-
 class FigureShadingAllocator : public RegisterAllocator{
   protected:
 	int run() override;
-  	std::unordered_map<LocalAddr , backend::vRegRSet *,Hashfunc> rcontent;
-	std::unordered_map<LocalAddr , backend::vRegSSet *,Hashfunc> s_rcontent;
+  	std::vector<backend::vRegRSet *> rcontent;
+	std::vector<backend::vRegSSet *> s_rcontent;
 	bool live_At(const vRegSet *s1,const vRegSet *s2);
 	void prepare_Matrixs();
-	void prune_Graph(std::unordered_map<LocalAddr , backend::vRegRSet *,Hashfunc> &rcontent);
-	void prune_Graph(std::unordered_map<LocalAddr , backend::vRegSSet *,Hashfunc> &rcontent);
+	void prune_Graph(std::vector<backend::vRegRSet *> &rcontent);
+	void prune_Graph(std::vector<backend::vRegSSet *> &rcontent);
 	std::set<std::pair<vRegRSet *,vRegRSet *>> conflictMatrixR;
 	std::set<std::pair<vRegSSet *,vRegSSet *>> conflictMatrixS;
   public:
