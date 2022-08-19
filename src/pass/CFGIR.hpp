@@ -44,10 +44,15 @@ class Node {
 class DUChain {
   public:
 	using ItPIRInstr_t = typename std::list<ircode::IRInstr *>::iterator;
+	using ItPPhi_t = typename std::map<ircode::AddrLocalVariable *, ircode::InstrPhi *>::iterator;
+	enum class pos {
+		def, use, phi
+	};
 
 	struct PosInfo {
 		Node * pNode;
-		ItPIRInstr_t it;
+		ItPIRInstr_t itInstr;
+
 		PosInfo(Node * pNode, ItPIRInstr_t it);
 		//  `it` is the instruction of `pNode.instrs` which defines or uses a variable.
 	};
@@ -59,6 +64,7 @@ class DUChain {
 	void insertUseInfo(
 		Node * pNodeUse, ItPIRInstr_t instrUse
 	); //  check if def.pNode dom pNodeUse by yourself.
+	void insertPhiUse(Node * pNodeUse, ircode::AddrLocalVariable *);
 };
 
 class CFG {
@@ -76,12 +82,12 @@ class CFG {
 	void resolvePhi();
 	void addMarker();
 	//  helper
-	void collectInfoFromAllReachableNode(const std::function<void(const Node *)> & fun);
-	void collectInfoFromAllReachableInstr(
+	void collectInfoFromAllReachableNode(const std::function<void(const Node *)> & fun) const;
+	void collectInfoFromAllReachableInstr(  //  include phi node
 		const std::function<void(
 			Node *, typename std::list<ircode::IRInstr *>::iterator
 		)> & fun
-	);
+	) const;
   public:
 	ircode::IRModule & ir;
 	moeconcept::Pool<Node> _nodePool;

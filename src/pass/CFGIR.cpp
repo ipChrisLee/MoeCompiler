@@ -274,6 +274,11 @@ void DUChain::insertUseInfo(Node * pNodeUse, ItPIRInstr_t instrUse) {
 	use.emplace_back(pNodeUse, std::move(instrUse));
 }
 
+
+void DUChain::insertPhiUse(Node * pNodeUse, ircode::AddrLocalVariable *) {
+	phiU
+}
+
 }
 
 #pragma clang diagnostic pop

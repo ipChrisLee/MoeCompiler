@@ -8,7 +8,8 @@
 
 namespace pass {
 
-void CFG::collectInfoFromAllReachableNode(const std::function<void(const Node *)> & fun) {
+void
+CFG::collectInfoFromAllReachableNode(const std::function<void(const Node *)> & fun) const {
 	auto vis = std::map<Node *, bool>();
 	auto q = std::queue<Node *>();
 	q.push(pEntryNode);
@@ -30,7 +31,7 @@ void CFG::collectInfoFromAllReachableInstr(
 	const std::function<void(
 		Node *, typename std::list<ircode::IRInstr *>::iterator
 	)> & fun
-) {
+) const {
 	auto vis = std::map<Node *, bool>();
 	auto q = std::queue<Node *>();
 	q.push(pEntryNode);
@@ -39,6 +40,11 @@ void CFG::collectInfoFromAllReachableInstr(
 		q.pop();
 		if (vis[u]) { continue; }
 		vis[u] = true;
+		for (auto [pLVAddr, pPhi]: u->phiInstrs) {
+			for (auto * pOpnd: pPhi->getUse()) {
+
+			}
+		}
 		auto itPInstr = u->instrs.begin();
 		while (itPInstr != u->instrs.end()) {
 			fun(u, itPInstr);

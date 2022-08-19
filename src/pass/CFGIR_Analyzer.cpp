@@ -116,8 +116,11 @@ void CFG::getDUChain() {
 	auto findUse
 		= [this](Node * pNode, typename std::list<ircode::IRInstr *>::iterator itPInstr) {
 			for (auto * pOperand: get(itPInstr)->getUse()) {
-
-
+				if (pOperand->addrType == ircode::AddrType::Var) {
+					auto * pVar = dynamic_cast<ircode::AddrVariable *>(pOperand);
+					com::Assert(duChain.count(pVar), "", CODEPOS);
+					duChain.find(pVar)->second.insertUseInfo(pNode, itPInstr);
+				}
 			}
 		};
 	collectInfoFromAllReachableInstr(findUse);
