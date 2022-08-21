@@ -402,8 +402,8 @@ class InstrCall : public IRInstr {
 
 	[[nodiscard]] std::string toLLVMIR() const override;
 	bool changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) override;
-	std::vector<ircode::AddrOperand *> getUse() const override;
-	AddrVariable * getDef() const override;
+	[[nodiscard]] std::vector<ircode::AddrOperand *> getUse() const override;
+	[[nodiscard]] AddrVariable * getDef() const override;
 };
 
 class InstrGetelementptr : public IRInstr {
@@ -420,10 +420,10 @@ class InstrGetelementptr : public IRInstr {
 	);
 	InstrGetelementptr(InstrGetelementptr &&) = default;
 
-	std::string toLLVMIR() const override;
+	[[nodiscard]] std::string toLLVMIR() const override;
 	bool changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) override;
-	std::vector<ircode::AddrOperand *> getUse() const override;
-	AddrVariable * getDef() const override;
+	[[nodiscard]] std::vector<ircode::AddrOperand *> getUse() const override;
+	[[nodiscard]] AddrVariable * getDef() const override;
 };
 
 class InstrCompare : public IRInstr {
@@ -438,6 +438,7 @@ class InstrCompare : public IRInstr {
   public:
 	AddrVariable * dest;
 	AddrOperand * leftOp, * rightOp;
+	std::string op;
 
 	InstrCompare(InstrCompare &&) = default;
 
@@ -461,6 +462,7 @@ enum class ICMP {
 ICMP getReverse(ICMP icmp);
 
 std::string to_string(ICMP icmp);
+std::string to_op(ICMP icmp);
 
 ICMP strToICMP(const std::string & str);
 
@@ -491,6 +493,7 @@ enum class FCMP {
 FCMP getReverse(FCMP fcmp);
 
 std::string to_string(FCMP fcmp);
+std::string to_op(FCMP fcmp);
 
 FCMP strToFCMP(const std::string & str);
 
@@ -547,6 +550,7 @@ class InstrPhi : public IRInstr {
 
 	[[nodiscard]] std::string toLLVMIR() const override;
 	bool changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) override;
+	//  include label and var
 	std::vector<ircode::AddrOperand *> getUse() const override;
 	AddrVariable * getDef() const override;
 };
@@ -625,6 +629,11 @@ class InstrMarkVars : public IRInstr {
 	[[nodiscard]] std::vector<ircode::AddrOperand *> getUse() const override;
 	[[nodiscard]] AddrVariable * getDef() const override;
 };
+
+
+//  hash on instr right side. Notice that left side is not hashed.
+using InstrHashVal_t = std::vector<uint64_t>;
+InstrHashVal_t hashInstr(ircode::IRInstr * pInstr);
 
 }
 

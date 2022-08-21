@@ -114,7 +114,51 @@ Node * CFG::try_merge_node(Node * pNodeFrom, PNode & pNodeTo) {
 		//  merge instrs
 		pNodeFrom->instrs.erase(std::prev(pNodeFrom->instrs.end()));
 		pNodeTo->instrs.erase(pNodeTo->instrs.begin());
-		STLPro::list::merge_to(pNodeFrom->instrs, std::move(pNodeTo->instrs));
+		pNodeFrom->instrs.merge(
+			pNodeTo->instrs,
+			[](ircode::IRInstr * left, ircode::IRInstr * right) -> bool {
+				auto rkl = 0, rkr = 0;
+				switch (left->instrType) {
+					case ircode::InstrType::Label: {
+						rkl = 0;
+						break;
+					}
+					case ircode::InstrType::Phi: {
+						rkl = 1;
+						break;
+					}
+					case ircode::InstrType::Br:
+					case ircode::InstrType::Ret: {
+						rkl = 3;
+						break;
+					}
+					default: {
+						rkl = 2;
+						break;
+					}
+				}
+				switch (right->instrType) {
+					case ircode::InstrType::Label: {
+						rkr = 0;
+						break;
+					}
+					case ircode::InstrType::Phi: {
+						rkr = 1;
+						break;
+					}
+					case ircode::InstrType::Br:
+					case ircode::InstrType::Ret: {
+						rkr = 3;
+						break;
+					}
+					default: {
+						rkr = 2;
+						break;
+					}
+				}
+				return rkl < rkr;
+			}
+		);
 		//  merge edges, process on data of succ of pNodeTo
 		for (auto * p: pNodeTo->succOnCFG) {
 			p->predOnCFG.erase(pNodeTo);
@@ -124,6 +168,10 @@ Node * CFG::try_merge_node(Node * pNodeFrom, PNode & pNodeTo) {
 		pNodeFrom->succOnCFG.erase(pNodeTo);
 		//  merge edges, process on data of pNodeFrom
 		pNodeFrom->succOnCFG.merge(pNodeTo->succOnCFG);
+		//  for all phi node, change label
+		for (auto * pNodeNxt: pNodeFrom->succOnCFG) {
+			changePhiLabels(pNodeNxt, pNodeTo->pIRLabel, pNodeFrom->pIRLabel);
+		}
 		//  process data on CFG
 		_label2Node.erase(pNodeTo->pIRLabel);
 		pNodeTo->clear();
@@ -135,8 +183,6 @@ Node * CFG::try_merge_node(Node * pNodeFrom, PNode & pNodeTo) {
 }
 
 std::list<ircode::IRInstr *> CFG::toDeSSAForm() {
-	calculateIDomAndDFAndDom();
-	mem2reg();
 	resolvePhi();
 	addMarker();
 	auto res = std::list<ircode::IRInstr *>();
@@ -214,9 +260,14 @@ int CFG::opti() {
 	simplifyCFG();
 	//  analyze cfg
 	calculateIDomAndDFAndDom();
+	mem2reg();
 	getDUChain();
 	//  opti
 	constantPropagation();
+	sccp();
+	dce();
+//	cse();
+	adSimplifyCFG();
 	return 0;
 }
 
@@ -224,8 +275,10 @@ CFGIR::CFGIR(ircode::IRModule & ir) : ir(ir), cfgPool(funcDef2CFG) {
 }
 
 int CFGIR::opti() {
+	//  functional pass on flow-form ir
 	globalVarOpt();
-	//  local passes:
+//	checkIfHaveSideEffect();
+	//  build cfg for every function
 	for (auto * pFuncDef: ir.funcPool) {
 		if (pFuncDef->pAddrFun->justDeclare) {
 			continue;
@@ -233,9 +286,11 @@ int CFGIR::opti() {
 			cfgPool.emplace_back(CFG(ir, pFuncDef));
 		}
 	}
+	//  global opti inside functions on cfg-form ir
 	for (auto [pFuncDef, pCFG]: funcDef2CFG) {
 		pCFG->opti();
 	}
+	//  may can add some functional analyze (analyze side effect maybe) and inline.
 	return 0;
 }
 

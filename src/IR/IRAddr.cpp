@@ -322,6 +322,7 @@ AddrStaticValue::AddrStaticValue(const AddrStaticValue & addr) :
 	uPtrStaticValue(
 		com::dynamic_cast_uPtr<StaticValue>(addr.uPtrStaticValue->cloneToUniquePtr())
 	) {
+	addrType = AddrType::StaticValue;
 }
 
 std::string AddrStaticValue::toLLVMIR() const {

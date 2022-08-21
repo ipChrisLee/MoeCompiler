@@ -97,10 +97,10 @@ void CFG::mem2reg() {
 	//  Rename Variable
 	[&phiInstrs, &setOfLV, this]() {
 		//  lvAddrLastVar[pLV][pNode]=pVal : at exit of pNode, value of pLV is pVal.
-		auto
-			lvAddrLastVar =
-			std::map<ircode::AddrLocalVariable *, std::map<Node *, ircode::AddrOperand *
-			>>();
+		auto lvAddrLastVar =
+			std::map<
+				ircode::AddrLocalVariable *, std::map<Node *, ircode::AddrOperand *
+				>>();
 		//  mappingWithOp[pVar]=pVal : pVar should be replaced with pVal
 		auto mappingWithOp =
 			std::map<ircode::AddrVariable *, ircode::AddrOperand *>();
@@ -224,9 +224,7 @@ void CFG::resolvePhi() {
 	while (!q.empty()) {
 		auto * pNodeNow = q.front();
 		q.pop();
-		if (vis[pNodeNow]) {
-			continue;
-		}
+		if (vis[pNodeNow]) { continue; }
 		vis[pNodeNow] = true;
 		for (auto * pInstr: pNodeNow->instrs) {
 			if (pInstr->instrType == ircode::InstrType::Phi) {

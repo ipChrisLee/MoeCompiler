@@ -104,4 +104,12 @@ void CFGIR::globalVarOpt() {
 	}
 }
 
+void CFGIR::checkIfHaveSideEffect() {
+//	for (auto * pFuncDef: ir.funcPool) {
+//
+//
+//	}
+}
+
+
 }

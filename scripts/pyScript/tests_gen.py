@@ -111,6 +111,9 @@ def test_frontend():
 		outFilePath=TestFilesSettings.FilePath.testOut,
 		resFilePath=TestFilesSettings.FilePath.testRes
 	)
+	if res.exit_code != 0:
+		cprint(f'{res.stderr}', color=C.WA)
+		exit(1)
 	print(f'Result : {res.test_status.value}')
 
 
@@ -127,7 +130,6 @@ def test_gen():
 		optiLevel=args.moeOpti, timeout=TimeoutSettings.moe, emit_llvm=False, emit_dessa=False,
 		float_dec_format=False
 	).check_returncode()
-	
 
 
 def test_moe():

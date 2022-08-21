@@ -4,7 +4,7 @@ import typing as typ
 
 
 class BasicSettings:
-	optimizeMoe: bool = False
+	optimizeMoe: bool = True
 
 
 class TimeoutSettings:

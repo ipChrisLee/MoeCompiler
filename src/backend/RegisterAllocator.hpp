@@ -6,6 +6,7 @@
 #include <random>
 
 #include "backend/Opnd.hpp"
+#include "IR/IRModule.hpp"
 
 
 namespace backend {
@@ -56,6 +57,7 @@ class RegisterAllocator {
 	std::map<ircode::AddrPara *, backend::VRegR *> m_AddrArg_VRegR;
 	std::map<ircode::AddrPara *, backend::VRegS *> m_AddrArg_VRegS;
 
+	ircode::IRFuncDef * pFuncDef=nullptr;
 	void set(
 		std::unordered_set<backend::VRegR *> & _allVarVRegR,
 		std::unordered_set<backend::VRegS *> & _allVarVRegS,
@@ -66,7 +68,8 @@ class RegisterAllocator {
 		std::map<ircode::AddrPara *, backend::Opnd *> & _argsOnPrev,
 		int _argsStkSizeOnPrev,
 		std::map<ircode::AddrPara *, backend::VRegR *> & m_AddrArg_VRegR,
-		std::map<ircode::AddrPara *, backend::VRegS *> & m_AddrArg_VRegS
+		std::map<ircode::AddrPara *, backend::VRegS *> & m_AddrArg_VRegS,
+		ircode::IRFuncDef * pFuncDef
 	);
 
 	//  Call run() first, do allocate, and analyze result.

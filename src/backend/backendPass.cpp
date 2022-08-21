@@ -171,7 +171,7 @@ int FuncInfo::run() {
 	regAllocator->set(
 		allVarVRegR, allVarVRegS, allVarStkPtr, defineUseTimelineVRegR,
 		defineUseTimelineVRegS, tim, paramsInfoOnCallingThis, argsStkSizeOnCallingThis,
-		m_AddrArg_VRegR, m_AddrArg_VRegS
+		m_AddrArg_VRegR, m_AddrArg_VRegS,pFuncDef
 	);
 	regAllocator->getRes();
 	backupRReg = regAllocator->backupRReg;
@@ -473,7 +473,14 @@ int FuncInfo::run(ircode::IRInstr * pInstr) {
 }
 
 std::string FuncInfo::toASM(ircode::IRInstr * pInstr) {
-	auto res = "@ " + pInstr->toLLVMIR() + " \n";
+	auto res = std::string();
+	if (pInstr->instrType == ircode::InstrType::Alloca) {
+		auto * pAlloca = dynamic_cast<ircode::InstrAlloca *>(pInstr);
+		res = "@ " + pAlloca->allocaTo->toLLVMIR() + " : " +
+			pAlloca->allocaTo->getType().toLLVMIR() + " \n";
+	} else {
+		res = "@ " + pInstr->toLLVMIR() + " \n";
+	}
 	switch (pInstr->instrType) {
 		case ircode::InstrType::Alloca: {
 			res += toASM(dynamic_cast<ircode::InstrAlloca *>(pInstr));

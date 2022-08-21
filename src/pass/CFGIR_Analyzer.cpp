@@ -30,6 +30,7 @@ void CFG::calculateIDomAndDFAndDom() {
 		doms.emplace_back(-1);
 	};
 	dfs(pEntryNode);
+//	std::cerr << std::endl;
 	auto intersect = [&doms](int b1, int b2) {
 		while (b1 != b2) {
 			while (b1 < b2) {
@@ -105,8 +106,12 @@ void CFG::calculateIDomAndDFAndDom() {
 
 void CFG::getDUChain() {
 	duChain.clear();
+	auto visitedLabel = std::set<ircode::AddrJumpLabel *>();
 	auto findDefine
-		= [this](Node * pNode, typename std::list<ircode::IRInstr *>::iterator pInstr) {
+		= [&visitedLabel, this](
+			Node * pNode, typename std::list<ircode::IRInstr *>::iterator pInstr
+		) {
+			visitedLabel.insert(pNode->pIRLabel);
 			auto * pVar = get(pInstr)->getDef();
 			if (pVar) {
 				duChain.emplace(pVar, DUChain(pNode, pInstr));
@@ -114,9 +119,29 @@ void CFG::getDUChain() {
 		};
 	collectInfoFromAllReachableInstr(findDefine);
 	auto findUse
-		= [this](Node * pNode, typename std::list<ircode::IRInstr *>::iterator itPInstr) {
+		= [&visitedLabel, this](
+			Node * pNode, typename std::list<ircode::IRInstr *>::iterator itPInstr
+		) {
+			//  for phi node, if not defined, may because of structure of cfg changed.
+			auto * pInstr = get(itPInstr);
+			if (pInstr->instrType == ircode::InstrType::Phi) {
+				auto * pPhi = dynamic_cast<ircode::InstrPhi *>(pInstr);
+				auto labelToDelete = std::set<ircode::AddrJumpLabel *>();
+				for (auto [pLabel, pOperand]: pPhi->vecPair) {
+					if (!visitedLabel.count(pLabel)) {
+						labelToDelete.insert(pLabel);
+					}
+				}
+				for (auto pLabel: labelToDelete) {
+					pPhi->vecPair.erase(pLabel);
+				}
+			}
 			for (auto * pOperand: get(itPInstr)->getUse()) {
-				if (pOperand->addrType == ircode::AddrType::Var) {
+				if (com::enum_fun::in(
+					pOperand->addrType, {
+						ircode::AddrType::Var, ircode::AddrType::LocalVar
+					}
+				)) {
 					auto * pVar = dynamic_cast<ircode::AddrVariable *>(pOperand);
 					com::Assert(duChain.count(pVar), "", CODEPOS);
 					duChain.find(pVar)->second.insertUseInfo(pNode, itPInstr);

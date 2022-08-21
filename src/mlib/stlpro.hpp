@@ -89,6 +89,29 @@ inline std::string to_string(const char * s) { return s; }
 inline std::string to_string(const std::string & s) { return s; }
 
 }
+
+
+namespace set {
+
+template<typename T>
+std::set<T> operator-(std::set<T> from, std::set<T> items_to_remove) {
+	std::set<T> res;
+	std::set_difference(
+		from.begin(), from.end(), items_to_remove.begin(), items_to_remove.end(),
+		std::inserter(res, res.end())
+	);
+	return res;
+}
+
+template<typename T>
+std::set<T> & operator-=(std::set<T> & from, std::set<T> items_to_remove) {
+	for (const auto & x: items_to_remove) {
+		from.erase(x);
+	}
+	return from;
+}
+}
+
 }
 
 template<typename Iter>

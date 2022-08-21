@@ -1,4 +1,5 @@
 #include "RegisterAllocator.hpp"
+#include "IR/IRModule.hpp"
 
 
 namespace backend {
@@ -13,7 +14,8 @@ void RegisterAllocator::set(
 	std::map<ircode::AddrPara *, backend::Opnd *> & _argsOnPrev,
 	int _argsStkSizeOnPrev,
 	std::map<ircode::AddrPara *, backend::VRegR *> & _m_AddrArg_VRegR,
-	std::map<ircode::AddrPara *, backend::VRegS *> & _m_AddrArg_VRegS
+	std::map<ircode::AddrPara *, backend::VRegS *> & _m_AddrArg_VRegS,
+	ircode::IRFuncDef * _pFuncDef
 ) {
 	this->allVarVRegR = _allVarVRegR;
 	this->allVarVRegS = _allVarVRegS;
@@ -25,6 +27,7 @@ void RegisterAllocator::set(
 	this->argsStkSizeOnCallingThis = _argsStkSizeOnPrev;
 	this->m_AddrArg_VRegR = _m_AddrArg_VRegR;
 	this->m_AddrArg_VRegS = _m_AddrArg_VRegS;
+	this->pFuncDef = _pFuncDef;
 	for (auto [_, p]: this->m_AddrArg_VRegR) {
 		fixedOpnd.emplace(p);
 	}
@@ -81,6 +84,13 @@ int RegisterAllocator::getRes() {
 				break;
 			}
 			default:com::Throw("", CODEPOS);
+		}
+	}
+	if (pFuncDef->pAddrFun->uPtrReturnTypeInfo) {
+		if (pFuncDef->pAddrFun->uPtrReturnTypeInfo->type == sup::Type::Int_t) {
+			callerSaveRReg.insert(RId::r0);
+		} else if (pFuncDef->pAddrFun->uPtrReturnTypeInfo->type == sup::Type::Float_t) {
+			callerSaveSReg.insert(SId::s0);
 		}
 	}
 	for (auto * pStkPtr: allVarStkPtr) {
@@ -245,7 +255,7 @@ void LinearScanAllocator::linear_scan() {
 					//  Now: random choose
 					auto newPos = chooseWhereToSpillRReg();
 					auto * spilledVRegR = livingVRegR[newPos];
-					if (fixedOpnd.find(spilledVRegR) != fixedOpnd.end()) {
+					if (fixedOpnd.count(spilledVRegR)) {
 						definingVRegR->rid = backend::RId::stk;
 					} else {
 						spilledVRegR->rid = backend::RId::stk;
@@ -266,7 +276,7 @@ void LinearScanAllocator::linear_scan() {
 				if (freeSIds.empty()) {
 					auto newPos = chooseWhereToSpillSReg();
 					auto * spilledVRegS = livingVRegS[newPos];
-					if (fixedOpnd.find(spilledVRegS) != fixedOpnd.end()) {
+					if (fixedOpnd.count(spilledVRegS)) {
 						definingVRegS->sid = backend::SId::stk;
 					} else {
 						spilledVRegS->sid = backend::SId::stk;

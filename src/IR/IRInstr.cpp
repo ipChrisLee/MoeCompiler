@@ -1,6 +1,8 @@
 #include "mlib/common.hpp"
 #include "mlib/mdb.hpp"
 #include <utility>
+#include <functional>
+#include <random>
 
 #include "IRInstr.hpp"
 #include "IRModule.hpp"
@@ -131,20 +133,27 @@ InstrStore::InstrStore(AddrOperand * from, AddrVariable * to) :
 }
 
 bool InstrStore::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
+	auto changed = false;
 	if (chgFrom == from) {
 		from = chgTo;
-		return true;
-	} else {
-		return false;
+		changed = true;
 	}
+	auto * pVarFrom = dynamic_cast<ircode::AddrVariable *>(chgFrom);
+	auto * pVarTo = dynamic_cast<ircode::AddrVariable *>(chgTo);
+	if (pVarFrom && pVarFrom == to) {
+		com::Assert(pVarTo, "", CODEPOS);
+		to = pVarTo;
+		changed = true;
+	}
+	return changed;
 }
 
 AddrVariable * InstrStore::getDef() const {
-	return to;
+	return nullptr;
 }
 
 std::vector<ircode::AddrOperand *> InstrStore::getUse() const {
-	return {from};
+	return {from, to};
 }
 
 InstrRet::InstrRet(AddrOperand * pAddr) :
@@ -339,8 +348,15 @@ std::string InstrLoad::toLLVMIR() const {
 }
 
 bool InstrLoad::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
-	// ?
-	return false;
+	auto changed = false;
+	auto * chgFromVar = dynamic_cast<ircode::AddrVariable *>(chgFrom);
+	auto * chgToVar = dynamic_cast<ircode::AddrVariable *>(chgTo);
+	if (chgFromVar && from == chgFromVar) {
+		com::Assert(chgToVar, "", CODEPOS);
+		from = chgToVar;
+		changed = true;
+	}
+	return changed;
 }
 
 AddrVariable * InstrLoad::getDef() const {
@@ -348,8 +364,7 @@ AddrVariable * InstrLoad::getDef() const {
 }
 
 std::vector<ircode::AddrOperand *> InstrLoad::getUse() const {
-	// ?
-	return { };
+	return {from};
 }
 
 std::string InstrBr::toLLVMIR() const {
@@ -386,7 +401,12 @@ InstrBr::InstrBr(
 }
 
 bool InstrBr::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand * chgTo) {
-	return false;
+	if (chgFrom == pCond) {
+		pCond = chgTo;
+		return true;
+	} else {
+		return false;
+	}
 }
 
 AddrVariable * InstrBr::getDef() const {
@@ -394,7 +414,11 @@ AddrVariable * InstrBr::getDef() const {
 }
 
 std::vector<ircode::AddrOperand *> InstrBr::getUse() const {
-	return { };
+	if (pCond) {
+		return {pCond};
+	} else {
+		return { };
+	}
 }
 
 InstrMul::InstrMul(AddrOperand * left, AddrOperand * right, AddrVariable * res) :
@@ -513,7 +537,8 @@ AddrVariable * InstrCall::getDef() const {
 }
 
 std::vector<ircode::AddrOperand *> InstrCall::getUse() const {
-	return paramsPassing;
+	auto res = paramsPassing;
+	return res;
 }
 
 
@@ -623,7 +648,7 @@ InstrGetelementptr::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand
 	}
 	auto * chgFromVar = dynamic_cast<ircode::AddrVariable *>(chgFrom);
 	auto * chgToVar = dynamic_cast<ircode::AddrVariable *>(chgTo);
-	if (from == chgFromVar) {
+	if (chgFromVar && from == chgFromVar) {
 		com::Assert(chgToVar, "", CODEPOS);
 		from = chgToVar;
 		changed = true;
@@ -636,16 +661,18 @@ AddrVariable * InstrGetelementptr::getDef() const {
 }
 
 std::vector<ircode::AddrOperand *> InstrGetelementptr::getUse() const {
-	auto res = idxs;
+	auto res = std::vector<ircode::AddrOperand *>();
 	res.emplace_back(from);
+	for (auto * p: idxs) {
+		res.emplace_back(p);
+	}
 	return res;
 }
 
 InstrCompare::InstrCompare(
 	AddrVariable * dest, AddrOperand * leftOp, AddrOperand * rightOp,
 	InstrType instrType
-) : IRInstr(instrType),
-    dest(dest), leftOp(leftOp), rightOp(rightOp) {
+) : IRInstr(instrType), dest(dest), leftOp(leftOp), rightOp(rightOp) {
 	com::Assert(
 		leftOp->getType() == rightOp->getType(),
 		"Operands of instr compare should have same type.", CODEPOS
@@ -678,7 +705,14 @@ AddrVariable * InstrCompare::getDef() const {
 }
 
 std::vector<ircode::AddrOperand *> InstrCompare::getUse() const {
-	return {leftOp, rightOp};
+	auto vec = std::vector<ircode::AddrOperand *>();
+	if (leftOp) {
+		vec.emplace_back(leftOp);
+	}
+	if (rightOp) {
+		vec.emplace_back(rightOp);
+	}
+	return vec;
 }
 
 
@@ -710,6 +744,18 @@ std::string to_string(ICMP icmp) {
 	}
 }
 
+std::string to_op(ICMP icmp) {
+	switch (icmp) {
+		case ICMP::EQ: return "==";
+		case ICMP::NE: return "!=";
+		case ICMP::SGT: return ">";
+		case ICMP::SGE: return ">=";
+		case ICMP::SLT: return "<";
+		case ICMP::SLE: return "<=";
+		case ICMP::ERR: return "err";
+	}
+}
+
 InstrICmp::InstrICmp(
 	AddrVariable * dest, AddrOperand * leftOp, ICMP icmp, AddrOperand * rightOp
 ) : InstrCompare(dest, leftOp, rightOp, InstrType::ICmp), icmp(icmp) {
@@ -737,6 +783,19 @@ std::string to_string(FCMP fcmp) {
 		case FCMP::ERR: return "err";
 	}
 }
+
+std::string to_op(FCMP fcmp) {
+	switch (fcmp) {
+		case FCMP::OEQ: return "==";
+		case FCMP::OGT: return ">";
+		case FCMP::OGE: return ">=";
+		case FCMP::OLT: return "<";
+		case FCMP::OLE: return "<=";
+		case FCMP::UNE: return "!=";
+		case FCMP::ERR: return "err";
+	}
+}
+
 
 InstrFCmp::InstrFCmp(
 	AddrVariable * dest, AddrOperand * leftOp, FCMP fcmp, AddrOperand * rightOp
@@ -922,7 +981,7 @@ bool InstrParaMov::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand 
 }
 
 std::vector<ircode::AddrOperand *> InstrParaMov::getUse() const {
-	return { };
+	return {from};
 }
 
 AddrVariable * InstrParaMov::getDef() const {
@@ -945,8 +1004,11 @@ InstrParallelCopy::changeUse(ircode::AddrOperand * chgFrom, ircode::AddrOperand 
 	auto changed = false;
 	for (auto & [from, to, stand]: copies) {
 		if (from == chgFrom) {
-			from = chgTo;
-			changed |= stand->changeUse(from, chgTo);
+			auto b = stand->changeUse(from, chgTo);
+			if (b) {
+				from = chgTo;
+			}
+			changed |= b;
 		}
 	}
 	return changed;
@@ -1033,6 +1095,91 @@ std::vector<ircode::AddrOperand *> InstrMarkVars::getUse() const {
 
 AddrVariable * InstrMarkVars::getDef() const {
 	com::Throw("", CODEPOS);
+}
+
+std::vector<uint64_t> hashInstr(ircode::IRInstr * pInstr) {
+	static auto hashInt = [](int x) { return uint64_t(x); };
+	static auto hashFloat = [](float f) { return *(uint64_t *) (&f); };
+	static auto hashBool = [](bool b) { return uint64_t(b); };
+	static auto hashPointer = [](void * p) { return *(uint64_t *) (&p); };
+	static auto hashU64 = [](uint64_t x) { return x; };
+	static auto combineHash = [](std::vector<uint64_t> & h, uint64_t y) -> void {
+		h.emplace_back(y);
+	};
+	static auto mt = std::mt19937_64(20001220);
+	auto h = std::vector({hashInt(int(pInstr->instrType))});
+	if (pInstr->instrType == ircode::InstrType::Call) {
+		auto * pCall = dynamic_cast<ircode::InstrCall *>(pInstr);
+		auto nh = size_t(0);
+		if (pCall->func->haveSideEffect) {
+			nh = hashU64(mt());
+		} else {
+			nh = hashPointer(pCall->func);
+		}
+		combineHash(h, nh);
+	} else if (pInstr->instrType == ircode::InstrType::Phi) {
+		combineHash(h, hashU64(mt()));
+	} else if (pInstr->instrType == ircode::InstrType::Alloca) {
+		combineHash(h, hashU64(mt()));
+	} else if (pInstr->instrType == ircode::InstrType::Br) {
+		combineHash(h, hashU64(mt()));
+	} else if (pInstr->instrType == ircode::InstrType::Ret) {
+		combineHash(h, hashU64(mt()));
+	} else if (pInstr->instrType == ircode::InstrType::Store) {
+		combineHash(h, hashU64(mt()));
+	} else if (pInstr->instrType == ircode::InstrType::Load) {
+		combineHash(h, hashU64(mt()));
+	}
+	for (auto * pOperand: pInstr->getUse()) {
+		auto nh = size_t(0);
+		switch (pOperand->addrType) {
+			case ircode::AddrType::JumpLabel:
+			case ircode::AddrType::LocalVar:
+			case ircode::AddrType::GlobalVar:
+			case ircode::AddrType::ParaVar: {
+				nh = hashU64(mt());
+				break;
+			}
+			case ircode::AddrType::Var: {
+				nh = hashPointer(pOperand);
+				break;
+			}
+			case ircode::AddrType::StaticValue: {
+				auto * pSVAddr = dynamic_cast<ircode::AddrStaticValue *>(pOperand);
+				switch (pSVAddr->getType().type) {
+					case sup::Type::Int_t: {
+						auto value = dynamic_cast<const sup::IntStaticValue &>(
+							pSVAddr->getStaticValue()
+						).value;
+						nh = hashInt(value);
+						break;
+					}
+					case sup::Type::Float_t: {
+						auto value = dynamic_cast<const sup::FloatStaticValue &>(
+							pSVAddr->getStaticValue()
+						).value;
+						nh = hashFloat(value);
+						break;
+					}
+					case sup::Type::Bool_t: {
+						auto value = dynamic_cast<const sup::BoolStaticValue &>(
+							pSVAddr->getStaticValue()
+						).value;
+						nh = hashBool(value);
+						break;
+					}
+					default: {
+						nh = hashU64(mt());
+						break;
+					}
+				}
+				break;
+			}
+			default: com::Throw("", CODEPOS);
+		}
+		combineHash(h, nh);
+	}
+	return h;
 }
 
 }
