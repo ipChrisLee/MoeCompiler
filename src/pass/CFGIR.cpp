@@ -267,7 +267,7 @@ int CFG::opti() {
 	sccp();
 	dce();
 //	cse();
-	adSimplifyCFG();
+//	adSimplifyCFG();
 	return 0;
 }
 
