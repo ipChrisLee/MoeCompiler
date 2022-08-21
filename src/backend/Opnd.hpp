@@ -53,9 +53,8 @@ std::string to_asm(RId rid);
 class VRegR : public Opnd {
   protected:
   public:
-	size_t expense=0;
 	[[nodiscard]] OpndType getOpndType() const override;
-
+	int expense=0;
 	RId rid;
 	int offset;
 
@@ -84,9 +83,8 @@ std::string to_asm(SId sid);
 class VRegS : public Opnd {
   protected:
   public:
-	size_t expense=0;
 	[[nodiscard]] OpndType getOpndType() const override;
-
+	int expense=0;
 	SId sid;
 	int offset;
 

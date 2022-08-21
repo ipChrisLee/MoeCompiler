@@ -237,10 +237,50 @@ SId LinearScanAllocator::chooseWhereToSpillSReg() {
 
 void LinearScanAllocator::linear_scan() {
 	for (int i = 1; i <= totalTim; ++i) {
-		com::Assert(
-			defVRegRAt.find(i) == defVRegRAt.end() || defVRegSAt.find(i) == defVRegSAt.end(),
-			"", CODEPOS
-		);
+		if (defVRegRAt.find(i) != defVRegRAt.end()) {
+			auto & vec = defVRegRAt[i];
+			for (auto * definingVRegR: vec) {
+				if (freeRIds.empty()) {
+					//  TODO: spill basing on some rate.
+					//  Now: random choose
+					auto newPos = chooseWhereToSpillRReg();
+					auto * spilledVRegR = livingVRegR[newPos];
+					if (fixedOpnd.find(spilledVRegR) != fixedOpnd.end()) {
+						definingVRegR->rid = backend::RId::stk;
+					} else {
+						spilledVRegR->rid = backend::RId::stk;
+						definingVRegR->rid = newPos;
+						livingVRegR[newPos] = definingVRegR;
+					}
+				} else {
+					auto newPos = *freeRIds.rbegin();
+					freeRIds.erase(newPos);
+					definingVRegR->rid = newPos;
+					livingVRegR[newPos] = definingVRegR;
+				}
+			}
+		}
+		if (defVRegSAt.find(i) != defVRegSAt.end()) {
+			auto & vec = defVRegSAt[i];
+			for (auto * definingVRegS: vec) {
+				if (freeSIds.empty()) {
+					auto newPos = chooseWhereToSpillSReg();
+					auto * spilledVRegS = livingVRegS[newPos];
+					if (fixedOpnd.find(spilledVRegS) != fixedOpnd.end()) {
+						definingVRegS->sid = backend::SId::stk;
+					} else {
+						spilledVRegS->sid = backend::SId::stk;
+						definingVRegS->sid = newPos;
+						livingVRegS[newPos] = definingVRegS;
+					}
+				} else {
+					auto newPos = *freeSIds.rbegin();
+					freeSIds.erase(newPos);
+					definingVRegS->sid = newPos;
+					livingVRegS[newPos] = definingVRegS;
+				}
+			}
+		}
 		if (lstUseVRegRAt.find(i) != lstUseVRegRAt.end()) {
 			auto & vec = lstUseVRegRAt[i];
 			for (auto * pVRegRLstUse: vec) {
@@ -259,49 +299,6 @@ void LinearScanAllocator::linear_scan() {
 				}
 			}
 		}
-		if (defVRegRAt.find(i) != defVRegRAt.end()) {
-			auto & vec = defVRegRAt[i];
-			com::Assert(vec.size() == 1, "", CODEPOS);
-			auto * definingVRegR = vec[0];
-			if (freeRIds.empty()) {
-				//  TODO: spill basing on some rate.
-				//  Now: random choose
-				auto newPos = chooseWhereToSpillRReg();
-				auto * spilledVRegR = livingVRegR[newPos];
-				if (fixedOpnd.find(spilledVRegR) != fixedOpnd.end()) {
-					definingVRegR->rid = backend::RId::stk;
-				} else {
-					spilledVRegR->rid = backend::RId::stk;
-					definingVRegR->rid = newPos;
-					livingVRegR[newPos] = definingVRegR;
-				}
-			} else {
-				auto newPos = *freeRIds.rbegin();
-				freeRIds.erase(newPos);
-				definingVRegR->rid = newPos;
-				livingVRegR[newPos] = definingVRegR;
-			}
-		} else if (defVRegSAt.find(i) != defVRegSAt.end()) {
-			auto & vec = defVRegSAt[i];
-			com::Assert(vec.size() == 1, "", CODEPOS);
-			auto * definingVRegS = vec[0];
-			if (freeSIds.empty()) {
-				auto newPos = chooseWhereToSpillSReg();
-				auto * spilledVRegS = livingVRegS[newPos];
-				if (fixedOpnd.find(spilledVRegS) != fixedOpnd.end()) {
-					definingVRegS->sid = backend::SId::stk;
-				} else {
-					spilledVRegS->sid = backend::SId::stk;
-					definingVRegS->sid = newPos;
-					livingVRegS[newPos] = definingVRegS;
-				}
-			} else {
-				auto newPos = *freeSIds.rbegin();
-				freeSIds.erase(newPos);
-				definingVRegS->sid = newPos;
-				livingVRegS[newPos] = definingVRegS;
-			}
-		}
 	}
 }
 
@@ -311,14 +308,65 @@ int LinearScanAllocator::run() {
 	return 0;
 }
 
-void FigureShadingAllocator::prune_Graph(std::unordered_map<LocalAddr , backend::vRegRSet *,Hashfunc> &rcontent){
+int LinearScanAllocator::rdSeed = 20001220;
+
+LinearScanAllocator::LinearScanAllocator(OpndPool & opndPool) :
+	RegisterAllocator(opndPool), _g(rdSeed) {
+}
+
+bool FigureShadingAllocator::live_At(const vRegSet *s1,const vRegSet *s2){
+		if(s1->globalDefineUseTimeleline.back()<s2->globalDefineUseTimeleline.front()
+		||(s1->globalDefineUseTimeleline.front()>s2->globalDefineUseTimeleline.back()))
+		return false;
+	else return true;	
+}
+
+void FigureShadingAllocator::prepare_Matrixs(){
+	//std::map<ircode::AddrPara * ,RId> callers; 
+	for (auto * pVRegR: allVarVRegR) {
+		if(!defineUseTimelineVRegR.count(pVRegR)||defineUseTimelineVRegR[pVRegR].empty()){
+			pVRegR->rid=RId::stk;
+			continue;
+		} 
+		auto  current=new vRegRSet();
+		current->globalDefineUseTimeleline=defineUseTimelineVRegR[pVRegR];
+		current->pvRegR=pVRegR;
+		current->spillcost=pVRegR->expense;
+		rcontent.push_back(current);
+	}
+	for(size_t i=0;i<rcontent.size();++i){
+		for(size_t j=0;j<i;++j){
+			if(live_At(rcontent[i],rcontent[j])) 
+				conflictMatrixR.insert(std::make_pair(rcontent[i],rcontent[j]));
+		}
+	}
+	for(auto * pVRegS: allVarVRegS) {
+		if(!defineUseTimelineVRegS.count(pVRegS)||defineUseTimelineVRegS[pVRegS].empty()){
+			pVRegS->sid=SId::stk;
+			continue;
+		} 
+		auto current=new vRegSSet();
+		current->globalDefineUseTimeleline=defineUseTimelineVRegS[pVRegS];
+		current->pvRegS=pVRegS;
+		current->spillcost=pVRegS->expense;
+		s_rcontent.push_back(current);
+	}
+	for(size_t i=0;i<s_rcontent.size();++i){
+		for(size_t j=0;j<i;++j){
+			if(live_At(s_rcontent[i],s_rcontent[j])) 
+				conflictMatrixS.insert(std::make_pair(s_rcontent[i],s_rcontent[j]));
+		}
+	}
+}
+
+void FigureShadingAllocator::prune_Graph(std::vector<backend::vRegRSet *> &rcontent){
 	for(auto content:rcontent){
 		for(auto content_p:rcontent){
-			if(conflictMatrixR.count(std::make_pair(content.second,content_p.second))||
-				conflictMatrixR.count(std::make_pair(content_p.second,content.second))
+			if(conflictMatrixR.count(std::make_pair(content,content_p))||
+				conflictMatrixR.count(std::make_pair(content_p,content))
 				){
-					content.second->nints++;
-					content.second->neighbors.push_back(content_p.second);
+					content->nints++;
+					content->neighbors.push_back(content_p);
 				}
 		}
 	}
@@ -328,26 +376,26 @@ void FigureShadingAllocator::prune_Graph(std::unordered_map<LocalAddr , backend:
 	while(adjnodes!=0){
 		token=false;
 		for(auto content:rcontent){
-			if(content.second->allocated) continue;
-			if(content.second->nints<AVAILABLE_RREGR){
+			if(content->allocated) continue;
+			if(content->nints<AVAILABLE_RREGR){
 				token=true;
 				--adjnodes;
-				content.second->allocated=true;
-				for(auto neighbor:content.second->neighbors){
+				content->allocated=true;
+				for(auto neighbor:content->neighbors){
 					neighbor->nints--;
-					neighbor->dn_neighbors.push_back(content.second);
+					neighbor->dn_neighbors.push_back(content);
 				}
-				adjStack.push(content.second);
+				adjStack.push(content);
 			}
 		}
 		size_t lowest=0;
 		vRegRSet * lowestadj;
 		if(!token&&adjnodes!=0){
 			for(auto content:rcontent){
-				if(content.second->allocated) continue;
-				if(lowest==0||content.second->spillcost<lowest){
-					lowest=content.second->spillcost;
-					lowestadj=content.second;
+				if(content->allocated) continue;
+				if(lowest==0||content->spillcost<lowest){
+					lowest=content->spillcost;
+					lowestadj=content;
 				}
 			}
 			--adjnodes;
@@ -375,27 +423,24 @@ void FigureShadingAllocator::prune_Graph(std::unordered_map<LocalAddr , backend:
 		}
 		else node->rid=RId::stk;
 	}
-	for(auto content:rcontent){
-		for(auto pvReg:content.second->pvRegRs) pvReg->rid=content.second->rid;
-	}
+	for(auto content:rcontent) content->pvRegR->rid=content->rid;
 	for(auto content :rcontent){
-		std::cerr<<content.first.local_v->getName()<<"."<<content.first.local_v->id<<":"
-			<<(int)(content.second->rid)<<std::endl;
-		for(int tml:content.second->globalDefineUseTimeleline) std::cerr<<tml<<" ";
+		std::cerr<<content->pvRegR->id<<":"<<(int)(content->pvRegR->rid)<<"\n";
+		for(int tml:content->globalDefineUseTimeleline) std::cerr<<tml<<" ";
 		std::cerr<<std::endl;
-		std::cerr<<"--expense="<<content.second->spillcost<<"\n";
+		std::cerr<<"--expense="<<content->spillcost<<"\n";
 	}
 
 }
 
-void FigureShadingAllocator::prune_Graph(std::unordered_map<LocalAddr , backend::vRegSSet *,Hashfunc> &rcontent){
+void FigureShadingAllocator::prune_Graph(std::vector<backend::vRegSSet *> &rcontent){
 		for(auto content:rcontent){
 		for(auto content_p:rcontent){
-			if(conflictMatrixS.count(std::make_pair(content.second,content_p.second))||
-				conflictMatrixS.count(std::make_pair(content_p.second,content.second))
+			if(conflictMatrixS.count(std::make_pair(content,content_p))||
+				conflictMatrixS.count(std::make_pair(content_p,content))
 				){
-					content.second->nints++;
-					content.second->neighbors.push_back(content_p.second);
+					content->nints++;
+					content->neighbors.push_back(content_p);
 				}
 		}
 	}
@@ -405,26 +450,26 @@ void FigureShadingAllocator::prune_Graph(std::unordered_map<LocalAddr , backend:
 	while(adjnodes!=0){
 		token=false;
 		for(auto content:rcontent){
-			if(content.second->allocated) continue;
-			if(content.second->nints<AVAILABLE_RREGS){
+			if(content->allocated) continue;
+			if(content->nints<AVAILABLE_RREGS){
 				token=true;
 				--adjnodes;
-				content.second->allocated=true;
-				for(auto neighbor:content.second->neighbors){
+				content->allocated=true;
+				for(auto neighbor:content->neighbors){
 					neighbor->nints--;
-					neighbor->dn_neighbors.push_back(content.second);
+					neighbor->dn_neighbors.push_back(content);
 				}
-				adjStack.push(content.second);
+				adjStack.push(content);
 			}
 		}
 		size_t lowest=0;
 		vRegSSet * lowestadj;
 		if(!token&&adjnodes!=0){
 			for(auto content:rcontent){
-				if(content.second->allocated) continue;
-				if(lowest==0||content.second->spillcost<lowest){
-					lowest=content.second->spillcost;
-					lowestadj=content.second;
+				if(content->allocated) continue;
+				if(lowest==0||content->spillcost<lowest){
+					lowest=content->spillcost;
+					lowestadj=content;
 				}
 			}
 			--adjnodes;
@@ -453,76 +498,20 @@ void FigureShadingAllocator::prune_Graph(std::unordered_map<LocalAddr , backend:
 		else node->sid=SId::stk;
 	}
 	for(auto content:rcontent){
-		for(auto pvReg:content.second->pvRegSs) pvReg->sid=content.second->sid;
+		content->pvRegS->sid=content->sid;
 	}
 	for(auto content :rcontent){
-		std::cerr<<content.first.local_v->getName()<<"."<<content.first.local_v->id<<":"
-			<<(int)(content.second->sid)<<std::endl;
-		for(int tml:content.second->globalDefineUseTimeleline) std::cerr<<tml<<" ";
+		std::cerr<<content->pvRegS->id;
+		for(int tml:content->globalDefineUseTimeleline) std::cerr<<tml<<" ";
 		std::cerr<<std::endl;
-		std::cerr<<"--expense="<<content.second->spillcost<<"\n";
+		std::cerr<<"--expense="<<content->spillcost<<"\n";
 	}
 }
-
-bool FigureShadingAllocator::live_At(const vRegSet *s1,const vRegSet *s2){
-		if(s1->globalDefineUseTimeleline.back()<s2->globalDefineUseTimeleline.front()
-		||(s1->globalDefineUseTimeleline.front()>s2->globalDefineUseTimeleline.back()))
-		return false;
-	else return true;	
-}
-
-void FigureShadingAllocator::prepare_Matrixs(){
-	//std::map<ircode::AddrPara * ,RId> callers; 
-	for (auto * pVRegR: allVarVRegR) {
-		if(!pVRegR->laddr){
-			pVRegR->rid=RId::stk;
-			continue;
-		}
-		if(!rcontent.count(*(pVRegR->laddr))) rcontent[*(pVRegR->laddr)]=new vRegRSet();
-		auto set=rcontent[*(pVRegR->laddr)];
-		set->pvRegRs.push_back(pVRegR);
-		set->spillcost+=pVRegR->expense;
-		std::vector<int> current=defineUseTimelineVRegR[pVRegR];
-		set->globalDefineUseTimeleline.insert(set->globalDefineUseTimeleline.end(),
-			current.begin(),current.end());
-	}
-	std::unordered_map<LocalAddr,backend::vRegRSet *,Hashfunc>::iterator it1,it2;
-	for(it1=rcontent.begin();it1!=rcontent.end();++it1){
-		std::sort(it1->second->globalDefineUseTimeleline.begin(),
-			it1->second->globalDefineUseTimeleline.end());
-		for(it2=rcontent.begin();it2!=it1;++it2){
-			if(live_At(it1->second,it2->second)) 
-				conflictMatrixR.insert(std::make_pair(it1->second,it2->second));
-		}
-	}
-	for(auto * pVRegS: allVarVRegS) {
-		if(!pVRegS->laddr){
-			pVRegS->sid=SId::stk;
-			continue;
-		}
-		if(!s_rcontent.count(*(pVRegS->laddr))) s_rcontent[*(pVRegS->laddr)]=new vRegSSet();
-		auto set=s_rcontent[*(pVRegS->laddr)];
-		set->pvRegSs.push_back(pVRegS);
-		set->spillcost+=pVRegS->expense;
-		std::vector<int> current=defineUseTimelineVRegS[pVRegS];
-		set->globalDefineUseTimeleline.insert(set->globalDefineUseTimeleline.end(),
-			current.begin(),current.end());	
-	}
-	std::unordered_map<LocalAddr,backend::vRegSSet *,Hashfunc>::iterator its1,its2;
-	for(its1=s_rcontent.begin();its1!=s_rcontent.end();++its1){
-		std::sort(its1->second->globalDefineUseTimeleline.begin(),
-			its1->second->globalDefineUseTimeleline.end());
-		for(its2=s_rcontent.begin();its2!=its1;++its2){
-			if(live_At(its1->second,its2->second)) 
-				conflictMatrixS.insert(std::make_pair(its1->second,its2->second));
-		}
-	}
-}
-
 int FigureShadingAllocator::run(){
 	prepare_Matrixs();
 	prune_Graph(rcontent);
 	prune_Graph(s_rcontent);
+	//for (auto * pVRegR: allVarVRegR) std::cerr<<pVRegR->id<<(int)(pVRegR->rid)<<' ';
 	conflictMatrixR.clear();
 	conflictMatrixS.clear();
 	/*for (auto * pVRegS: allVarVRegS) {
@@ -530,18 +519,6 @@ int FigureShadingAllocator::run(){
 		//pVRegS->prt();
 		//std::cerr<<pVRegS->id;
 	}*/
-
 	return 0;
 }
-
 }
-		/*if(!pVRegR->laddr->valorarray_t){
-			std::cerr<<"%"<<pVRegR->laddr->local_v->getName()<<":";
-			for(int id:pVRegR->laddr->idx) std::cerr<<id<<' ';
-			std::cerr<<'\n';
-			for(int l:defineUseTimelineVRegR[pVRegR]) std::cerr<<l<<' ';
-			std::cerr<<'\n';
-		}*/
-		//std::cerr<<pVRegR->id;
-		//pVRegR->prt();
-		//backend::vRegRSet *set;

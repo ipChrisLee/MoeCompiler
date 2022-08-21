@@ -160,9 +160,13 @@ class Pool {
   protected:
 	std::vector<std::unique_ptr<B>> pool;
 	std::function<void(B *)> afterEmplace;
+	std::function<void(B *)> onDelete;
   public:
-	explicit Pool(std::function<void(B *)> afterEmplace = nullptr) :
-		afterEmplace(afterEmplace) {
+	explicit Pool(
+		std::function<void(B *)> afterEmplace = nullptr,
+		std::function<void(B *)> onDelete = nullptr
+	) :
+		afterEmplace(afterEmplace), onDelete(onDelete) {
 	}
 
 	Pool(const Pool &) = delete;
@@ -180,6 +184,7 @@ class Pool {
 		auto itP = vec.begin();
 		while (itP != vec.end()) {
 			if (*itP == p) {
+				onDelete(*itP);
 				vec.erase(itP);
 				break;
 			}

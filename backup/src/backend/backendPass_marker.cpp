@@ -1,6 +1,6 @@
 
 #include "backendPass.hpp"
-
+#include <cmath>
 
 namespace pass {
 
@@ -114,14 +114,14 @@ backend::Opnd * FuncInfo::markOperand(ircode::AddrOperand * pAddrOperand) {
 				case sup::Type::Int_t: {
 					auto * pVRegR = convertIntVariable(pAddrVar);
 					defineUseTimelineVRegR[pVRegR].emplace_back(tim);
-					pVRegR->expense+=std::pow(10,loop_labels);
+					pVRegR->expense+=std::pow(10,loop_label);
 					res = pVRegR;
 					break;
 				}
 				case sup::Type::Float_t: {
 					auto * pVRegS = convertFloatVariable(pAddrVar);
 					defineUseTimelineVRegS[pVRegS].emplace_back(tim);
-					pVRegS->expense+=std::pow(10,loop_labels);
+					pVRegS->expense+=std::pow(10,loop_label);
 					res = pVRegS;
 					break;
 				}

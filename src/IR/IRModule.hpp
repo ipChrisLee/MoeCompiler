@@ -17,7 +17,7 @@ class IRModule;
 class IRAddrPool : public sup::LLVMable, public moeconcept::Pool<IRAddr> {
   protected:
 	std::vector<std::unique_ptr<IRAddr>> pool;
-	std::vector<AddrGlobalVariable *> globalVars;
+	std::set<AddrGlobalVariable *> globalVars;
   public:
 
 	IRAddrPool();
@@ -26,7 +26,7 @@ class IRAddrPool : public sup::LLVMable, public moeconcept::Pool<IRAddr> {
 
 	std::string toLLVMIR() const override;
 
-	const std::vector<AddrGlobalVariable *> & getGlobalVars() const;
+	const std::set<AddrGlobalVariable *> & getGlobalVars() const;
 };
 
 class IRInstrPool : public moeconcept::Pool<IRInstr> {

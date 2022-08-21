@@ -38,23 +38,23 @@ int AddBrToNextBB::run(std::list<ircode::IRInstr *> & instrs) {
 		}
 		itPInstrNow = std::next(itPInstrNow);
 	}
-	itPInstrNow = instrs.begin();
-	while (itPInstrNow != instrs.end()) {
-		auto itPInstrNxt = std::next(itPInstrNow);
-		if (itPInstrNxt != instrs.end() &&
-			isTerminalInstr(get(itPInstrNow)->instrType) &&
-			get(itPInstrNxt)->instrType != InstrType::Label) {
-			auto * pLabelAddr = ir.addrPool.emplace_back(
-				ircode::AddrJumpLabel()
-			);
-			instrs.emplace(
-				itPInstrNxt, ir.instrPool.emplace_back(
-					ircode::InstrLabel(pLabelAddr)
-				)
-			);
-		}
-		itPInstrNow = std::next(itPInstrNow);
-	}
+//	itPInstrNow = instrs.begin();
+//	while (itPInstrNow != instrs.end()) {
+//		auto itPInstrNxt = std::next(itPInstrNow);
+//		if (itPInstrNxt != instrs.end() &&
+//			isTerminalInstr(get(itPInstrNow)->instrType) &&
+//			get(itPInstrNxt)->instrType != InstrType::Label) {
+//			auto * pLabelAddr = ir.addrPool.emplace_back(
+//				ircode::AddrJumpLabel()
+//			);
+//			instrs.emplace(
+//				itPInstrNxt, ir.instrPool.emplace_back(
+//					ircode::InstrLabel(pLabelAddr)
+//				)
+//			);
+//		}
+//		itPInstrNow = std::next(itPInstrNow);
+//	}
 	return 0;
 }
 
@@ -77,19 +77,14 @@ int EliminateBrAfterBr::run(std::list<ircode::IRInstr *> & instrs) {
 		auto itPInstrNxt = std::next(itPInstrNow);
 		if (itPInstrNxt != instrs.end()) {
 			if (get(itPInstrNow)->instrType == ircode::InstrType::Br &&
-				get(itPInstrNxt)->instrType == ircode::InstrType::Br) {
+				get(itPInstrNxt)->instrType != ircode::InstrType::Label) {
 				auto * pBrNow = dynamic_cast<ircode::InstrBr *>(get(itPInstrNow));
 				com::Assert(
 					(pBrNow->pLabelTrue && pBrNow->pLabelFalse && !pBrNow->pCond) ||
 						(pBrNow->pLabelTrue && !pBrNow->pLabelFalse && !pBrNow->pCond), "",
 					CODEPOS
 				);
-				auto * pLabelAddr = ir.addrPool.emplace_back(
-					ircode::AddrJumpLabel()
-				);
-				instrs.emplace(
-					itPInstrNxt, ir.instrPool.emplace_back(ircode::InstrLabel(pLabelAddr))
-				);
+				instrs.erase(itPInstrNxt);
 				continue;
 			}
 		}

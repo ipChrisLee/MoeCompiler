@@ -25,9 +25,6 @@ void Node::insertBeforeTerm(ircode::IRInstr * pInstr) {
 
 std::list<ircode::IRInstr *> Node::toLLVMIRForm() {
 	auto res = instrs;
-	for (auto [pLVAddr, pPhi]: phiInstrs) {
-		res.insert(std::next(res.begin()), pPhi);
-	}
 	return res;
 }
 
@@ -117,7 +114,51 @@ Node * CFG::try_merge_node(Node * pNodeFrom, PNode & pNodeTo) {
 		//  merge instrs
 		pNodeFrom->instrs.erase(std::prev(pNodeFrom->instrs.end()));
 		pNodeTo->instrs.erase(pNodeTo->instrs.begin());
-		STLPro::list::merge_to(pNodeFrom->instrs, std::move(pNodeTo->instrs));
+		pNodeFrom->instrs.merge(
+			pNodeTo->instrs,
+			[](ircode::IRInstr * left, ircode::IRInstr * right) -> bool {
+				auto rkl = 0, rkr = 0;
+				switch (left->instrType) {
+					case ircode::InstrType::Label: {
+						rkl = 0;
+						break;
+					}
+					case ircode::InstrType::Phi: {
+						rkl = 1;
+						break;
+					}
+					case ircode::InstrType::Br:
+					case ircode::InstrType::Ret: {
+						rkl = 3;
+						break;
+					}
+					default: {
+						rkl = 2;
+						break;
+					}
+				}
+				switch (right->instrType) {
+					case ircode::InstrType::Label: {
+						rkr = 0;
+						break;
+					}
+					case ircode::InstrType::Phi: {
+						rkr = 1;
+						break;
+					}
+					case ircode::InstrType::Br:
+					case ircode::InstrType::Ret: {
+						rkr = 3;
+						break;
+					}
+					default: {
+						rkr = 2;
+						break;
+					}
+				}
+				return rkl < rkr;
+			}
+		);
 		//  merge edges, process on data of succ of pNodeTo
 		for (auto * p: pNodeTo->succOnCFG) {
 			p->predOnCFG.erase(pNodeTo);
@@ -127,6 +168,10 @@ Node * CFG::try_merge_node(Node * pNodeFrom, PNode & pNodeTo) {
 		pNodeFrom->succOnCFG.erase(pNodeTo);
 		//  merge edges, process on data of pNodeFrom
 		pNodeFrom->succOnCFG.merge(pNodeTo->succOnCFG);
+		//  for all phi node, change label
+		for (auto * pNodeNxt: pNodeFrom->succOnCFG) {
+			changePhiLabels(pNodeNxt, pNodeTo->pIRLabel, pNodeFrom->pIRLabel);
+		}
 		//  process data on CFG
 		_label2Node.erase(pNodeTo->pIRLabel);
 		pNodeTo->clear();
@@ -138,8 +183,6 @@ Node * CFG::try_merge_node(Node * pNodeFrom, PNode & pNodeTo) {
 }
 
 std::list<ircode::IRInstr *> CFG::toDeSSAForm() {
-	calculateIDomAndDFAndDom();
-	mem2reg();
 	resolvePhi();
 	addMarker();
 	auto res = std::list<ircode::IRInstr *>();
@@ -214,16 +257,28 @@ std::list<ircode::IRInstr *> CFG::toLLVMIRFrom() {
 }
 
 int CFG::opti() {
-//	simplifyCFG();
+	simplifyCFG();
+	//  analyze cfg
 	calculateIDomAndDFAndDom();
-	//  TODO : Some other global/local opti
+	mem2reg();
+	getDUChain();
+	//  opti
+	constantPropagation();
+	sccp();
+	dce();
+	cse();
+//	adSimplifyCFG();
 	return 0;
 }
 
 CFGIR::CFGIR(ircode::IRModule & ir) : ir(ir), cfgPool(funcDef2CFG) {
 }
 
-int CFGIR::run() {
+int CFGIR::opti() {
+	//  functional pass on flow-form ir
+	globalVarOpt();
+//	checkIfHaveSideEffect();
+	//  build cfg for every function
 	for (auto * pFuncDef: ir.funcPool) {
 		if (pFuncDef->pAddrFun->justDeclare) {
 			continue;
@@ -231,16 +286,11 @@ int CFGIR::run() {
 			cfgPool.emplace_back(CFG(ir, pFuncDef));
 		}
 	}
-	return 0;
-}
-
-int CFGIR::opti() {
-	//  local passes:
+	//  global opti inside functions on cfg-form ir
 	for (auto [pFuncDef, pCFG]: funcDef2CFG) {
 		pCFG->opti();
 	}
-	//  TODO : Global passes
-	//  can use Pool::erase to inline
+	//  may can add some functional analyze (analyze side effect maybe) and inline.
 	return 0;
 }
 
@@ -252,17 +302,29 @@ int CFGIR::genLLVMFormRes() {
 }
 
 int CFGIR::genDeSSAFormRes() {
-	for (auto [pFuncDef, pCFG]: funcDef2CFG) {
-		pFuncDef->instrs = pCFG->toDeSSAForm();
+	auto deletedFuncDef = std::set<ircode::IRFuncDef *>();
+	for (auto * pFuncDef: ir.funcPool) {
+		if (pFuncDef->pAddrFun->justDeclare) {
+			continue;
+		} else if (funcDef2CFG.count(pFuncDef)) {
+			pFuncDef->instrs = funcDef2CFG[pFuncDef]->toDeSSAForm();
+		} else {
+			deletedFuncDef.insert(pFuncDef);
+		}
+	}
+	for (auto * pFuncDef: deletedFuncDef) {
+		ir.funcPool.erase(pFuncDef);
 	}
 	return 0;
 }
 
 
-CFGIR::CFGPool::CFGPool(std::map<ircode::IRFuncDef *, CFG *> & mp) :
-	Pool() {
+CFGIR::CFGPool::CFGPool(std::map<ircode::IRFuncDef *, CFG *> & mp) : Pool() {
 	afterEmplace = [&mp](CFG * pCFG) {
 		mp.emplace(pCFG->pFuncDefThis, pCFG);
+	};
+	onDelete = [&mp](CFG * pCFG) {
+		mp.erase(pCFG->pFuncDefThis);
 	};
 }
 
@@ -276,6 +338,7 @@ DUChain::DUChain(Node * pNodeDef, ItPIRInstr_t instrDef) : def(pNodeDef, std::mo
 void DUChain::insertUseInfo(Node * pNodeUse, ItPIRInstr_t instrUse) {
 	use.emplace_back(pNodeUse, std::move(instrUse));
 }
+
 
 }
 

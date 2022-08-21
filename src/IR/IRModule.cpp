@@ -7,7 +7,12 @@ namespace ircode {
 IRAddrPool::IRAddrPool() : pool() {
 	afterEmplace = [this](IRAddr * pAddr) {
 		if (auto * pp = dynamic_cast<AddrGlobalVariable *>(pAddr)) {
-			globalVars.emplace_back(pp);
+			globalVars.insert(pp);
+		}
+	};
+	onDelete = [this](IRAddr * pAddr) {
+		if (auto * pp = dynamic_cast<AddrGlobalVariable *>(pAddr)) {
+			globalVars.erase(pp);
 		}
 	};
 }
@@ -20,7 +25,7 @@ std::string IRAddrPool::toLLVMIR() const {
 	return res + "\n";
 }
 
-const std::vector<AddrGlobalVariable *> & IRAddrPool::getGlobalVars() const {
+const std::set<AddrGlobalVariable *> & IRAddrPool::getGlobalVars() const {
 	return globalVars;
 }
 

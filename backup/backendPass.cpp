@@ -1,4 +1,5 @@
 #include "backendPass.hpp"
+#include <climits>
 
 
 namespace pass {
@@ -14,17 +15,14 @@ int ToASM::run() {
 			backend::Label(pGVarAddr)
 		);
 	}
-	for (auto * pFuncDef: ir.funcPool.funcDefs) {
+	for (auto * pFuncDef: ir.funcPool) {
 		auto * pFuncInfo = funcInfoPool.emplace_back(
 			FuncInfo(
 				opndPool, pFuncDef, addrToFuncInfo, gVarToLabel,
-				std::make_unique<backend::AllOnStkAllocator>(opndPool)
+				std::make_unique<backend::FigureShadingAllocator>(opndPool)
 			)
 		);
 		addrToFuncInfo[pFuncDef->pAddrFun] = pFuncInfo;
-		if (pFuncDef->pAddrFun->justDeclare) {
-			continue;
-		}
 		pFuncInfo->run();
 	}
 	return 0;
@@ -34,7 +32,7 @@ int ToASM::run() {
 std::string ToASM::toASM() {
 	auto res = std::string(pass::ToASM::asmHeader) + "\n\n";
 	if (!ir.addrPool.getGlobalVars().empty()) {
-		res += std::string(gVarHeader);
+		res += std::string(gVarHeaderDataSection);
 		for (auto * pGVarAddr: ir.addrPool.getGlobalVars()) {
 			res += declGVar(pGVarAddr) + "\n";
 		}
@@ -79,10 +77,12 @@ FuncInfo::FuncInfo(
 					);
 					argsStkSizeOnCallingThis += 4;
 				}
-				argsInfoOnCallingThis[pAddrPara] = opndPara;
-				m_AddrArg_VRegR[pAddrPara] = opndPool.emplace_back(
+				paramsInfoOnCallingThis[pAddrPara] = opndPara;
+				auto * opndArg = opndPool.emplace_back(
 					backend::VRegR(*opndPara)
 				);
+				m_AddrArg_VRegR.emplace(pAddrPara, opndArg);
+				defineUseTimelineVRegR[opndArg].emplace_back(0);
 				break;
 			}
 			case sup::Type::Float_t: {
@@ -100,10 +100,12 @@ FuncInfo::FuncInfo(
 					);
 					argsStkSizeOnCallingThis += 4;
 				}
-				argsInfoOnCallingThis[pAddrPara] = opndPara;
-				m_AddrArg_VRegS[pAddrPara] = opndPool.emplace_back(
+				paramsInfoOnCallingThis[pAddrPara] = opndPara;
+				auto * opndArg = opndPool.emplace_back(
 					backend::VRegS(*opndPara)
 				);
+				m_AddrArg_VRegS.emplace(pAddrPara, opndArg);
+				defineUseTimelineVRegS[opndArg].emplace_back(0);
 				break;
 			}
 			default:com::Throw("", CODEPOS);
@@ -117,6 +119,7 @@ FuncInfo::FuncInfo(
 std::string FuncInfo::toASM() {
 	auto res = "@\t" + pFuncDef->pAddrFun->declLLVMIR() + " \n";
 	res += pFuncLabel->labelStr + ":\n";
+	pFuncLabel->lineNum = backend::instrCnt;
 	if (!backupRReg.empty()) {
 		genASMPushRegs(res, backupRReg);
 	}
@@ -157,13 +160,19 @@ std::string FuncInfo::toASM() {
 
 int FuncInfo::run() {
 	tim = 0;
+	loop_label=0;
 	for (auto * pInstr: pFuncDef->instrs) {
 		run(pInstr);
 	}
-	com::Assert(regAllocator.get(), "", CODEPOS);
+	if (pFuncDef->pAddrFun->justDeclare) {
+		allVarVRegR.emplace(opndPool.emplace_back(backend::VRegR(backend::RId::r0)));
+		allVarVRegR.emplace(opndPool.emplace_back(backend::VRegR(backend::RId::r1)));
+		allVarVRegR.emplace(opndPool.emplace_back(backend::VRegR(backend::RId::r2)));
+		allVarVRegR.emplace(opndPool.emplace_back(backend::VRegR(backend::RId::r3)));
+	}
 	regAllocator->set(
-		allUsedVRegR, allUsedVRegS, allStkPtr, defineUseTimelineVRegR,
-		defineUseTimelineVRegS, tim, argsInfoOnCallingThis, argsStkSizeOnCallingThis,
+		allVarVRegR, allVarVRegS, allVarStkPtr, defineUseTimelineVRegR,
+		defineUseTimelineVRegS, tim, paramsInfoOnCallingThis, argsStkSizeOnCallingThis,
 		m_AddrArg_VRegR, m_AddrArg_VRegS
 	);
 	regAllocator->getRes();
@@ -175,12 +184,14 @@ int FuncInfo::run() {
 	m_AddrArg_VRegR = regAllocator->m_AddrArg_VRegR;
 	m_AddrArg_VRegS = regAllocator->m_AddrArg_VRegS;
 	spilledStkSize = regAllocator->spilledStkSize;
-	backupStkSize = regAllocator->backupStkSize;
+	backupStkSizeWhenCallingThis = regAllocator->backupStkSizeWhenCallingThis;
 	return 0;
 }
 
 std::string FuncInfo::toASM(ircode::InstrAlloca * pInstrAlloca) {
-	return "";
+	auto * pLVAddr = pInstrAlloca->allocaTo;
+	auto * pStkPtr = convertLocalVar(pLVAddr);
+	return "@\t" + pLVAddr->toLLVMIR() + "\t=>\tstk+" + std::to_string(pStkPtr->offset) + "\n";
 }
 
 int FuncInfo::run(ircode::InstrAlloca * pInstrAlloca) {
@@ -203,7 +214,7 @@ std::string FuncInfo::toASM(ircode::InstrBr * pBr) {
 	if (!pBr->pCond) {    //  unconditional jump
 		com::Assert(pBr->pLabelTrue, "", CODEPOS);
 		auto * pASMLabelTrue = convertLabel(pBr->pLabelTrue);
-		res += backend::toASM("b", pASMLabelTrue->labelStr);
+		res += genASMBranchInstrs("", pASMLabelTrue, backend::RId::lhs);
 	} else if (pBr->pCond->addrType == ircode::AddrType::StaticValue) {
 		auto * pSVCond = dynamic_cast<ircode::AddrStaticValue *>(pBr->pCond);
 		auto b = dynamic_cast<const sup::BoolStaticValue &>(
@@ -211,11 +222,15 @@ std::string FuncInfo::toASM(ircode::InstrBr * pBr) {
 		).value;
 		if (b) {
 			if (pBr->pLabelTrue) {
-				res += backend::toASM("b", convertLabel(pBr->pLabelTrue)->labelStr);
+				res += genASMBranchInstrs(
+					"", convertLabel(pBr->pLabelTrue), backend::RId::lhs
+				);
 			}
 		} else {
 			if (pBr->pLabelFalse) {
-				res += backend::toASM("b", convertLabel(pBr->pLabelFalse)->labelStr);
+				res += genASMBranchInstrs(
+					"", convertLabel(pBr->pLabelFalse), backend::RId::lhs
+				);
 			}
 		}
 	} else {
@@ -225,21 +240,23 @@ std::string FuncInfo::toASM(ircode::InstrBr * pBr) {
 			switch (cmpType) {
 				case CmpType::I: {
 					condStr = genASMCondName(lastICmp, false);
-					res += backend::toASM(
-						"b" + condStr, convertLabel(pBr->pLabelTrue)->labelStr
+					res += genASMBranchInstrs(
+						condStr, convertLabel(pBr->pLabelTrue), backend::RId::lhs
 					);
-					res += backend::toASM(
-						"b", convertLabel(pBr->pLabelFalse)->labelStr
+					res += genASMBranchInstrs(
+						"", convertLabel(pBr->pLabelFalse), backend::RId::lhs
 					);
 					break;
 				}
 				case CmpType::F: {
 					condStr = genASMCondNameReverse(lastFCmp);
 					res += backend::toASM("vmrs", "APSR_nzcv", "fpscr");
-					res += backend::toASM(
-						"b" + condStr, convertLabel(pBr->pLabelFalse)->labelStr
+					res += genASMBranchInstrs(
+						condStr, convertLabel(pBr->pLabelFalse), backend::RId::lhs
 					);
-					res += backend::toASM("b", convertLabel(pBr->pLabelTrue)->labelStr);
+					res += genASMBranchInstrs(
+						"", convertLabel(pBr->pLabelTrue), backend::RId::lhs
+					);
 					break;
 				}
 				default:com::Throw("", CODEPOS);
@@ -248,8 +265,8 @@ std::string FuncInfo::toASM(ircode::InstrBr * pBr) {
 			switch (cmpType) {
 				case CmpType::I: {
 					auto condStr = genASMCondName(lastICmp, false);
-					res += backend::toASM(
-						"b" + condStr, convertLabel(pBr->pLabelTrue)->labelStr
+					res += genASMBranchInstrs(
+						condStr, convertLabel(pBr->pLabelTrue), backend::RId::lhs
 					);
 					break;
 				}
@@ -258,18 +275,11 @@ std::string FuncInfo::toASM(ircode::InstrBr * pBr) {
 		} else if (!pBr->pLabelTrue && pBr->pLabelFalse) {
 			auto condStr = std::string();
 			switch (cmpType) {
-				case CmpType::I: {
-					condStr = genASMCondName(lastICmp, true);
-					res += backend::toASM(
-						"b" + condStr, convertLabel(pBr->pLabelTrue)->labelStr
-					);
-					break;
-				}
 				case CmpType::F: {
 					condStr = genASMCondNameReverse(lastFCmp);
-					res += backend::toASM("vmrs");
-					res += backend::toASM(
-						"b" + condStr, convertLabel(pBr->pLabelFalse)->labelStr
+					res += backend::toASM("vmrs", "APSR_nzcv", "fpscr");
+					res += genASMBranchInstrs(
+						condStr, convertLabel(pBr->pLabelFalse), backend::RId::lhs
 					);
 					break;
 				}
@@ -337,7 +347,7 @@ std::string FuncInfo::toASM_Ret_Int(ircode::InstrRet * pRet) {
 		case ircode::AddrType::Var: {
 			auto * pRetVarAddr = dynamic_cast<ircode::AddrVariable *>(pRetAddr);
 			auto * pVRegRRet = convertIntVariable(pRetVarAddr);
-			genASMGetVRegRVal(res, pVRegRRet, backend::RId::r0);
+			genASMSaveFromVRegRToRReg(res, pVRegRRet, backend::RId::r0);
 			break;
 		}
 		case ircode::AddrType::StaticValue: {
@@ -360,7 +370,7 @@ std::string FuncInfo::toASM_Ret_Float(ircode::InstrRet * pRet) {
 		case ircode::AddrType::Var: {
 			auto * pRetVarAddr = dynamic_cast<ircode::AddrVariable *>(pRetAddr);
 			auto * pVRegSRet = convertFloatVariable(pRetVarAddr);
-			genASMGetVRegSVal(res, pVRegSRet, backend::SId::s0, backend::RId::lhs);
+			genASMSaveFromVRegSToSReg(res, pVRegSRet, backend::SId::s0, backend::RId::lhs);
 			break;
 		}
 		case ircode::AddrType::StaticValue: {
@@ -445,6 +455,18 @@ int FuncInfo::run(ircode::IRInstr * pInstr) {
 			retVal = run(dynamic_cast<ircode::InstrConversionOp *>(pInstr));
 			break;
 		}
+		case ircode::InstrType::ParaMov: {
+			retVal = run(dynamic_cast<ircode::InstrParaMov *>(pInstr));
+			break;
+		}
+		case ircode::InstrType::Copy: {
+			retVal = run(dynamic_cast<ircode::InstrParallelCopy *>(pInstr));
+			break;
+		}
+		case ircode::InstrType::Mark: {
+			retVal = run(dynamic_cast<ircode::InstrMarkVars *>(pInstr));
+			break;
+		}
 		default: {
 			com::Throw("", CODEPOS);
 		}
@@ -523,6 +545,18 @@ std::string FuncInfo::toASM(ircode::IRInstr * pInstr) {
 			res += toASM(dynamic_cast<ircode::InstrFptosi *>(pInstr));
 			break;
 		}
+		case ircode::InstrType::ParaMov: {
+			res += toASM(dynamic_cast<ircode::InstrParaMov *>(pInstr));
+			break;
+		}
+		case ircode::InstrType::Copy: {
+			res += toASM(dynamic_cast<ircode::InstrParallelCopy *>(pInstr));
+			break;
+		}
+		case ircode::InstrType::Mark: {
+			res += toASM(dynamic_cast<ircode::InstrMarkVars *>(pInstr));
+			break;
+		}
 		default: {
 			com::Throw("", CODEPOS);
 		}
@@ -532,12 +566,15 @@ std::string FuncInfo::toASM(ircode::IRInstr * pInstr) {
 
 int FuncInfo::run(ircode::InstrLabel * pInstrLabel) {
 	convertLabel(pInstrLabel->pAddrLabel);
+	if(pInstrLabel->pAddrLabel->labelName==WHILE_ST) loop_label++;
+	else if(pInstrLabel->pAddrLabel->labelName==WHILE_ED) loop_label--;
 	return 0;
 }
 
 std::string FuncInfo::toASM(ircode::InstrLabel * pInstrLabel) {
 	auto * pASMLabel = convertLabel(pInstrLabel->pAddrLabel);
 	auto res = pASMLabel->labelStr + ":\n";
+	pASMLabel->lineNum = backend::instrCnt;
 	return res;
 }
 
@@ -672,7 +709,9 @@ int FuncInfo::run(ircode::InstrCall * pInstrCall) {
 	for (auto * pOperandAddr: pInstrCall->paramsPassing) {
 		markOperand(pOperandAddr);
 	}
-	if (pInstrCall->retAddr) { markOperand(pInstrCall->retAddr); }
+	if (pInstrCall->retAddr) {
+		markOperand(pInstrCall->retAddr);
+	}
 	return 0;
 }
 
@@ -809,6 +848,7 @@ std::string FuncInfo::toASM(ircode::InstrZExt * pInstrZExt) {
 					break;
 				}
 				case CmpType::F: {
+					res += backend::toASM("vmrs", "APSR_nzcv", "fpscr");
 					res += backend::toASM("movw", extValRId, 1);
 					res += backend::toASM(
 						"movw" + genASMCondNameReverse(lastFCmp), extValRId, 0
@@ -884,7 +924,7 @@ std::string FuncInfo::toASM(ircode::InstrSitofp * pInstrSitofp) {
 		auto strTo = std::string();
 		if (backend::Imm<backend::ImmType::Immed>::fitThis(offset)) {
 			strTo = "[sp, " + backend::to_asm(offset) + "]";
-		} else if (backend::Imm<backend::ImmType::ImmOffset>::fitThis(offset)) {
+		} else if (backend::Imm<backend::ImmType::Imm8m>::fitThis(offset)) {
 			res += backend::toASM("add", backend::RId::rhs, backend::RId::rhs, offset);
 			strTo = "[" + backend::to_asm(backend::RId::rhs) + ", " + backend::to_asm(0) + "]";
 		} else {
@@ -930,7 +970,7 @@ std::string FuncInfo::toASM(ircode::InstrFptosi * pInstrFptosi) {
 		auto strTo = std::string();
 		if (backend::Imm<backend::ImmType::Immed>::fitThis(offset)) {
 			strTo = "[sp, " + backend::to_asm(offset) + "]";
-		} else if (backend::Imm<backend::ImmType::ImmOffset>::fitThis(offset)) {
+		} else if (backend::Imm<backend::ImmType::Imm8m>::fitThis(offset)) {
 			res += backend::toASM("add", backend::RId::rhs, backend::RId::rhs, offset);
 			strTo = "[" + backend::to_asm(backend::RId::rhs) + ", " + backend::to_asm(0) + "]";
 		} else {
@@ -944,4 +984,5 @@ std::string FuncInfo::toASM(ircode::InstrFptosi * pInstrFptosi) {
 	} else { com::Throw("", CODEPOS); }
 	return res;
 }
+
 }

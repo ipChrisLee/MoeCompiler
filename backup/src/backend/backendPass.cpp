@@ -1,4 +1,5 @@
 #include "backendPass.hpp"
+#include <climits>
 
 
 namespace pass {
@@ -159,7 +160,7 @@ std::string FuncInfo::toASM() {
 
 int FuncInfo::run() {
 	tim = 0;
-	loop_labels=0;
+	loop_label=0;
 	for (auto * pInstr: pFuncDef->instrs) {
 		run(pInstr);
 	}
@@ -184,6 +185,7 @@ int FuncInfo::run() {
 	m_AddrArg_VRegS = regAllocator->m_AddrArg_VRegS;
 	spilledStkSize = regAllocator->spilledStkSize;
 	backupStkSizeWhenCallingThis = regAllocator->backupStkSizeWhenCallingThis;
+	//bbDispatch();
 	return 0;
 }
 
@@ -454,6 +456,18 @@ int FuncInfo::run(ircode::IRInstr * pInstr) {
 			retVal = run(dynamic_cast<ircode::InstrConversionOp *>(pInstr));
 			break;
 		}
+		case ircode::InstrType::ParaMov: {
+			retVal = run(dynamic_cast<ircode::InstrParaMov *>(pInstr));
+			break;
+		}
+		case ircode::InstrType::Copy: {
+			retVal = run(dynamic_cast<ircode::InstrParallelCopy *>(pInstr));
+			break;
+		}
+		case ircode::InstrType::Mark: {
+			retVal = run(dynamic_cast<ircode::InstrMarkVars *>(pInstr));
+			break;
+		}
 		default: {
 			com::Throw("", CODEPOS);
 		}
@@ -532,6 +546,18 @@ std::string FuncInfo::toASM(ircode::IRInstr * pInstr) {
 			res += toASM(dynamic_cast<ircode::InstrFptosi *>(pInstr));
 			break;
 		}
+		case ircode::InstrType::ParaMov: {
+			res += toASM(dynamic_cast<ircode::InstrParaMov *>(pInstr));
+			break;
+		}
+		case ircode::InstrType::Copy: {
+			res += toASM(dynamic_cast<ircode::InstrParallelCopy *>(pInstr));
+			break;
+		}
+		case ircode::InstrType::Mark: {
+			res += toASM(dynamic_cast<ircode::InstrMarkVars *>(pInstr));
+			break;
+		}
 		default: {
 			com::Throw("", CODEPOS);
 		}
@@ -541,8 +567,8 @@ std::string FuncInfo::toASM(ircode::IRInstr * pInstr) {
 
 int FuncInfo::run(ircode::InstrLabel * pInstrLabel) {
 	convertLabel(pInstrLabel->pAddrLabel);
-	if(pInstrLabel->pAddrLabel->labelName==WHILE_ST) loop_labels++;
-	else if(pInstrLabel->pAddrLabel->labelName==WHILE_ED) loop_labels--;
+	if(pInstrLabel->pAddrLabel->labelName==WHILE_ST) loop_label++;
+	else if(pInstrLabel->pAddrLabel->labelName==WHILE_ED) loop_label--;
 	return 0;
 }
 
@@ -696,26 +722,6 @@ int FuncInfo::run(ircode::InstrGetelementptr * pInstrGetelementptr) {
 		markOperand(p);
 	}
 	markOperand(pInstrGetelementptr->to);
-	auto * pRegTo=convertIntVariable(pInstrGetelementptr->to);
-	if(pInstrGetelementptr->from->addrType==ircode::AddrType::LocalVar||
-			pInstrGetelementptr->from->addrType==ircode::AddrType::GlobalVar){
-		pRegTo->laddr=std::make_shared<backend::LocalAddr>(pInstrGetelementptr->from,false);
-	}
-	else {
-		auto * pRegFrom=convertIntVariable(pInstrGetelementptr->from);
-		pRegTo->laddr=std::make_shared<backend::LocalAddr>(*pRegFrom->laddr);
-	}
-	for(auto *p:pInstrGetelementptr->idxs){
-		if(p->addrType==ircode::AddrType::StaticValue){
-			auto pvalue=dynamic_cast<ircode::AddrStaticValue *>(p);
-			auto static_value=&pvalue->getStaticValue();
-			if(typeid(*static_value)==typeid(sup::IntStaticValue)){
-				auto intv=dynamic_cast<const sup::IntStaticValue *>(static_value);
-				pRegTo->laddr->idx.push_back(intv->value);
-			}
-		}
-		else pRegTo->laddr->idx.push_back(p->id);
-	}
 	return 0;
 }
 
@@ -980,5 +986,72 @@ std::string FuncInfo::toASM(ircode::InstrFptosi * pInstrFptosi) {
 	return res;
 }
 
+typedef struct topologyGraphNode{
+	size_t earlist=0;
+	std::list<topologyGraphNode *> bks;
+}topologyGraphNode;
+
+void increTml(topologyGraphNode *g){
+	g->earlist++;
+	for(auto bk:g->bks) increTml(bk);
+}
+void FuncInfo::bbDispatch(){
+	std::list<ircode::IRInstr *> instrs;
+	std::vector<ircode::IRInstr *> insInBB,brMessage;
+	std::map<ircode::IRInstr *,topologyGraphNode *> tpInstr;
+	int tml=0,upd=0;
+	for (auto * pInstr: pFuncDef->instrs) {
+		++tml;
+		if(pInstr->instrType==ircode::InstrType::Label){
+			for(auto *pVegR:allVarVRegR){
+				if(!defineUseTimelineVRegR.count(pVegR)||defineUseTimelineVRegR[pVegR].empty()) continue;
+				else{
+					int de=defineUseTimelineVRegR[pVegR][0];
+					if(de<upd||de>tml) continue;
+					for(int ptr:defineUseTimelineVRegR[pVegR]){
+						if(ptr>tml) break;
+						if(ptr!=de){
+							//auto nd=insInBB[1];
+							tpInstr[insInBB[de-upd-1]]->bks.push_back(tpInstr[insInBB[ptr-upd-1]]);
+							increTml(tpInstr[insInBB[ptr-upd-1]]);
+						}
+					}
+				}
+			}
+			for(auto ins:insInBB){
+				std::cerr<<tpInstr[ins]->earlist<<' ';
+			}
+			upd=tml;
+			size_t num=insInBB.size();
+			size_t batchno=0;
+			while(num!=0){
+				for(auto *ins:insInBB){
+					if(tpInstr[ins]->earlist==batchno){
+						num--;
+						if(ins->instrType==ircode::InstrType::Br||ins->instrType==ircode::InstrType::Mark){
+							brMessage.push_back(ins);
+						}
+						else instrs.push_back(ins);
+					}
+				}
+				batchno++;
+			}
+			insInBB.clear();
+			for(auto me:brMessage) instrs.push_back(me);
+			brMessage.clear();
+			instrs.push_back(pInstr);
+			std::cerr<<'\n';
+		}
+		else{
+			insInBB.push_back(pInstr);
+			tpInstr.insert(std::make_pair(pInstr,new topologyGraphNode()));
+
+		}		
+	}
+	for(auto pi:insInBB) instrs.push_back(pi);
+		//std::cerr<<instrs.size();
+	pFuncDef->instrs.clear();
+	pFuncDef->instrs.insert(pFuncDef->instrs.end(),instrs.begin(),instrs.end());
+}
 
 }

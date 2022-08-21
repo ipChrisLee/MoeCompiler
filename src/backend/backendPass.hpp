@@ -9,9 +9,9 @@
 #include "backend/Opnd.hpp"
 #include "backend/RegisterAllocator.hpp"
 #include "backend/to_asm.hpp"
+
 #define WHILE_ST "while_cond"
 #define WHILE_ED "while_end"
-
 namespace pass {
 std::string hexFormOf(int32_t val);
 std::string hexFormOf(float val);
@@ -66,7 +66,7 @@ class FuncInfo {
 
 	backend::Opnd * markOperand(ircode::AddrOperand * pAddrOperand);
   public:
-	size_t loop_label;
+	int loop_label;
 	//  IRFuncDef of this function
 	ircode::IRFuncDef * pFuncDef;
 	//  backend::Label of this function

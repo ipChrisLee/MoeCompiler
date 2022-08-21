@@ -286,6 +286,7 @@ class AddrFunction :
 	std::vector<AddrPara *> vecPtrAddrPara;
 	std::string name;
 	bool justDeclare = false;
+	bool haveSideEffect = true;
 
 	[[nodiscard]] const std::string & getName() const { return name; }
 

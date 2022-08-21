@@ -3,13 +3,14 @@
 #include <map>
 #include <unordered_set>
 #include <queue>
-#include <stack>
 #include <random>
+#include <stack>
 
 #include "backend/Opnd.hpp"
-
+#include "IR/IRModule.hpp"
 #define AVAILABLE_RREGR 8
 #define AVAILABLE_RREGS 16
+
 namespace backend {
 
 using pii = std::pair<int, int>;
@@ -58,6 +59,7 @@ class RegisterAllocator {
 	std::map<ircode::AddrPara *, backend::VRegR *> m_AddrArg_VRegR;
 	std::map<ircode::AddrPara *, backend::VRegS *> m_AddrArg_VRegS;
 
+	ircode::IRFuncDef * pFuncDef=nullptr;
 	void set(
 		std::unordered_set<backend::VRegR *> & _allVarVRegR,
 		std::unordered_set<backend::VRegS *> & _allVarVRegS,
@@ -68,7 +70,8 @@ class RegisterAllocator {
 		std::map<ircode::AddrPara *, backend::Opnd *> & _argsOnPrev,
 		int _argsStkSizeOnPrev,
 		std::map<ircode::AddrPara *, backend::VRegR *> & m_AddrArg_VRegR,
-		std::map<ircode::AddrPara *, backend::VRegS *> & m_AddrArg_VRegS
+		std::map<ircode::AddrPara *, backend::VRegS *> & m_AddrArg_VRegS,
+		ircode::IRFuncDef * pFuncDef
 	);
 
 	//  Call run() first, do allocate, and analyze result.
@@ -162,5 +165,6 @@ class FigureShadingAllocator : public RegisterAllocator{
   public:
 	explicit FigureShadingAllocator(OpndPool & opndPool) : RegisterAllocator(opndPool) {}
 };
+
 
 }
